@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/topics.$topic";
-import { HANZI, WORDS, getTopic } from "~/lib/data.server";
-import { LEVELS, levelLabel } from "~/lib/levels";
+import { getHanziIndexes, getTopic, getWordIndexes } from "~/lib/data.client";
+import { LEVELS, formatLevels, levelLabel } from "~/lib/levels";
 import { Chip, Empty, Section, StatusDot } from "~/components/ui";
 import { DetailShell, Prose } from "~/components/DetailShell";
 import type { Level } from "~/lib/types";
@@ -11,9 +11,11 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: `${loaderData.topic.label} — Mandarin` }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
-  const topic = getTopic(params.topic);
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const topic = await getTopic(params.topic);
   if (!topic) throw new Response(`No topic “${params.topic}”`, { status: 404 });
+
+  const [HANZI, WORDS] = await Promise.all([getHanziIndexes(LEVELS), getWordIndexes(LEVELS)]);
 
   const members = [
     ...HANZI.filter((h) => h.topics.includes(topic.id)).map((h) => ({
@@ -22,7 +24,7 @@ export async function loader({ params }: Route.LoaderArgs) {
       pinyin: h.pinyin[0] ?? "",
       meaning: h.meanings[0] ?? "",
       level: h.level,
-      status: h.authored?.status ?? ("stub" as const),
+      status: h.status,
       also: h.topics.filter((t) => t !== topic.id),
     })),
     ...WORDS.filter((w) => w.topics.includes(topic.id)).map((w) => ({
@@ -31,7 +33,7 @@ export async function loader({ params }: Route.LoaderArgs) {
       pinyin: w.pinyin,
       meaning: w.meanings[0] ?? "",
       level: w.level,
-      status: w.authored?.status ?? ("stub" as const),
+      status: w.status,
       also: w.topics.filter((t) => t !== topic.id),
     })),
   ];
@@ -43,12 +45,13 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   return { topic, byLevel, total: members.length };
 }
+clientLoader.hydrate = true as const;
 
 export default function TopicDetail({ loaderData }: Route.ComponentProps) {
   const { topic, byLevel, total } = loaderData;
 
   return (
-    <DetailShell back={{ to: "/hsk/1,2,3,4,5,6,7/topics", label: "All topics" }}>
+    <DetailShell back={{ to: `/hsk/${formatLevels(LEVELS)}/topics`, label: "All topics" }}>
       <h1 className="text-2xl text-ink">{topic.label}</h1>
       <p className="mt-1 text-sm text-ink-3">
         {total === 0 ? "Nothing tagged yet" : `${total} entr${total === 1 ? "y" : "ies"}`}

@@ -1,4 +1,4 @@
-import type { Hanzi, Status, Word } from "./types";
+import type { HanziIndex, Status, WordIndex } from "./types";
 import { pinyinMatches } from "./pinyin";
 
 /** Reserved topic filter value: entries carrying no topic at all. */
@@ -39,8 +39,10 @@ export function readFilters(params: URLSearchParams): Filters {
   };
 }
 
-export const statusOf = (e: { authored: { status: Status } | null }): Status =>
-  e.authored?.status ?? "stub";
+export const statusOf = (e: {
+  status?: Status;
+  authored?: { status: Status } | null;
+}): Status => e.status ?? e.authored?.status ?? "stub";
 
 /**
  * One search box across three writing systems: type hanzi, pinyin (with or
@@ -67,7 +69,19 @@ const matchesTopics = (f: Filters, topics: string[]) => {
   return f.topics.some((t) => topics.includes(t));
 };
 
-export function filterHanzi(list: Hanzi[], f: Filters): Hanzi[] {
+export function filterHanzi<
+  T extends Pick<
+    HanziIndex,
+    | "char"
+    | "pinyin"
+    | "meanings"
+    | "radical"
+    | "radicalCanonical"
+    | "components"
+    | "standards"
+    | "topics"
+  > & { status?: Status; authored?: { status: Status } | null },
+>(list: T[], f: Filters): T[] {
   return list.filter((h) => {
     if (f.radicals.length && !f.radicals.includes(h.radicalCanonical)) return false;
     if (f.status.length && !f.status.includes(statusOf(h))) return false;
@@ -86,7 +100,12 @@ export function filterHanzi(list: Hanzi[], f: Filters): Hanzi[] {
   });
 }
 
-export function filterWords(list: Word[], f: Filters): Word[] {
+export function filterWords<
+  T extends Pick<WordIndex, "word" | "pinyin" | "meanings" | "standards" | "topics"> & {
+    status?: Status;
+    authored?: { status: Status } | null;
+  },
+>(list: T[], f: Filters): T[] {
   return list.filter((w) => {
     if (f.status.length && !f.status.includes(statusOf(w))) return false;
     if (!matchesStandards(f, w.standards)) return false;

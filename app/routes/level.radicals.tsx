@@ -1,17 +1,19 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/level.radicals";
-import { radicalsAtLevels } from "~/lib/data.server";
+import { radicalsAtLevels } from "~/lib/catalog";
+import { getHanziIndexes, getMeta } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
 import { Empty } from "~/components/ui";
 import { Toolbar } from "./level.hanzi";
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
   const { q } = readFilters(new URL(request.url).searchParams);
   const lower = q.toLowerCase();
+  const [{ radicals: allRadicals }, hanzi] = await Promise.all([getMeta(), getHanziIndexes(levels)]);
 
-  const radicals = radicalsAtLevels(levels).filter(
+  const radicals = radicalsAtLevels(allRadicals, hanzi, levels).filter(
     (r) =>
       !q ||
       r.char.includes(q) ||
@@ -26,6 +28,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   return { byStrokes, total: radicals.length };
 }
+clientLoader.hydrate = true as const;
 
 export default function LevelRadicals({ loaderData }: Route.ComponentProps) {
   const { byStrokes, total } = loaderData;

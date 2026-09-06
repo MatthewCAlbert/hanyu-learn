@@ -47,6 +47,18 @@ export function Sentences({ sentences, highlight }: { sentences: Sentence[]; hig
           {expanded ? "Show fewer" : `Show ${sentences.length - 3} more`}
         </button>
       )}
+      <p className="text-[11px] text-ink-3">
+        From{" "}
+        <a
+          href="https://tatoeba.org"
+          target="_blank"
+          rel="noreferrer"
+          className="underline underline-offset-2 hover:text-accent"
+        >
+          Tatoeba
+        </a>{" "}
+        (CC-BY 2.0 FR)
+      </p>
     </div>
   );
 }

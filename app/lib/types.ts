@@ -150,3 +150,69 @@ export interface Dataset {
     { entries: number; hanzi: number; words: number; radicals: number }
   >;
 }
+
+/** Compact per-level row used for browsing, filtering and grouping. */
+export interface HanziIndex {
+  char: string;
+  level: Level;
+  pinyin: string[];
+  meanings: string[];
+  frequency: number | null;
+  radical: string;
+  radicalCanonical: string;
+  components: string[];
+  standards: string[];
+  topics: string[];
+  status: Status;
+  /** Visible phonetic component, if any. Used on radical pages. */
+  phonetic: string | null;
+}
+
+/** Compact per-level row used for browsing, filtering and grouping. */
+export interface WordIndex {
+  word: string;
+  level: Level;
+  pinyin: string;
+  meanings: string[];
+  frequency: number | null;
+  standards: string[];
+  topics: string[];
+  status: Status;
+  literal: string | null;
+  transparency: Transparency | null;
+}
+
+export interface DatasetMeta {
+  radicals: Radical[];
+  topics: Topic[];
+  counts: Dataset["counts"];
+}
+
+export interface DatasetManifest {
+  version: string;
+  buckets: number;
+}
+
+/** Precomputed hanzi detail page. One of these lives in a hash bucket. */
+export interface HanziPage {
+  hanzi: Hanzi;
+  radical: Pick<Radical, "char" | "display" | "gloss" | "number" | "canonical"> | null;
+  etymology: Hanzi["etymology"];
+  glosses: Record<string, string>;
+  phoneticSeries: { char: string; pinyin: string; meaning: string }[];
+  words: { word: string; pinyin: string; meaning: string; level: Level }[];
+  topics: { id: string; label: string }[];
+}
+
+/** Precomputed word detail page. One of these lives in a hash bucket. */
+export interface WordPage {
+  word: Word;
+  chars: {
+    char: string;
+    pinyin: string;
+    meaning: string;
+    level: Level | null;
+    radical: string | null;
+  }[];
+  topics: { id: string; label: string }[];
+}

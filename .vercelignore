@@ -7,6 +7,7 @@ node_modules
 *.local
 /data/sources/.raw
 /app/data/generated
+/public/data
 .vercel
 
 # Not needed to build or run the app on Vercel.

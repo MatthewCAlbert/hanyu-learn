@@ -2,10 +2,10 @@
  * Builds app/data/generated/* from the vendored sources in data/sources/,
  * overlaid with authored markdown in content/.
  *
- * Run with `pnpm data:build`. Output is committed so the app never needs
- * network or heavy computation at build time.
+ * Run with `pnpm data:build`. Output is gitignored and rebuilt on demand.
  */
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, readdir, rm, writeFile, cp } from "node:fs/promises";
 import matter from "gray-matter";
 import { parseIds, idsLeaves, isAtomic } from "../app/lib/ids.ts";
 import {
@@ -14,9 +14,25 @@ import {
   wordFrontmatter,
   sections,
 } from "../app/lib/content-schema.ts";
+import { SHARD_BUCKETS, shardBucket } from "../app/lib/shards.ts";
 import type {
-  AuthoredHanzi, AuthoredWord, Dataset, EtymologyType, Hanzi, Level, Radical, Reading,
-  Sentence, Topic, Word,
+  AuthoredHanzi,
+  AuthoredWord,
+  Dataset,
+  DatasetManifest,
+  DatasetMeta,
+  EtymologyType,
+  Hanzi,
+  HanziIndex,
+  HanziPage,
+  Level,
+  Radical,
+  Reading,
+  Sentence,
+  Topic,
+  Word,
+  WordIndex,
+  WordPage,
 } from "../app/lib/types.ts";
 
 const OUT = "app/data/generated";
@@ -409,18 +425,13 @@ async function main() {
   await write("counts.json", counts);
   await write("topics.json", topics);
 
-  // stroke data: only the characters we need, not all 9,000
-  await mkdir(`${OUT}/strokes`, { recursive: true });
-  let strokes = 0;
-  for (const h of hanziList) {
-    const src = `node_modules/hanzi-writer-data/${h.char}.json`;
-    try {
-      await writeFile(`${OUT}/strokes/${h.char}.json`, await readFile(src, "utf8"));
-      strokes += 1;
-    } catch {
-      console.warn(`  ! no stroke data for ${h.char}`);
-    }
-  }
+  const { version, strokeEntries } = await writeWebShards({
+    hanziList,
+    words,
+    radicals,
+    topics,
+    counts,
+  });
 
   for (const level of LEVELS) {
     const c = counts[level];
@@ -431,7 +442,9 @@ async function main() {
   const tagged =
     hanziList.filter((h) => h.topics.length > 0).length +
     words.filter((w) => w.topics.length > 0).length;
-  console.log(`radicals total ${radicals.length} · stroke files ${strokes} · sentences attached`);
+  console.log(
+    `radicals total ${radicals.length} · stroke shards ${strokeEntries} chars · web ${version}`,
+  );
   console.log(
     `topics ${topics.length} · ${tagged} of ${hanziList.length + words.length} entries tagged`,
   );
@@ -444,6 +457,223 @@ async function main() {
   async function write(name: string, data: unknown) {
     await writeFile(`${OUT}/${name}`, JSON.stringify(data));
   }
+}
+
+/**
+ * Compact, versioned JSON the browser fetches on demand. Indexes are per level
+ * so HSK 1 does not download HSK 7; details and strokes live in a fixed number
+ * of hash buckets so we never mint thousands of output files.
+ */
+async function writeWebShards(args: {
+  hanziList: Hanzi[];
+  words: Word[];
+  radicals: Radical[];
+  topics: Topic[];
+  counts: Dataset["counts"];
+}): Promise<{ version: string; strokeEntries: number }> {
+  const { hanziList, words, radicals, topics, counts } = args;
+  const hanziByChar = new Map(hanziList.map((h) => [h.char, h]));
+  const wordByText = new Map(words.map((w) => [w.word, w]));
+  const topicById = new Map(topics.map((t) => [t.id, t]));
+
+  const version = createHash("sha256")
+    .update(JSON.stringify(hanziList))
+    .update(JSON.stringify(words))
+    .update(JSON.stringify(topics))
+    .digest("hex")
+    .slice(0, 12);
+
+  const web = `${OUT}/web`;
+  const root = `${web}/${version}`;
+  await mkdir(`${root}/hd`, { recursive: true });
+  await mkdir(`${root}/wd`, { recursive: true });
+  await mkdir(`${root}/st`, { recursive: true });
+
+  const manifest: DatasetManifest = { version, buckets: SHARD_BUCKETS };
+  const meta: DatasetMeta = { radicals, topics, counts };
+  await writeFile(`${web}/manifest.json`, JSON.stringify(manifest));
+  await writeFile(`${root}/meta.json`, JSON.stringify(meta));
+
+  for (const level of LEVELS) {
+    const hanziIndex: HanziIndex[] = hanziList
+      .filter((h) => h.level === level)
+      .map((h) => ({
+        char: h.char,
+        level: h.level,
+        pinyin: h.pinyin,
+        meanings: h.meanings,
+        frequency: h.frequency,
+        radical: h.radical,
+        radicalCanonical: h.radicalCanonical,
+        components: h.components,
+        standards: h.standards,
+        topics: h.topics,
+        status: h.authored?.status ?? "stub",
+        phonetic:
+          h.authored?.phonetic ??
+          (h.etymology?.phoneticVisible === false ? null : (h.etymology?.phonetic ?? null)),
+      }));
+    const wordIndex: WordIndex[] = words
+      .filter((w) => w.level === level)
+      .map((w) => ({
+        word: w.word,
+        level: w.level,
+        pinyin: w.pinyin,
+        meanings: w.meanings,
+        frequency: w.frequency,
+        standards: w.standards,
+        topics: w.topics,
+        status: w.authored?.status ?? "stub",
+        literal: w.authored?.literal ?? null,
+        transparency: w.authored?.transparency ?? null,
+      }));
+    await writeFile(`${root}/h${level}.json`, JSON.stringify(hanziIndex));
+    await writeFile(`${root}/w${level}.json`, JSON.stringify(wordIndex));
+  }
+
+  const hanziPages: Record<string, HanziPage>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
+  const wordPages: Record<string, WordPage>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
+  const strokePages: Record<string, unknown>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
+
+  for (const hanzi of hanziList) {
+    hanziPages[shardBucket(hanzi.char)]![hanzi.char] = buildHanziPage(
+      hanzi,
+      hanziList,
+      hanziByChar,
+      wordByText,
+      radicals,
+      topicById,
+    );
+  }
+  for (const word of words) {
+    wordPages[shardBucket(word.word)]![word.word] = buildWordPage(word, hanziByChar, topicById);
+  }
+
+  let strokeEntries = 0;
+  for (const h of hanziList) {
+    const src = `node_modules/hanzi-writer-data/${h.char}.json`;
+    try {
+      strokePages[shardBucket(h.char)]![h.char] = JSON.parse(await readFile(src, "utf8"));
+      strokeEntries += 1;
+    } catch {
+      console.warn(`  ! no stroke data for ${h.char}`);
+    }
+  }
+
+  for (let i = 0; i < SHARD_BUCKETS; i += 1) {
+    await writeFile(`${root}/hd/${i}.json`, JSON.stringify(hanziPages[i]));
+    await writeFile(`${root}/wd/${i}.json`, JSON.stringify(wordPages[i]));
+    await writeFile(`${root}/st/${i}.json`, JSON.stringify(strokePages[i]));
+  }
+
+  await rm("public/data", { recursive: true, force: true });
+  await mkdir("public", { recursive: true });
+  await cp(web, "public/data", { recursive: true });
+
+  return { version, strokeEntries };
+}
+
+function overlayEtymology(hanzi: Hanzi): Hanzi["etymology"] {
+  const a = hanzi.authored;
+  if (hanzi.etymology) {
+    return {
+      ...hanzi.etymology,
+      ...(a?.semantic ? { semantic: a.semantic, semanticVisible: true } : {}),
+      ...(a?.phonetic ? { phonetic: a.phonetic, phoneticVisible: true } : {}),
+    };
+  }
+  if (a?.semantic || a?.phonetic) {
+    return {
+      type: "ideographic",
+      ...(a.semantic ? { semantic: a.semantic, semanticVisible: true } : {}),
+      ...(a.phonetic ? { phonetic: a.phonetic, phoneticVisible: true } : {}),
+    };
+  }
+  return null;
+}
+
+function buildHanziPage(
+  hanzi: Hanzi,
+  all: Hanzi[],
+  hanziByChar: Map<string, Hanzi>,
+  wordByText: Map<string, Word>,
+  radicals: Radical[],
+  topicById: Map<string, Topic>,
+): HanziPage {
+  const radical = radicals.find((r) => r.char === hanzi.radicalCanonical) ?? null;
+  const etymology = overlayEtymology(hanzi);
+  const glosses: Record<string, string> = {};
+  for (const c of hanzi.components) {
+    const asHanzi = hanziByChar.get(c);
+    if (asHanzi) glosses[c] = asHanzi.meanings[0]?.split(/[;,]/)[0]?.trim() ?? "";
+    else {
+      const asRadical = radicals.find((r) => r.char === c || r.canonical === c);
+      if (asRadical) glosses[c] = asRadical.gloss;
+    }
+  }
+  const phonetic = hanzi.authored?.phonetic ?? hanzi.etymology?.phonetic;
+  const phoneticSeries =
+    phonetic && hanzi.etymology?.phoneticVisible !== false
+      ? all
+          .filter(
+            (h) =>
+              h.char !== hanzi.char &&
+              (h.authored?.phonetic ?? h.etymology?.phonetic) === phonetic,
+          )
+          .map((h) => ({ char: h.char, pinyin: h.pinyin[0] ?? "", meaning: h.meanings[0] ?? "" }))
+      : [];
+  const pageWords = hanzi.words
+    .map((w) => wordByText.get(w))
+    .filter((w): w is Word => Boolean(w))
+    .map((w) => ({
+      word: w.word,
+      pinyin: w.pinyin,
+      meaning: w.meanings[0] ?? "",
+      level: w.level,
+    }));
+  const pageTopics = hanzi.topics
+    .map((id) => topicById.get(id))
+    .filter((t): t is Topic => Boolean(t))
+    .map((t) => ({ id: t.id, label: t.label }));
+  return {
+    hanzi,
+    radical: radical
+      ? {
+          char: radical.char,
+          display: radical.display,
+          gloss: radical.gloss,
+          number: radical.number,
+          canonical: radical.canonical,
+        }
+      : null,
+    etymology,
+    glosses,
+    phoneticSeries,
+    words: pageWords,
+    topics: pageTopics,
+  };
+}
+
+function buildWordPage(
+  word: Word,
+  hanziByChar: Map<string, Hanzi>,
+  topicById: Map<string, Topic>,
+): WordPage {
+  const chars = word.chars.map((c) => {
+    const h = hanziByChar.get(c);
+    return {
+      char: c,
+      pinyin: h?.pinyin[0] ?? "",
+      meaning: h?.meanings[0] ?? "",
+      level: h?.level ?? null,
+      radical: h?.radical ?? null,
+    };
+  });
+  const pageTopics = word.topics
+    .map((id) => topicById.get(id))
+    .filter((t): t is Topic => Boolean(t))
+    .map((t) => ({ id: t.id, label: t.label }));
+  return { word, chars, topics: pageTopics };
 }
 
 function push(map: Map<string, string[]>, key: string, value: string) {

@@ -8,7 +8,7 @@ import type { CharacterJson } from "hanzi-writer";
  * Keyed on `char` by the caller so navigating between characters tears the
  * writer down rather than layering a second one into the same node. Stroke
  * data is passed in from the loader — the library's own network fetch is
- * disabled, since we ship only the 598 characters we need.
+ * disabled, since stroke data is passed in from a hashed shard.
  */
 export function StrokeOrder({ char, data }: { char: string; data: CharacterJson | null }) {
   const target = useRef<HTMLDivElement>(null);

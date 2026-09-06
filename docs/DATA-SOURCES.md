@@ -13,8 +13,8 @@ network and upstream changes show up as reviewable diffs.
 
 ## Attribution required on distribution
 
-This is a personal app; while it stays local, none of this bites. **If it is
-ever published, these three need attribution in the UI:**
+The UI footer and `/credits` page cover the three that require attribution
+on distribution:
 
 - **makemeahanzi** (LGPL-3.0) — character decompositions, radicals, etymology.
   Derived from Unihan and CJKlib.
@@ -24,7 +24,7 @@ ever published, these three need attribution in the UI:**
 - **hanzi-writer-data** (Arphic Public License) — stroke-order graphics,
   derived from the Arphic PL KaitiM GB font. The APL is the strictest licence
   here: it requires the licence text to travel with the data and any changes to
-  be documented.
+  be documented. An unaltered copy is at `/licenses/ARPHICPL.TXT`.
 
 The `meanings` fields trace back to **CC-CEDICT** (CC-BY-SA 3.0) through the
 HSK wordlist repo. That repo is MIT-licensed, but share-alike arguably reaches

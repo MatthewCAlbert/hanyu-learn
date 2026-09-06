@@ -1,43 +1,45 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/radicals.$radical";
-import { HANZI, getRadical } from "~/lib/data.server";
+import { getHanziIndexes, getRadical } from "~/lib/data.client";
+import { LEVELS, formatLevels } from "~/lib/levels";
 import { Chip, Section, StatusDot } from "~/components/ui";
 import { DetailShell } from "~/components/DetailShell";
-import type { Level } from "~/lib/types";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [{ title: "Not found" }];
   return [{ title: `Radical ${loaderData.radical.char} — ${loaderData.radical.gloss}` }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const char = decodeURIComponent(params.radical);
-  const radical = getRadical(char);
-  if (!radical) throw new Response(`No radical ${char} in HSK 1–2`, { status: 404 });
+  const radical = await getRadical(char);
+  if (!radical) throw new Response(`No radical ${char} in HSK 1–9`, { status: 404 });
 
+  const HANZI = await getHanziIndexes(LEVELS);
   const members = HANZI.filter((h) => h.radicalCanonical === radical.char).map((h) => ({
     char: h.char,
     written: h.radical,
     pinyin: h.pinyin[0] ?? "",
     meaning: h.meanings[0] ?? "",
     level: h.level,
-    status: h.authored?.status ?? ("stub" as const),
-    etymology: h.etymology?.type ?? null,
-    phonetic: h.etymology?.phoneticVisible === false ? null : (h.etymology?.phonetic ?? null),
+    status: h.status,
+    phonetic: h.phonetic,
   }));
 
-  const byLevel = ([1, 2] as Level[])
-    .map((level) => ({ level, members: members.filter((m) => m.level === level) }))
-    .filter((g) => g.members.length > 0);
+  const byLevel = LEVELS.map((level) => ({
+    level,
+    members: members.filter((m) => m.level === level),
+  })).filter((g) => g.members.length > 0);
 
   return { radical, byLevel, total: members.length };
 }
+clientLoader.hydrate = true as const;
 
 export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
   const { radical: r, byLevel, total } = loaderData;
 
   return (
-    <DetailShell back={{ to: "/hsk/1,2/radicals", label: "All radicals" }}>
+    <DetailShell back={{ to: `/hsk/${formatLevels(LEVELS)}/radicals`, label: "All radicals" }}>
       <div className="flex flex-wrap items-center gap-5">
         <span className="han text-7xl leading-none">{r.display}</span>
         <div>
@@ -55,7 +57,7 @@ export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
             )}
           </p>
           <p className="mt-2 text-sm text-ink-3">
-            {total} character{total === 1 ? "" : "s"} in HSK 1–2
+            {total} character{total === 1 ? "" : "s"} in HSK 1–9
           </p>
         </div>
       </div>

@@ -7,9 +7,9 @@ node_modules
 /data/sources/.raw
 
 # Derived from data/sources/ + content/ by `pnpm data:build` (~8s, no network).
-# Not committed: 20MB, 12MB of which duplicates the hanzi-writer-data package,
-# and it is single-line JSON that git cannot diff — one tagged word rewrites a
-# 4.5MB blob. The reviewable projection of this data is docs/hsk/, which is
-# committed and diffs line by line.
+# Not committed: large, and it is single-line JSON that git cannot diff — one
+# tagged word rewrites a 4.5MB blob. The reviewable projection of this data is
+# docs/hsk/, which is committed and diffs line by line.
 /app/data/generated
+/public/data
 .vercel

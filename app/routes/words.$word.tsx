@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import clsx from "clsx";
 import type { Route } from "./+types/words.$word";
-import { getHanzi, getTopic, getWord } from "~/lib/data.server";
+import { getWordPage } from "~/lib/data.client";
 import { Chip, Section, StatusDot } from "~/components/ui";
 import { DetailShell, Prose } from "~/components/DetailShell";
 import { Sentences } from "~/components/Sentences";
@@ -11,29 +11,13 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: `${loaderData.word.word} ${loaderData.word.pinyin} — Mandarin` }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const text = decodeURIComponent(params.word);
-  const word = getWord(text);
-  if (!word) throw new Response(`${text} is not in HSK 1–2`, { status: 404 });
-
-  const chars = word.chars.map((c) => {
-    const h = getHanzi(c);
-    return {
-      char: c,
-      pinyin: h?.pinyin[0] ?? "",
-      meaning: h?.meanings[0] ?? "",
-      level: h?.level ?? null,
-      radical: h?.radical ?? null,
-    };
-  });
-
-  const topics = word.topics
-    .map((id) => getTopic(id))
-    .filter((t): t is NonNullable<typeof t> => Boolean(t))
-    .map((t) => ({ id: t.id, label: t.label }));
-
-  return { word, chars, topics };
+  const page = await getWordPage(text);
+  if (!page) throw new Response(`${text} is not in HSK 1–9`, { status: 404 });
+  return page;
 }
+clientLoader.hydrate = true as const;
 
 const TRANSPARENCY_NOTE = {
   transparent: "The characters give this one away.",

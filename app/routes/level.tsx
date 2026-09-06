@@ -1,23 +1,30 @@
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import clsx from "clsx";
 import type { Route } from "./+types/level";
-import { countsFor, radicalsAtLevels, topicsAtLevels } from "~/lib/data.server";
+import { countsFor, radicalsAtLevels, topicsAtLevels } from "~/lib/catalog";
+import { getHanziIndexes, getMeta, getWordIndexes } from "~/lib/data.client";
 import { LEVELS, formatLevels, levelLabel, parseLevels, toggleLevel } from "~/lib/levels";
 import { UNTAGGED, readFilters, toSearch, type Filters } from "~/lib/filters";
 import type { Status } from "~/lib/types";
 import { ThemeToggle } from "~/components/ThemeToggle";
+import { CreditsFooter } from "~/components/CreditsFooter";
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: `HSK ${params.level?.replaceAll(",", " + ")} — Mandarin` }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
-  const radicals = radicalsAtLevels(levels);
-  const { topics, untagged } = topicsAtLevels(levels);
+  const [{ radicals: allRadicals, topics: allTopics, counts }, hanzi, words] = await Promise.all([
+    getMeta(),
+    getHanziIndexes(levels),
+    getWordIndexes(levels),
+  ]);
+  const radicals = radicalsAtLevels(allRadicals, hanzi, levels);
+  const { topics, untagged } = topicsAtLevels(allTopics, hanzi, words, levels);
   return {
     levels,
-    counts: { ...countsFor(levels), radicals: radicals.length, topics: topics.length },
+    counts: { ...countsFor(counts, levels), radicals: radicals.length, topics: topics.length },
     untagged,
     topics: topics.map((t) => ({
       id: t.id,
@@ -33,6 +40,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     })),
   };
 }
+clientLoader.hydrate = true as const;
 
 const STATUSES: Status[] = ["reviewed", "drafted", "stub"];
 /** Search-param keys that hold repeatable filter values. */
@@ -101,7 +109,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const search = toSearch(filters);
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="flex min-h-screen flex-col bg-paper">
       <header className="sticky top-0 z-20 border-b border-line bg-paper/85 backdrop-blur">
         <div className="flex items-center gap-4 px-4 py-2.5 lg:px-6">
           <NavLink
@@ -213,7 +221,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
         </nav>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1">
         <aside className="hidden w-56 shrink-0 border-r border-line px-4 py-5 lg:block">
           <FilterGroup
             label="Topic"
@@ -317,6 +325,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           <Outlet />
         </main>
       </div>
+      <CreditsFooter />
     </div>
   );
 }

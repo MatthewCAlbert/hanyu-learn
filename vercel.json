@@ -1,0 +1,19 @@
+{
+  "headers": [
+    {
+      "source": "/data/manifest.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=60, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/data/:version/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/((?!data/|assets/).*)", "destination": "/index.html" }
+  ]
+}

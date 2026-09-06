@@ -1,7 +1,7 @@
 import { Link, useNavigation, useSearchParams } from "react-router";
 import clsx from "clsx";
 import type { Route } from "./+types/level.hanzi";
-import { HANZI, RADICALS, TOPICS } from "~/lib/data.server";
+import { getHanziIndexes, getMeta } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
 import { PAGE_STEP, UNTAGGED, filterHanzi, readFilters, readTake, statusOf } from "~/lib/filters";
 import { Chip, Empty, StatusDot } from "~/components/ui";
@@ -19,11 +19,15 @@ interface Row {
   level: number;
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
   const url = new URL(request.url);
   const filters = readFilters(url.searchParams);
   const take = readTake(url.searchParams);
+  const [{ radicals: RADICALS, topics: TOPICS }, HANZI] = await Promise.all([
+    getMeta(),
+    getHanziIndexes(levels),
+  ]);
   const gloss = new Map(RADICALS.map((r) => [r.char, r]));
 
   const matched = filterHanzi(
@@ -150,6 +154,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     showLevel: levels.length > 1,
   };
 }
+clientLoader.hydrate = true as const;
 
 export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
   const { sections, total, placements, shown, hasMore, view, group, showLevel } = loaderData;

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx scripts/ensure-dataset.ts && react-router dev",
     "build": "tsx scripts/ensure-dataset.ts && react-router build",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "vite preview --outDir build/client",
     "typecheck": "react-router typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

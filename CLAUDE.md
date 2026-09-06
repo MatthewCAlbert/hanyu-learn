@@ -61,7 +61,7 @@ assertion:
 
 - **Levels are multi-select in the UI but never merged in the data.** The
   selection lives in the path as a comma list (`/hsk/1,2`) so it stays
-  bookmarkable and prerenderable. Content is still authored one level at a time.
+  bookmarkable. Content is still authored one level at a time.
 - **Topics are many-to-many.** 飞机 is both `travel` and `technology` and appears
   under both headings, so section counts sum to more than the entry count. The UI
   reports placements and distinct entries separately rather than conflating them.

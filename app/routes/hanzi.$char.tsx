@@ -1,98 +1,24 @@
-import { createRequire } from "node:module";
 import { Link } from "react-router";
 import type { Route } from "./+types/hanzi.$char";
-import { HANZI, RADICALS, WORDS, getHanzi, getRadical, getTopic } from "~/lib/data.server";
+import { getHanziPage, getStrokes } from "~/lib/data.client";
 import { Chip, HanziLink, Section, StatusDot } from "~/components/ui";
 import { DetailShell, Prose } from "~/components/DetailShell";
 import { Decomposition } from "~/components/Decomposition";
 import { StrokeOrder } from "~/components/StrokeOrder";
 import { Sentences } from "~/components/Sentences";
 
-const require = createRequire(import.meta.url);
-
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [{ title: "Not found" }];
   return [{ title: `${loaderData.hanzi.char} ${loaderData.hanzi.pinyin[0] ?? ""} — Mandarin` }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const char = decodeURIComponent(params.char);
-  const hanzi = getHanzi(char);
-  if (!hanzi) throw new Response(`${char} is not in HSK 1–2`, { status: 404 });
-
-  // Stroke data comes from hanzi-writer-data at request time so the serverless
-  // function does not need the generated copies on disk.
-  let strokes: unknown = null;
-  try {
-    strokes = require(`hanzi-writer-data/${char}.json`);
-  } catch {
-    strokes = null;
-  }
-
-  const radical = getRadical(hanzi.radicalCanonical);
-
-  /**
-   * Authored `semantic`/`phonetic` take precedence over the upstream etymology:
-   * they are the human-checked answer, and `pnpm check:content` has already
-   * verified each names a component the character really contains.
-   */
-  const a = hanzi.authored;
-  const etymology = hanzi.etymology
-    ? {
-        ...hanzi.etymology,
-        ...(a?.semantic ? { semantic: a.semantic, semanticVisible: true } : {}),
-        ...(a?.phonetic ? { phonetic: a.phonetic, phoneticVisible: true } : {}),
-      }
-    : a?.semantic || a?.phonetic
-      ? {
-          type: "ideographic" as const,
-          ...(a.semantic ? { semantic: a.semantic, semanticVisible: true } : {}),
-          ...(a.phonetic ? { phonetic: a.phonetic, phoneticVisible: true } : {}),
-        }
-      : null;
-
-  // Glosses for the component chips in the decomposition tree.
-  const glosses: Record<string, string> = {};
-  for (const c of hanzi.components) {
-    const asHanzi = getHanzi(c);
-    if (asHanzi) glosses[c] = asHanzi.meanings[0]?.split(/[;,]/)[0]?.trim() ?? "";
-    else {
-      const asRadical = RADICALS.find((r) => r.char === c || r.canonical === c);
-      if (asRadical) glosses[c] = asRadical.gloss;
-    }
-  }
-
-  /**
-   * Characters sharing this one's phonetic component. Listing them is the
-   * fastest way to show that a phonetic carries sound and not meaning.
-   */
-  const phonetic = a?.phonetic ?? hanzi.etymology?.phonetic;
-  const phoneticSeries =
-    phonetic && hanzi.etymology?.phoneticVisible !== false
-      ? HANZI.filter(
-          (h) =>
-            h.char !== hanzi.char &&
-            (h.authored?.phonetic ?? h.etymology?.phonetic) === phonetic,
-        ).map((h) => ({ char: h.char, pinyin: h.pinyin[0] ?? "", meaning: h.meanings[0] ?? "" }))
-      : [];
-
-  const words = hanzi.words
-    .map((w) => WORDS.find((x) => x.word === w))
-    .filter((w): w is NonNullable<typeof w> => Boolean(w))
-    .map((w) => ({
-      word: w.word,
-      pinyin: w.pinyin,
-      meaning: w.meanings[0] ?? "",
-      level: w.level,
-    }));
-
-  const topics = hanzi.topics
-    .map((id) => getTopic(id))
-    .filter((t): t is NonNullable<typeof t> => Boolean(t))
-    .map((t) => ({ id: t.id, label: t.label }));
-
-  return { hanzi, radical, etymology, strokes, glosses, phoneticSeries, words, topics };
+  const [page, strokes] = await Promise.all([getHanziPage(char), getStrokes(char)]);
+  if (!page) throw new Response(`${char} is not in HSK 1–9`, { status: 404 });
+  return { ...page, strokes };
 }
+clientLoader.hydrate = true as const;
 
 export default function HanziDetail({ loaderData }: Route.ComponentProps) {
   const { hanzi: h, radical, etymology: e, strokes, glosses, phoneticSeries, words, topics } =

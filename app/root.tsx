@@ -7,6 +7,8 @@ import {
   isRouteErrorResponse,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { CreditsFooter } from "~/components/CreditsFooter";
+import { PageLoading } from "~/components/PageLoading";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -48,24 +50,31 @@ export default function App() {
   return <Outlet />;
 }
 
+export function HydrateFallback() {
+  return <PageLoading />;
+}
+
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const is404 = isRouteErrorResponse(error) && error.status === 404;
   return (
-    <main className="mx-auto max-w-lg px-6 py-24 text-center">
-      <p className="han text-6xl text-accent">{is404 ? "无" : "错"}</p>
-      <h1 className="mt-6 text-xl font-medium">
-        {is404 ? "Not found" : "Something went wrong"}
-      </h1>
-      <p className="mt-2 text-sm text-ink-2">
-        {is404
-          ? "That character, word or radical isn't in HSK 1–2."
-          : error instanceof Error
-            ? error.message
-            : "Unknown error."}
-      </p>
-      <a href="/" className="mt-8 inline-block text-sm text-accent underline underline-offset-4">
-        Back to level 1
-      </a>
-    </main>
+    <div className="flex min-h-screen flex-col bg-paper">
+      <main className="mx-auto flex-1 px-6 py-24 text-center">
+        <p className="han text-6xl text-accent">{is404 ? "无" : "错"}</p>
+        <h1 className="mt-6 text-xl font-medium">
+          {is404 ? "Not found" : "Something went wrong"}
+        </h1>
+        <p className="mt-2 text-sm text-ink-2">
+          {is404
+            ? "That character, word or radical isn't in HSK 1–9."
+            : error instanceof Error
+              ? error.message
+              : "Unknown error."}
+        </p>
+        <a href="/" className="mt-8 inline-block text-sm text-accent underline underline-offset-4">
+          Back to level 1
+        </a>
+      </main>
+      <CreditsFooter />
+    </div>
   );
 }

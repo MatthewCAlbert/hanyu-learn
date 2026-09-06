@@ -1,6 +1,21 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type Plugin } from "vite";
+
+const WEB = path.resolve("app/data/generated/web");
+
+function datasetVersion(): string {
+  try {
+    const manifest = JSON.parse(readFileSync(path.join(WEB, "manifest.json"), "utf8")) as {
+      version: string;
+    };
+    return manifest.version;
+  } catch {
+    return "";
+  }
+}
 
 /**
  * Debugger auto-attach (VS Code / Cursor JS debug terminals, devtools clients)
@@ -19,8 +34,8 @@ function ignoreDevtoolsProbe(): Plugin {
     apply: "serve",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        const path = (req.url ?? "").split("?")[0] ?? "";
-        if (!CDP.test(path)) return next();
+        const url = (req.url ?? "").split("?")[0] ?? "";
+        if (!CDP.test(url)) return next();
         res.statusCode = 404;
         res.setHeader("content-type", "application/json");
         res.end('{"error":"not a devtools endpoint"}');
@@ -30,9 +45,10 @@ function ignoreDevtoolsProbe(): Plugin {
 }
 
 export default defineConfig({
+  appType: "spa",
   plugins: [ignoreDevtoolsProbe(), tailwindcss(), reactRouter()],
   resolve: { tsconfigPaths: true },
-  // Keep the package on disk so the hanzi loader can require one character JSON
-  // at request time instead of bundling ~9,000 stroke files.
-  ssr: { external: ["hanzi-writer-data"] },
+  define: {
+    __DATASET_VERSION__: JSON.stringify(datasetVersion()),
+  },
 });

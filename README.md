@@ -33,7 +33,8 @@ not committed — see [Generated data](#generated-data).
 
 ```bash
 pnpm dev              # dev server
-pnpm build            # production build (SSR; pages render on demand)
+pnpm build            # production build (static SPA)
+pnpm start            # preview the static client build
 pnpm typecheck        # react-router typegen && tsc
 pnpm test             # dataset invariants + unit tests
 pnpm check:content    # validate content/ against the dataset
@@ -58,7 +59,7 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 - **Search across three systems at once** — type `好`, `hao`, `hǎo`, `hao3` or
   `good`. Searching a component (`女`) finds every character containing it.
 - **Multi-select levels** in the path (`/hsk/1`, `/hsk/1,2`), so any selection is
-  bookmarkable and prerendered.
+  bookmarkable.
 - **Group by radical, topic or frequency**; filter by radical, topic, status and
   the older HSK standards.
 - **i+1 example sentences** — every example at a level uses *only* characters
@@ -82,7 +83,7 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 Content is derived from four open sources — HSK wordlists, makemeahanzi
 decompositions, Unicode Unihan radicals, and Tatoeba sentences. Licences and
 required attribution are recorded in [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md);
-three of them need attribution if this is ever published.
+the three that require it are named in the UI footer and on `/credits`.
 
 ## Writing content
 
@@ -109,10 +110,16 @@ invented mnemonics are kept in separate sections, claims need sources, and
 `app/data/generated/` is **not committed**. It is derived from `data/sources/` and
 `content/` by `pnpm data:build`, which takes ~8s and needs no network.
 
-Three reasons it stays out of git:
+It holds two projections of the same corpus:
 
-- **20MB**, of which 12MB is a verbatim copy of the `hanzi-writer-data` package —
-  committing a dependency's contents.
+- **Full JSON** (`hanzi.json`, `words.json`, …) for tests and content checks.
+- **Web shards** (`web/`) for the running app: per-level indexes, 64 hash
+  buckets of detail pages and stroke data, plus a tiny manifest. The browser
+  fetches only the files a route needs; versioned URLs are immutable on the CDN.
+
+Three reasons the generated tree stays out of git:
+
+- It is large, and the stroke shards duplicate the `hanzi-writer-data` package.
 - It is **single-line minified JSON**, so tagging three words rewrites a 4.5MB
   blob. Across hundreds of content batches that is gigabytes of undiffable history.
 - The reviewable projection of the same data is **`docs/hsk/`**, which *is*
@@ -125,7 +132,8 @@ under half a second.
 
 ## Stack
 
-React Router v8 (framework mode) · React 19 · Vite 8 · Tailwind v4 ·
+React Router v8 (framework mode, `ssr: false`) · React 19 · Vite 8 · Tailwind v4 ·
 react-virtuoso · Vitest · pnpm.
 
-Prerendered to static HTML with an SSR fallback for uncommon level combinations.
+Static SPA: one HTML shell, data loaded in the browser from versioned JSON shards.
+No runtime server. Deep links rewrite to `index.html`.

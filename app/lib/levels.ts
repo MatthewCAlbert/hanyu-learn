@@ -1,8 +1,7 @@
 import type { Level } from "./types";
 
 /**
- * Client-safe level helpers. Kept out of `data.server.ts` so components can
- * import them without pulling the whole corpus into the browser bundle.
+ * Client-safe level helpers, used by both the shell and the data loaders.
  */
 export const LEVELS: Level[] = [1, 2, 3, 4, 5, 6, 7];
 
@@ -10,13 +9,11 @@ const isLevel = (n: number): n is Level => Number.isInteger(n) && n >= 1 && n <=
 
 /**
  * Levels live in the path as a comma list — `/hsk/1`, `/hsk/2`, `/hsk/1,2` — so
- * a multi-level selection stays bookmarkable, back-button correct and
- * prerenderable, the way a single level already was.
+ * a multi-level selection stays bookmarkable and back-button correct.
  */
 export function parseLevels(raw: string | undefined): Level[] {
-  // Strict: every segment must be a real level and appear once. Since each
-  // selection is prerendered at an exact path, accepting sloppy variants like
-  // "1," or "2,1" would mint extra URLs for a page that already has one.
+  // Strict: every segment must be a real level and appear once. Sloppy variants
+  // like "1," or "2,1" would mint extra URLs for a page that already has one.
   const parts = (raw ?? "").split(",");
   const levels = parts.map((p) => (/^[0-9]+$/.test(p) ? Number(p) : NaN));
   const ok =

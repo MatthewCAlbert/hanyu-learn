@@ -4,13 +4,15 @@ export default [
   index("routes/home.tsx"),
 
   // Level-scoped browsing. `:level` is a comma list — "1", "2" or "1,2" — so a
-  // multi-level selection stays in the path: bookmarkable and prerenderable.
+  // multi-level selection stays in the path and stays bookmarkable.
   route("hsk/:level", "routes/level.tsx", [
     route("hanzi", "routes/level.hanzi.tsx"),
     route("words", "routes/level.words.tsx"),
     route("topics", "routes/level.topics.tsx"),
     route("radicals", "routes/level.radicals.tsx"),
   ]),
+
+  route("credits", "routes/credits.tsx"),
 
   // Detail pages are level-independent: 好 is one character with one page.
   route("hanzi/:char", "routes/hanzi.$char.tsx"),

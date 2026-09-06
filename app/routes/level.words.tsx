@@ -1,6 +1,6 @@
 import { Link, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/level.words";
-import { TOPICS, WORDS } from "~/lib/data.server";
+import { getMeta, getWordIndexes } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
 import { PAGE_STEP, UNTAGGED, filterWords, readFilters, readTake, statusOf } from "~/lib/filters";
 import { Chip, Empty, StatusDot } from "~/components/ui";
@@ -19,11 +19,12 @@ interface Row {
   transparency: string | null;
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
   const url = new URL(request.url);
   const filters = readFilters(url.searchParams);
   const take = readTake(url.searchParams);
+  const [{ topics: TOPICS }, WORDS] = await Promise.all([getMeta(), getWordIndexes(levels)]);
 
   const matched = filterWords(
     WORDS.filter((w) => levels.includes(w.level)),
@@ -55,8 +56,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       meaning: w.meanings.slice(0, 2).join("; "),
       status: statusOf(w),
       level: w.level,
-      literal: w.authored?.literal ?? null,
-      transparency: w.authored?.transparency ?? null,
+      literal: w.literal,
+      transparency: w.transparency,
     }),
   );
 
@@ -109,6 +110,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     showLevel: levels.length > 1,
   };
 }
+clientLoader.hydrate = true as const;
 
 export default function LevelWords({ loaderData }: Route.ComponentProps) {
   const { sections, total, placements, shown, hasMore, group, showLevel } = loaderData;

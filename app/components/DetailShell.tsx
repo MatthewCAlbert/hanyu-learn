@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { CreditsFooter } from "./CreditsFooter";
 
 /** Shared frame for the three detail pages. */
 export function DetailShell({
@@ -9,13 +10,14 @@ export function DetailShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="flex min-h-screen flex-col bg-paper">
       <header className="sticky top-0 z-20 border-b border-line bg-paper/85 px-4 py-2.5 backdrop-blur lg:px-6">
         <Link to={back.to} className="text-sm text-ink-2 transition-colors hover:text-accent">
           ← {back.label}
         </Link>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-8 lg:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 lg:px-6">{children}</main>
+      <CreditsFooter />
     </div>
   );
 }
