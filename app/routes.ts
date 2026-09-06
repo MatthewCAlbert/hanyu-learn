@@ -1,0 +1,20 @@
+import { type RouteConfig, index, route } from "@react-router/dev/routes";
+
+export default [
+  index("routes/home.tsx"),
+
+  // Level-scoped browsing. `:level` is a comma list — "1", "2" or "1,2" — so a
+  // multi-level selection stays in the path: bookmarkable and prerenderable.
+  route("hsk/:level", "routes/level.tsx", [
+    route("hanzi", "routes/level.hanzi.tsx"),
+    route("words", "routes/level.words.tsx"),
+    route("topics", "routes/level.topics.tsx"),
+    route("radicals", "routes/level.radicals.tsx"),
+  ]),
+
+  // Detail pages are level-independent: 好 is one character with one page.
+  route("hanzi/:char", "routes/hanzi.$char.tsx"),
+  route("words/:word", "routes/words.$word.tsx"),
+  route("radicals/:radical", "routes/radicals.$radical.tsx"),
+  route("topics/:topic", "routes/topics.$topic.tsx"),
+] satisfies RouteConfig;

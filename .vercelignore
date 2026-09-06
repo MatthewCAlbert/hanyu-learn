@@ -1,0 +1,15 @@
+# Same as .gitignore — the CLI may skip .gitignore when the repo has no commits.
+node_modules
+.pnpm-store
+/build
+/.react-router
+.DS_Store
+*.local
+/data/sources/.raw
+/app/data/generated
+.vercel
+
+# Not needed to build or run the app on Vercel.
+.claude
+/docs
+/tests

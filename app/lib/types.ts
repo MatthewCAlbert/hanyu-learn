@@ -1,0 +1,152 @@
+/**
+ * HSK 3.0 levels. The standard defines nine, but its wordlist treats 7-9 as a
+ * single band, so level 7 here means "7-9" and is labelled that way.
+ */
+export type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type Status = "stub" | "drafted" | "reviewed";
+export type Confidence = "high" | "medium" | "low";
+export type EtymologyType = "pictographic" | "ideographic" | "pictophonetic";
+
+export type Formation =
+  | "semantic-compound"
+  | "verb-object"
+  | "phonetic-loan"
+  | "abbreviation"
+  | "loanword-calque"
+  | "idiom"
+  | "reduplication";
+
+export type Transparency = "transparent" | "semi" | "opaque";
+
+export interface Sentence {
+  id: string;
+  cmn: string;
+  eng: string;
+}
+
+export interface Radical {
+  /** Canonical Kangxi radical and the route key, e.g. 人. */
+  char: string;
+  /** Kept equal to `char`; the canonical form is the group identity. */
+  canonical: string;
+  /** Genuine variant forms of this radical written inside these characters. */
+  variants: string[];
+  /** The form to show in headings: the dominant written variant, so a
+   *  simplified-character learner sees 讠 rather than the canonical 言. */
+  display: string;
+  number: number;
+  strokes: number;
+  gloss: string;
+  /** Hanzi under this radical, by level. */
+  hanzi: string[];
+}
+
+export interface Etymology {
+  type: EtymologyType;
+  hint?: string;
+  phonetic?: string;
+  semantic?: string;
+  /**
+   * False when the recorded component is not actually present in the simplified
+   * character — the clue was lost in simplification (e.g. 過 -> 过 dropped 咼).
+   * Worth surfacing: it tells the learner not to look for a sound hint.
+   */
+  phoneticVisible?: boolean;
+  semanticVisible?: boolean;
+}
+
+export interface Reading {
+  pinyin: string;
+  meanings: string[];
+}
+
+export interface Hanzi {
+  char: string;
+  level: Level;
+  /** Primary reading first; 中 has zhōng and zhòng, 好 has hǎo and hào. */
+  readings: Reading[];
+  pinyin: string[];
+  meanings: string[];
+  /** Present when the character is also a standalone HSK vocabulary entry. */
+  frequency: number | null;
+  pos: string[];
+  traditional: string | null;
+  /** The form written inside this character, e.g. 亻 — for display. */
+  radical: string;
+  /** Canonical Kangxi radical — the grouping key. Two characters written with
+   *  亻 and 人 belong to the same radical (#9 人). */
+  radicalCanonical: string;
+  radicalNumber: number;
+  decomposition: string;
+  components: string[];
+  strokeCount: number | null;
+  etymology: Etymology | null;
+  /** Words at any level that contain this character. */
+  words: string[];
+  sentences: Sentence[];
+  /** Levels from the other HSK standards this character's words appear in. */
+  standards: string[];
+  /** Themes this character belongs to. Zero, one, or many. */
+  topics: string[];
+  /** Overlaid from content/hanzi/<char>.md */
+  authored: AuthoredHanzi | null;
+}
+
+export interface AuthoredHanzi {
+  status: Status;
+  semantic: string | null;
+  phonetic: string | null;
+  confidence: Confidence;
+  sources: string[];
+  etymology: string | null;
+  mnemonic: string | null;
+  notes: string | null;
+}
+
+export interface Word {
+  word: string;
+  level: Level;
+  readings: Reading[];
+  pinyin: string;
+  meanings: string[];
+  frequency: number | null;
+  pos: string[];
+  traditional: string | null;
+  classifiers: string[];
+  chars: string[];
+  sentences: Sentence[];
+  standards: string[];
+  /** Themes this word belongs to. Zero, one, or many. */
+  topics: string[];
+  authored: AuthoredWord | null;
+}
+
+export interface AuthoredWord {
+  status: Status;
+  formation: Formation;
+  literal: string;
+  actual: string;
+  transparency: Transparency;
+  confidence: Confidence;
+  sources: string[];
+  why: string | null;
+  notes: string | null;
+}
+
+export interface Topic {
+  id: string;
+  label: string;
+  description: string;
+  hanzi: string[];
+  words: string[];
+}
+
+export interface Dataset {
+  hanzi: Hanzi[];
+  words: Word[];
+  radicals: Radical[];
+  counts: Record<
+    Level,
+    { entries: number; hanzi: number; words: number; radicals: number }
+  >;
+}

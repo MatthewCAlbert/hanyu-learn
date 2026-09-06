@@ -1,0 +1,466 @@
+/**
+ * Builds app/data/generated/* from the vendored sources in data/sources/,
+ * overlaid with authored markdown in content/.
+ *
+ * Run with `pnpm data:build`. Output is committed so the app never needs
+ * network or heavy computation at build time.
+ */
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import matter from "gray-matter";
+import { parseIds, idsLeaves, isAtomic } from "../app/lib/ids.ts";
+import {
+  hanziFrontmatter,
+  topicFrontmatter,
+  wordFrontmatter,
+  sections,
+} from "../app/lib/content-schema.ts";
+import type {
+  AuthoredHanzi, AuthoredWord, Dataset, EtymologyType, Hanzi, Level, Radical, Reading,
+  Sentence, Topic, Word,
+} from "../app/lib/types.ts";
+
+const OUT = "app/data/generated";
+const HANZI_RE = /[一-鿿]/u;
+const LEVEL_TAG = {
+  1: "new-1", 2: "new-2", 3: "new-3", 4: "new-4",
+  5: "new-5", 6: "new-6", 7: "new-7",
+} as const;
+const LEVELS: Level[] = [1, 2, 3, 4, 5, 6, 7];
+
+/** Sentences attached per entry. */
+const MAX_SENTENCES = 8;
+
+interface HskEntry {
+  simplified: string;
+  radical: string;
+  level: string[];
+  frequency: number;
+  pos: string[];
+  forms: {
+    traditional: string;
+    transcriptions: { pinyin: string; numeric: string };
+    meanings: string[];
+    classifiers: string[];
+  }[];
+}
+
+interface MmahEntry {
+  character: string;
+  definition?: string;
+  pinyin: string[];
+  decomposition: string;
+  radical: string;
+  etymology?: { type: string; hint?: string; phonetic?: string; semantic?: string };
+}
+
+const isHanzi = (c: string) => HANZI_RE.test(c);
+const hanziOf = (s: string) => [...s].filter(isHanzi);
+
+/**
+ * Tatoeba is an open corpus and is not curated for a study app. A small
+ * blocklist keeps crude or distressing examples off the cards; it is applied to
+ * both sides of the pair, since either language may carry the offending term.
+ */
+const BLOCKED_EN =
+  /\b(fuck\w*|shit\w*|bitch\w*|bastard|asshole|dick|cunt|whore|slut|damn|hell|piss\w*|rape\w*|kill(ed|ing)?|murder\w*|suicide|die|died|dead|death|drunk|sex|penis|vagina|nigg\w*|idiot|stupid|hate)\b/i;
+const BLOCKED_ZH = /[肏操屄屌妓娼婊嫖賤贱骚騷淫奸姦殺杀死尸屍毒]|他妈|她妈|去死|混蛋|王八/;
+
+const isWholesome = (s: Sentence) => !BLOCKED_EN.test(s.eng) && !BLOCKED_ZH.test(s.cmn);
+
+const ETYMOLOGY_TYPES = new Set<EtymologyType>(["pictographic", "ideographic", "pictophonetic"]);
+
+/** Narrow makemeahanzi's loose `etymology` blob, rejecting unexpected types loudly. */
+function toEtymology(e: MmahEntry["etymology"], components: string[]): Hanzi["etymology"] {
+  if (!e) return null;
+  if (!ETYMOLOGY_TYPES.has(e.type as EtymologyType)) {
+    throw new Error(`unexpected etymology type "${e.type}"`);
+  }
+  const present = new Set(components);
+  return {
+    type: e.type as EtymologyType,
+    ...(e.hint ? { hint: e.hint } : {}),
+    ...(e.phonetic ? { phonetic: e.phonetic, phoneticVisible: present.has(e.phonetic) } : {}),
+    ...(e.semantic ? { semantic: e.semantic, semanticVisible: present.has(e.semantic) } : {}),
+  };
+}
+
+/**
+ * CC-CEDICT lists a capitalised proper-noun reading first ("Sān — surname San"
+ * before "sān — three"), and pads entries with cross-reference glosses
+ * ("used in 上声"). Neither is what a learner wants at the top of a card, so
+ * rank the readings and expose the best one as primary while keeping the rest —
+ * 中 zhōng/zhòng and 好 hǎo/hào are exactly the distinctions worth teaching.
+ */
+const CROSS_REF = /^(used in|variant of|abbr\. for|old variant|see |erhua variant)/i;
+
+function rankReadings(forms: HskEntry["forms"]): Reading[] {
+  const scored = forms.map((f, i) => {
+    const pinyin = f.transcriptions.pinyin;
+    const meanings = f.meanings.filter(Boolean);
+    let score = 0;
+    if (/[A-Z]/.test(pinyin)) score += 2; // proper noun
+    if (meanings.length > 0 && meanings.every((m) => CROSS_REF.test(m))) score += 3;
+    if (meanings.length === 0) score += 4;
+    return { pinyin, meanings, score, i };
+  });
+  // Tiebreak on gloss count: CC-CEDICT elaborates the everyday sense more than
+  // the marginal one (东西 "thing, stuff, person" vs "east and west").
+  scored.sort((a, b) => a.score - b.score || b.meanings.length - a.meanings.length || a.i - b.i);
+  // Collapse duplicate pronunciations, keeping the better-ranked gloss set.
+  const seen = new Set<string>();
+  const out: Reading[] = [];
+  for (const r of scored) {
+    if (seen.has(r.pinyin)) continue;
+    seen.add(r.pinyin);
+    out.push({ pinyin: r.pinyin, meanings: r.meanings });
+  }
+  return out;
+}
+
+async function main() {
+  // ---------------------------------------------------------------- sources
+  const hsk: HskEntry[] = JSON.parse(
+    await readFile("data/sources/complete-hsk-vocabulary.json", "utf8"),
+  );
+
+  const mmah = new Map<string, MmahEntry>();
+  for (const line of (await readFile("data/sources/makemeahanzi-dictionary.txt", "utf8")).split("\n")) {
+    if (!line.trim()) continue;
+    const o: MmahEntry = JSON.parse(line);
+    mmah.set(o.character, o);
+  }
+
+  const radIndex: {
+    kangxi: Record<string, { number: number; char: string; strokes: number; gloss: string }>;
+    kRSUnicode: Record<string, { radical: number; extra: number }>;
+    variantToKangxi: Record<string, number>;
+    ambiguousVariants: Record<string, number[]>;
+  } = JSON.parse(await readFile("data/sources/radical-index.json", "utf8"));
+
+  const allSentences: Sentence[] = [];
+  for (const line of (await readFile("data/sources/tatoeba-cmn-eng.tsv", "utf8")).split("\n")) {
+    if (!line || line.startsWith("#")) continue;
+    const [id, cmn, eng] = line.split("\t");
+    if (id && cmn && eng) allSentences.push({ id, cmn, eng });
+  }
+
+  // ------------------------------------------------- level partition (exclusive)
+  const entriesByLevel = new Map<Level, HskEntry[]>();
+  for (const level of LEVELS) {
+    entriesByLevel.set(level, hsk.filter((e) => e.level.includes(LEVEL_TAG[level])));
+  }
+
+  /**
+   * A hanzi belongs to the LOWEST level that introduces it, whether standalone
+   * or inside a word. So the two level sets are disjoint by construction.
+   */
+  const hanziLevel = new Map<string, Level>();
+  for (const level of LEVELS) {
+    for (const e of entriesByLevel.get(level)!) {
+      for (const c of hanziOf(e.simplified)) {
+        if (!hanziLevel.has(c)) hanziLevel.set(c, level);
+      }
+    }
+  }
+
+  // Known-character set per level, cumulative — what the learner can read by then.
+  const knownAt = new Map<Level, Set<string>>();
+  const cumulative = new Set<string>();
+  for (const level of LEVELS) {
+    for (const [c, l] of hanziLevel) if (l === level) cumulative.add(c);
+    knownAt.set(level, new Set(cumulative));
+  }
+
+  // ------------------------------------------------------------- i+1 sentences
+  /** Sentences readable at a level: every character already known. Shortest first. */
+  const sentencesFor = new Map<Level, Sentence[]>();
+  for (const level of LEVELS) {
+    const known = knownAt.get(level)!;
+    const pool = allSentences
+      .filter(isWholesome)
+      .filter((s) => hanziOf(s.cmn).every((c) => known.has(c)));
+    pool.sort((a, b) => a.cmn.length - b.cmn.length || a.id.localeCompare(b.id));
+    sentencesFor.set(level, pool);
+  }
+
+  /** Pick example sentences containing `needle`, drawn from that level's pool. */
+  const pickSentences = (needle: string, level: Level): Sentence[] =>
+    sentencesFor.get(level)!.filter((s) => s.cmn.includes(needle)).slice(0, MAX_SENTENCES);
+
+  // ------------------------------------------------------------- authored content
+  const authoredHanzi = new Map<string, AuthoredHanzi>();
+  const authoredWords = new Map<string, AuthoredWord>();
+
+  for (const file of await safeReaddir("content/hanzi")) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const { data, content } = matter(await readFile(`content/hanzi/${file}`, "utf8"));
+    const fm = hanziFrontmatter.parse(data);
+    const s = sections(content);
+    authoredHanzi.set(fm.char, {
+      status: fm.status,
+      semantic: fm.semantic ?? null,
+      phonetic: fm.phonetic ?? null,
+      confidence: fm.confidence,
+      sources: fm.sources,
+      etymology: s["etymology"] ?? null,
+      mnemonic: s["mnemonic"] ?? null,
+      notes: s["notes"] ?? null,
+    });
+  }
+
+  for (const file of await safeReaddir("content/words")) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const { data, content } = matter(await readFile(`content/words/${file}`, "utf8"));
+    const fm = wordFrontmatter.parse(data);
+    const s = sections(content);
+    authoredWords.set(fm.word, {
+      status: fm.status,
+      formation: fm.formation,
+      literal: fm.literal,
+      actual: fm.actual,
+      transparency: fm.transparency,
+      confidence: fm.confidence,
+      sources: fm.sources,
+      why: s["why this combination"] ?? null,
+      notes: s["notes"] ?? null,
+    });
+  }
+
+  // ------------------------------------------------------------------ topics
+  /**
+   * Topic files own their membership; the app needs it per entry. Invert once
+   * here so both directions are available without either side going stale.
+   */
+  const topics: Topic[] = [];
+  const topicsOfHanzi = new Map<string, string[]>();
+  const topicsOfWord = new Map<string, string[]>();
+
+  for (const file of (await safeReaddir("content/topics")).sort()) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const { data, content } = matter(await readFile(`content/topics/${file}`, "utf8"));
+    const fm = topicFrontmatter.parse(data);
+    topics.push({
+      id: fm.topic,
+      label: fm.label,
+      description: content.trim(),
+      hanzi: fm.hanzi,
+      words: fm.words,
+    });
+    for (const c of fm.hanzi) push(topicsOfHanzi, c, fm.topic);
+    for (const w of fm.words) push(topicsOfWord, w, fm.topic);
+  }
+
+  // ------------------------------------------------------------------- words
+  const words: Word[] = [];
+  for (const level of LEVELS) {
+    for (const e of entriesByLevel.get(level)!) {
+      if (hanziOf(e.simplified).length < 2) continue;
+      const readings = rankReadings(e.forms);
+      const primary = readings[0];
+      const form = e.forms[0];
+      if (!primary || !form) continue;
+      words.push({
+        word: e.simplified,
+        level,
+        readings,
+        pinyin: primary.pinyin,
+        meanings: primary.meanings,
+        frequency: e.frequency ?? null,
+        pos: e.pos ?? [],
+        traditional: form.traditional !== e.simplified ? form.traditional : null,
+        classifiers: form.classifiers ?? [],
+        chars: hanziOf(e.simplified),
+        sentences: pickSentences(e.simplified, level),
+        standards: e.level.filter((l) => !l.startsWith("new-")),
+        topics: topicsOfWord.get(e.simplified) ?? [],
+        authored: authoredWords.get(e.simplified) ?? null,
+      });
+    }
+  }
+
+  // hanzi -> words containing it
+  const wordsByChar = new Map<string, string[]>();
+  for (const w of words) {
+    for (const c of new Set(w.chars)) {
+      const cur = wordsByChar.get(c);
+      if (cur) cur.push(w.word);
+      else wordsByChar.set(c, [w.word]);
+    }
+  }
+
+  // standalone single-character HSK entries, for pinyin/meanings/frequency
+  const standalone = new Map<string, HskEntry>();
+  for (const e of hsk) if (hanziOf(e.simplified).length === 1 && e.simplified.length === 1) {
+    if (!standalone.has(e.simplified)) standalone.set(e.simplified, e);
+  }
+
+  // ------------------------------------------------------------------- hanzi
+  const hanziList: Hanzi[] = [];
+  for (const [char, level] of [...hanziLevel].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const mm = mmah.get(char);
+    if (!mm) throw new Error(`no makemeahanzi entry for ${char}`);
+
+    const entry = standalone.get(char);
+    const readings = entry ? rankReadings(entry.forms) : [];
+    const primary = readings[0];
+    const form = entry?.forms[0];
+    const radical = mm.radical;
+    const radicalNumber =
+      radIndex.kRSUnicode[char]?.radical ??
+      radIndex.variantToKangxi[radical] ??
+      radIndex.kRSUnicode[radical]?.radical;
+    if (radicalNumber === undefined) throw new Error(`no radical number for ${char} (${radical})`);
+
+    const tree = isAtomic(mm.decomposition) ? null : parseIds(mm.decomposition);
+    const components = tree ? [...new Set(idsLeaves(tree))].filter((c) => c !== char) : [];
+
+    hanziList.push({
+      char,
+      level,
+      readings,
+      pinyin: primary ? readings.map((r) => r.pinyin) : mm.pinyin,
+      meanings: primary?.meanings ?? (mm.definition ? [mm.definition] : []),
+      frequency: entry?.frequency ?? null,
+      pos: entry?.pos ?? [],
+      traditional: form && form.traditional !== char ? form.traditional : null,
+      radical,
+      radicalCanonical: radIndex.kangxi[String(radicalNumber)]!.char,
+      radicalNumber,
+      decomposition: mm.decomposition,
+      components,
+      strokeCount: null,
+      etymology: toEtymology(mm.etymology, components),
+      words: wordsByChar.get(char) ?? [],
+      sentences: pickSentences(char, level),
+      standards: entry ? entry.level.filter((l) => !l.startsWith("new-")) : [],
+      topics: topicsOfHanzi.get(char) ?? [],
+      authored: authoredHanzi.get(char) ?? null,
+    });
+  }
+
+  // ---------------------------------------------------------------- radicals
+  /**
+   * Grouped by canonical Kangxi number, not by the written variant. The two
+   * sources disagree on the variant for some characters — makemeahanzi reads
+   * 买's radical as 大 while Unihan indexes it under #5 乙 — so keying on the
+   * variant would let one outlier rename a whole group.
+   */
+  const radMap = new Map<number, Radical>();
+  for (const h of hanziList) {
+    let r = radMap.get(h.radicalNumber);
+    if (!r) {
+      const k = radIndex.kangxi[String(h.radicalNumber)];
+      if (!k) throw new Error(`unknown kangxi radical ${h.radicalNumber}`);
+      r = {
+        char: k.char,
+        canonical: k.char,
+        variants: [],
+        display: k.char,
+        number: k.number,
+        strokes: k.strokes,
+        gloss: k.gloss,
+        hanzi: [],
+      };
+      radMap.set(h.radicalNumber, r);
+    }
+    r.hanzi.push(h.char);
+  }
+  /**
+   * Unihan decides membership; makemeahanzi supplies the written form. Where
+   * the two disagree (it reads 买's radical as 大, Unihan indexes it under 乙)
+   * only Unihan-confirmed variants are recorded, so the list stays truthful.
+   *
+   * `display` is the variant most of the members actually write, which for a
+   * simplified corpus is 讠 rather than the canonical 言.
+   */
+  for (const r of radMap.values()) {
+    const written = new Map<string, number>();
+    for (const c of r.hanzi) {
+      const form = hanziList.find((h) => h.char === c)!.radical;
+      const confirmed =
+        form === r.canonical ||
+        radIndex.kRSUnicode[form]?.radical === r.number ||
+        radIndex.variantToKangxi[form] === r.number ||
+        // 阝 is 阜 on the left and 邑 on the right; Unihan can only record one.
+        (radIndex.ambiguousVariants[form]?.includes(r.number) ?? false);
+      if (confirmed) written.set(form, (written.get(form) ?? 0) + 1);
+    }
+    r.variants = [...written.keys()].sort();
+    r.display = [...written.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? r.canonical;
+  }
+  const radicals = [...radMap.values()].sort((a, b) => a.strokes - b.strokes || a.number - b.number);
+
+  // ------------------------------------------------------------------ output
+  const counts = {} as Dataset["counts"];
+  for (const level of LEVELS) {
+    counts[level] = {
+      entries: entriesByLevel.get(level)!.length,
+      hanzi: hanziList.filter((h) => h.level === level).length,
+      words: words.filter((w) => w.level === level).length,
+      radicals: new Set(hanziList.filter((h) => h.level === level).map((h) => h.radicalNumber)).size,
+    };
+  }
+
+  await rm(OUT, { recursive: true, force: true });
+  await mkdir(OUT, { recursive: true });
+  await write("hanzi.json", hanziList);
+  await write("words.json", words);
+  await write("radicals.json", radicals);
+  await write("counts.json", counts);
+  await write("topics.json", topics);
+
+  // stroke data: only the characters we need, not all 9,000
+  await mkdir(`${OUT}/strokes`, { recursive: true });
+  let strokes = 0;
+  for (const h of hanziList) {
+    const src = `node_modules/hanzi-writer-data/${h.char}.json`;
+    try {
+      await writeFile(`${OUT}/strokes/${h.char}.json`, await readFile(src, "utf8"));
+      strokes += 1;
+    } catch {
+      console.warn(`  ! no stroke data for ${h.char}`);
+    }
+  }
+
+  for (const level of LEVELS) {
+    const c = counts[level];
+    console.log(
+      `HSK ${level}: ${c.entries} entries · ${c.hanzi} hanzi · ${c.words} words · ${c.radicals} radicals`,
+    );
+  }
+  const tagged =
+    hanziList.filter((h) => h.topics.length > 0).length +
+    words.filter((w) => w.topics.length > 0).length;
+  console.log(`radicals total ${radicals.length} · stroke files ${strokes} · sentences attached`);
+  console.log(
+    `topics ${topics.length} · ${tagged} of ${hanziList.length + words.length} entries tagged`,
+  );
+
+  // Written last, so its mtime means "everything above finished". Using an
+  // output written mid-build would make anything touched during the run look
+  // permanently newer than the build.
+  await writeFile(`${OUT}/.built`, new Date().toISOString());
+
+  async function write(name: string, data: unknown) {
+    await writeFile(`${OUT}/${name}`, JSON.stringify(data));
+  }
+}
+
+function push(map: Map<string, string[]>, key: string, value: string) {
+  const cur = map.get(key);
+  if (cur) {
+    if (!cur.includes(value)) cur.push(value);
+  } else {
+    map.set(key, [value]);
+  }
+}
+
+async function safeReaddir(dir: string): Promise<string[]> {
+  try {
+    return await readdir(dir);
+  } catch {
+    return [];
+  }
+}
+
+main();

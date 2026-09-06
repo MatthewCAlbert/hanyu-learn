@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-han: "Noto Serif SC", "Songti SC", "SimSun", "Source Han Serif SC", serif;
+
+  --color-paper: #faf9f7;
+  --color-surface: #ffffff;
+  --color-sunk: #f2f0ec;
+  --color-line: #e3dfd8;
+  --color-ink: #1c1a17;
+  --color-ink-2: #55504a;
+  --color-ink-3: #8b847a;
+  --color-accent: #c8442e;
+  --color-accent-soft: #f7e8e4;
+}
+
+/* Dark mode: redefine only what changes, so nothing is defined solely here. */
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      color-scheme: dark;
+      --color-paper: #141312;
+      --color-surface: #1c1a18;
+      --color-sunk: #242220;
+      --color-line: #33302c;
+      --color-ink: #eae6e0;
+      --color-ink-2: #a9a29a;
+      --color-ink-3: #746d65;
+      --color-accent: #e8654c;
+      --color-accent-soft: #3a221c;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-paper: #141312;
+    --color-surface: #1c1a18;
+    --color-sunk: #242220;
+    --color-line: #33302c;
+    --color-ink: #eae6e0;
+    --color-ink-2: #a9a29a;
+    --color-ink-3: #746d65;
+    --color-accent: #e8654c;
+    --color-accent-soft: #3a221c;
+  }
+
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Hanzi are never bolded: synthetic bold smears the strokes and destroys the
+   * radical separation this whole app depends on. Emphasis comes from size.
+   */
+  .han {
+    font-family: var(--font-han);
+    font-weight: 400 !important;
+    font-synthesis-weight: none;
+    line-height: 1.15;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
