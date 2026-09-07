@@ -6,7 +6,17 @@ import { readFile, readdir } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import hanzi from "~/data/generated/hanzi.json";
 import words from "~/data/generated/words.json";
-import type { DatasetManifest, DatasetMeta, Hanzi, HanziIndex, HanziPage, Word, WordIndex, WordPage } from "~/lib/types";
+import type {
+  DatasetManifest,
+  DatasetMeta,
+  Hanzi,
+  HanziIndex,
+  HanziPage,
+  PhoneticAnchor,
+  Word,
+  WordIndex,
+  WordPage,
+} from "~/lib/types";
 import { SHARD_BUCKETS, shardBucket } from "~/lib/shards";
 
 const H = hanzi as unknown as Hanzi[];
@@ -23,7 +33,9 @@ describe("web shards", () => {
     expect(manifest.version).toMatch(/^[a-f0-9]{12}$/);
     expect(manifest.buckets).toBe(SHARD_BUCKETS);
     const names = await readdir(`${WEB}/${manifest.version}`);
-    expect(names).toEqual(expect.arrayContaining(["meta.json", "h1.json", "w7.json", "hd", "wd", "st"]));
+    expect(names).toEqual(
+      expect.arrayContaining(["meta.json", "h1.json", "w7.json", "phonetics.json", "hd", "wd", "st"]),
+    );
   });
 
   it("indexes cover every hanzi and word once, by level", async () => {
@@ -68,6 +80,50 @@ describe("web shards", () => {
     expect(meta.radicals).toHaveLength(205);
     expect(meta.topics.length).toBeGreaterThan(0);
     expect(meta.counts[1].hanzi).toBe(300);
+  });
+
+  it("phonetics.json covers every visible series key and does not add a bucket dir", async () => {
+    const { version } = await readJson<DatasetManifest>("manifest.json");
+    const phonetics = await readJson<Record<string, PhoneticAnchor>>(`${version}/phonetics.json`);
+    const names = await readdir(`${WEB}/${version}`);
+    expect(names).not.toContain("pd");
+
+    const keys = new Set(
+      H.map((h) => {
+        const p = h.authored?.phonetic ?? h.etymology?.phonetic;
+        if (h.authored?.phonetic) return h.authored.phonetic;
+        if (!p || h.etymology?.phoneticVisible === false) return null;
+        return p;
+      }).filter((p): p is string => Boolean(p)),
+    );
+    expect(Object.keys(phonetics).sort()).toEqual([...keys].sort());
+    expect(phonetics["礻"]?.anchor).toBe("示");
+    expect(phonetics["礻"]?.pinyin).toContain("shì");
+    expect(phonetics["马"]?.component).toBe("马");
+  });
+
+  it("hanzi detail pages never link a non-corpus leaf to /hanzi/", async () => {
+    const { version } = await readJson<DatasetManifest>("manifest.json");
+    const chars = new Set(H.map((h) => h.char));
+    const hanziBuckets = await Promise.all(
+      Array.from({ length: SHARD_BUCKETS }, (_, i) =>
+        readJson<Record<string, HanziPage>>(`${version}/hd/${i}.json`),
+      ),
+    );
+    const shi = hanziBuckets[shardBucket("视")]!["视"]!;
+    expect(shi.componentHrefs["礻"]).toBe(`/phonetic/${encodeURIComponent("礻")}`);
+    expect(shi.semanticRole?.form).toBe("见");
+    expect(shi.phoneticRole?.form).toBe("礻");
+    expect(shi.componentHrefs["礻"]).not.toContain("/hanzi/");
+    for (const h of H) {
+      const hrefs = hanziBuckets[shardBucket(h.char)]![h.char]?.componentHrefs ?? {};
+      for (const [form, href] of Object.entries(hrefs)) {
+        if (href?.startsWith("/hanzi/")) {
+          const target = decodeURIComponent(href.slice("/hanzi/".length));
+          expect(chars.has(target), `${h.char} links ${form} to missing ${target}`).toBe(true);
+        }
+      }
+    }
   });
 
   it("uses a bounded number of bucket files", async () => {

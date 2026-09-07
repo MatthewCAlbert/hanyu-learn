@@ -24,6 +24,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
     level: h.level,
     status: h.status,
     phonetic: h.phonetic,
+    semantic: h.semantic,
   }));
 
   const byLevel = LEVELS.map((level) => ({
@@ -59,31 +60,52 @@ export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
           <p className="mt-2 text-sm text-ink-3">
             {total} character{total === 1 ? "" : "s"} in HSK 1–9
           </p>
+          <p className="mt-2 max-w-xl text-xs leading-relaxed text-ink-3">
+            Dictionary grouping follows Unicode Unihan. It is not always the meaning-bearing
+            component — check 义 / 声 on each card.
+          </p>
         </div>
       </div>
 
       <div className="mt-8 space-y-6">
         {byLevel.map(({ level, members }) => (
-          <Section key={level} title={`HSK ${level}`} aside={<span className="text-[11px] text-ink-3">{members.length}</span>}>
+          <Section
+            key={level}
+            title={`HSK ${level}`}
+            aside={<span className="text-[11px] text-ink-3">{members.length}</span>}
+          >
             <div className="grid gap-1.5 sm:grid-cols-2">
               {members.map((m) => (
-                <Link
+                <div
                   key={m.char}
-                  to={`/hanzi/${encodeURIComponent(m.char)}`}
                   className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 hover:border-accent"
                 >
-                  <span className="han w-10 shrink-0 text-center text-3xl">{m.char}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs text-ink-2">{m.pinyin}</span>
-                    <span className="block truncate text-[11px] text-ink-3">{m.meaning}</span>
-                  </span>
-                  {m.phonetic && (
-                    <span className="shrink-0 text-[11px] text-ink-3" title="phonetic component">
-                      声 <span className="han">{m.phonetic}</span>
+                  <Link
+                    to={`/hanzi/${encodeURIComponent(m.char)}`}
+                    className="flex min-w-0 flex-1 items-center gap-3"
+                  >
+                    <span className="han w-10 shrink-0 text-center text-3xl">{m.char}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs text-ink-2">{m.pinyin}</span>
+                      <span className="block truncate text-[11px] text-ink-3">{m.meaning}</span>
                     </span>
+                    {m.semantic && (
+                      <span className="shrink-0 text-[11px] text-ink-3" title="meaning component">
+                        义 <span className="han">{m.semantic}</span>
+                      </span>
+                    )}
+                  </Link>
+                  {m.phonetic && (
+                    <Link
+                      to={`/phonetic/${encodeURIComponent(m.phonetic)}`}
+                      className="shrink-0 text-[11px] text-ink-3 hover:text-accent"
+                      title="phonetic component"
+                    >
+                      声 <span className="han">{m.phonetic}</span>
+                    </Link>
                   )}
                   <StatusDot status={m.status} />
-                </Link>
+                </div>
               ))}
             </div>
           </Section>

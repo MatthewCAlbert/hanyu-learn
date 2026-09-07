@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/hanzi.$char";
 import { getHanziPage, getStrokes } from "~/lib/data.client";
-import { Chip, HanziLink, Section, StatusDot } from "~/components/ui";
+import { Chip, Section, StatusDot } from "~/components/ui";
 import { DetailShell, Prose } from "~/components/DetailShell";
 import { Decomposition } from "~/components/Decomposition";
 import { StrokeOrder } from "~/components/StrokeOrder";
@@ -21,9 +21,22 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 clientLoader.hydrate = true as const;
 
 export default function HanziDetail({ loaderData }: Route.ComponentProps) {
-  const { hanzi: h, radical, etymology: e, strokes, glosses, phoneticSeries, words, topics } =
-    loaderData;
+  const {
+    hanzi: h,
+    radical,
+    etymology: e,
+    strokes,
+    glosses,
+    phoneticSeries,
+    words,
+    topics,
+  } = loaderData;
   const a = h.authored;
+  const { semanticRole, phoneticRole, componentHrefs } = loaderData;
+  const radicalForm =
+    radical && (h.radical === radical.display || h.radical === radical.canonical)
+      ? h.radical
+      : radical?.display;
 
   return (
     <DetailShell back={{ to: `/hsk/${h.level}/hanzi`, label: `HSK ${h.level} hanzi` }}>
@@ -76,19 +89,54 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
             ))}
           </div>
 
-          {radical && (
-            <p className="mt-3 text-sm text-ink-2">
-              Radical{" "}
-              <Link to={`/radicals/${encodeURIComponent(radical.char)}`} className="text-accent">
-                <span className="han text-base">{h.radical}</span> {radical.gloss}
-              </Link>{" "}
-              <span className="text-ink-3">
-                · Kangxi #{radical.number}
-                {h.radical !== radical.canonical && (
-                  <> · written form of <span className="han">{radical.canonical}</span></>
-                )}
-              </span>
-            </p>
+          {(semanticRole || phoneticRole || radical) && (
+            <div className="mt-3 space-y-1 text-sm text-ink-2">
+              {semanticRole && (
+                <p>
+                  <span className="text-ink-3">Meaning</span>{" "}
+                  <RoleLink href={semanticRole.href}>
+                    <span className="han text-base">{semanticRole.form}</span>
+                    {semanticRole.gloss && <> · {semanticRole.gloss}</>}
+                  </RoleLink>
+                </p>
+              )}
+              {phoneticRole && (
+                <p>
+                  <span className="text-ink-3">Sound</span>{" "}
+                  <Link to={phoneticRole.href} className="text-accent">
+                    <span className="han text-base">{phoneticRole.form}</span>
+                    {phoneticRole.anchor !== phoneticRole.form && (
+                      <>
+                        {" "}
+                        / <span className="han">{phoneticRole.anchor}</span>
+                      </>
+                    )}
+                    {phoneticRole.pinyin[0] && <> {phoneticRole.pinyin[0]}</>}
+                    {phoneticRole.gloss && <> · {phoneticRole.gloss}</>}
+                  </Link>
+                </p>
+              )}
+              {radical && radicalForm && (
+                <p>
+                  <span className="text-ink-3">Dictionary radical</span>{" "}
+                  <Link
+                    to={`/radicals/${encodeURIComponent(radical.char)}`}
+                    className="text-accent"
+                  >
+                    <span className="han text-base">{radicalForm}</span> {radical.gloss}
+                  </Link>{" "}
+                  <span className="text-ink-3">
+                    · Kangxi #{radical.number}
+                    {radicalForm !== radical.canonical && (
+                      <>
+                        {" "}
+                        · written form of <span className="han">{radical.canonical}</span>
+                      </>
+                    )}
+                  </span>
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -99,7 +147,12 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
           <div className="flex flex-wrap items-start gap-8">
             <StrokeOrder key={h.char} char={h.char} data={strokes as never} />
             <div className="min-w-0 flex-1">
-              <Decomposition decomposition={h.decomposition} etymology={e} glosses={glosses} />
+              <Decomposition
+                decomposition={h.decomposition}
+                etymology={e}
+                glosses={glosses}
+                hrefs={componentHrefs}
+              />
               {e && (
                 <p className="mt-4 text-sm text-ink-2">
                   <span className="text-ink-3">{e.type}</span>
@@ -120,9 +173,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         {a?.etymology && (
           <Section
             title="Etymology"
-            aside={
-              <span className="text-[11px] text-ink-3">confidence: {a.confidence}</span>
-            }
+            aside={<span className="text-[11px] text-ink-3">confidence: {a.confidence}</span>}
           >
             <Prose>{a.etymology}</Prose>
             {a.sources.length > 0 && (
@@ -136,7 +187,10 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         )}
 
         {a?.mnemonic && (
-          <Section title="Mnemonic" aside={<span className="text-[11px] text-ink-3">invented aid</span>}>
+          <Section
+            title="Mnemonic"
+            aside={<span className="text-[11px] text-ink-3">invented aid</span>}
+          >
             <Prose>{a.mnemonic}</Prose>
           </Section>
         )}
@@ -151,9 +205,13 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         )}
 
         {/* -------------------------------------------------- phonetic series */}
-        {phoneticSeries.length > 0 && (
+        {phoneticSeries.length > 0 && phoneticRole && (
           <Section
-            title={`Phonetic series ${e?.phonetic ?? ""}`}
+            title={
+              <Link to={phoneticRole.href} className="hover:text-accent">
+                Phonetic series <span className="han">{e?.phonetic ?? phoneticRole.form}</span>
+              </Link>
+            }
             aside={<span className="text-[11px] text-ink-3">same sound component</span>}
           >
             <p className="mb-3 text-xs text-ink-3">
@@ -184,7 +242,10 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
 
         {/* ------------------------------------------------------ vocabulary */}
         {words.length > 0 && (
-          <Section title={`Words using ${h.char}`} aside={<span className="text-[11px] text-ink-3">{words.length}</span>}>
+          <Section
+            title={`Words using ${h.char}`}
+            aside={<span className="text-[11px] text-ink-3">{words.length}</span>}
+          >
             <div className="grid gap-1.5 sm:grid-cols-2">
               {words.map((w) => (
                 <Link
@@ -194,7 +255,9 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
                 >
                   <span className="han text-lg">{w.word}</span>
                   <span className="text-xs text-ink-2">{w.pinyin}</span>
-                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-3">{w.meaning}</span>
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-3">
+                    {w.meaning}
+                  </span>
                   <Chip tone="quiet">{w.level}</Chip>
                 </Link>
               ))}
@@ -217,13 +280,42 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         {h.components.length > 0 && (
           <Section title="Components">
             <div className="flex flex-wrap gap-2">
-              {h.components.map((c) => (
-                <HanziLink key={c} char={c} size="sm" />
-              ))}
+              {h.components.map((c) => {
+                const href = componentHrefs[c];
+                const className =
+                  "han inline-flex size-8 items-center justify-center rounded-md border border-line bg-surface text-lg text-ink";
+                if (href) {
+                  return (
+                    <Link
+                      key={c}
+                      to={href}
+                      className={`${className} transition-colors hover:border-accent hover:text-accent`}
+                    >
+                      {c}
+                    </Link>
+                  );
+                }
+                return (
+                  <span key={c} className={className}>
+                    {c}
+                  </span>
+                );
+              })}
             </div>
           </Section>
         )}
       </div>
     </DetailShell>
   );
+}
+
+function RoleLink({ href, children }: { href: string | null; children: React.ReactNode }) {
+  if (href) {
+    return (
+      <Link to={href} className="text-accent">
+        {children}
+      </Link>
+    );
+  }
+  return <>{children}</>;
 }

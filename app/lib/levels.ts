@@ -34,9 +34,7 @@ export const formatLevels = (levels: Level[]): string =>
  * the last remaining level would leave nothing to show, so it is ignored.
  */
 export function toggleLevel(current: Level[], level: Level): Level[] {
-  const next = current.includes(level)
-    ? current.filter((l) => l !== level)
-    : [...current, level];
+  const next = current.includes(level) ? current.filter((l) => l !== level) : [...current, level];
   return next.length === 0 ? current : next.sort((a, b) => a - b);
 }
 

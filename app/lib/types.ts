@@ -145,10 +145,7 @@ export interface Dataset {
   hanzi: Hanzi[];
   words: Word[];
   radicals: Radical[];
-  counts: Record<
-    Level,
-    { entries: number; hanzi: number; words: number; radicals: number }
-  >;
+  counts: Record<Level, { entries: number; hanzi: number; words: number; radicals: number }>;
 }
 
 /** Compact per-level row used for browsing, filtering and grouping. */
@@ -164,8 +161,10 @@ export interface HanziIndex {
   standards: string[];
   topics: string[];
   status: Status;
-  /** Visible phonetic component, if any. Used on radical pages. */
+  /** Visible phonetic component, if any. Used on radical and phonetic pages. */
   phonetic: string | null;
+  /** Visible meaning-bearing component, if any. */
+  semantic: string | null;
 }
 
 /** Compact per-level row used for browsing, filtering and grouping. */
@@ -193,12 +192,40 @@ export interface DatasetManifest {
   buckets: number;
 }
 
+export interface ComponentRole {
+  form: string;
+  gloss: string;
+  href: string | null;
+}
+
+export interface PhoneticRole extends ComponentRole {
+  href: string;
+  anchor: string;
+  pinyin: string[];
+}
+
+/** Compact metadata for one phonetic-series key. Members live in the hanzi indexes. */
+export interface PhoneticAnchor {
+  component: string;
+  /** Form that carries a reading: 礻 → 示. */
+  anchor: string;
+  pinyin: string[];
+  meaning: string | null;
+  radical: Pick<Radical, "char" | "display" | "gloss" | "number" | "canonical"> | null;
+  /** Corpus character to open for the component itself, if any. */
+  hanzi: string | null;
+}
+
 /** Precomputed hanzi detail page. One of these lives in a hash bucket. */
 export interface HanziPage {
   hanzi: Hanzi;
   radical: Pick<Radical, "char" | "display" | "gloss" | "number" | "canonical"> | null;
   etymology: Hanzi["etymology"];
   glosses: Record<string, string>;
+  /** href per decomposition leaf; null means render without a link. */
+  componentHrefs: Record<string, string | null>;
+  semanticRole: ComponentRole | null;
+  phoneticRole: PhoneticRole | null;
   phoneticSeries: { char: string; pinyin: string; meaning: string }[];
   words: { word: string; pinyin: string; meaning: string; level: Level }[];
   topics: { id: string; label: string }[];

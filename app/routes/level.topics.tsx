@@ -65,8 +65,8 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
         </div>
         {done === 0 && (
           <p className="mt-2 text-xs text-ink-3">
-            Nothing tagged at these levels yet. Topics are filled in per level — ask
-            Claude Code to “tag HSK 1 by topic”, or see{" "}
+            Nothing tagged at these levels yet. Topics are filled in per level — ask Claude Code to
+            “tag HSK 1 by topic”, or see{" "}
             <code className="rounded bg-sunk px-1">docs/RESEARCH-PLAYBOOK.md</code>.
           </p>
         )}

@@ -10,7 +10,10 @@ import { Toolbar } from "./level.hanzi";
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
   const { q } = readFilters(new URL(request.url).searchParams);
-  const [{ radicals: allRadicals }, hanzi] = await Promise.all([getMeta(), getHanziIndexes(levels)]);
+  const [{ radicals: allRadicals }, hanzi] = await Promise.all([
+    getMeta(),
+    getHanziIndexes(levels),
+  ]);
 
   const radicals = radicalsAtLevels(allRadicals, hanzi, levels).filter((r) => matchesRadical(q, r));
 

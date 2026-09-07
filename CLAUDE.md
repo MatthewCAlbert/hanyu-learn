@@ -6,10 +6,10 @@ reading the code.
 
 ## Never edit by hand
 
-| Path | Committed? | Regenerate with |
-|---|---|---|
+| Path                    | Committed?          | Regenerate with                                    |
+| ----------------------- | ------------------- | -------------------------------------------------- |
 | `app/data/generated/**` | **No** — gitignored | `pnpm data:build` (automatic on install/dev/build) |
-| `docs/hsk/level-N/**` | Yes | `pnpm data:md` (run it explicitly after a batch) |
+| `docs/hsk/level-N/**`   | Yes                 | `pnpm data:md` (run it explicitly after a batch)   |
 
 Both are overwritten wholesale, so edits there are silently lost.
 
@@ -24,7 +24,7 @@ are the only two places to change data.
 
 ## Writing content
 
-When asked to *"fill in hanzi/word content for HSK N"* or *"tag HSK N by topic"*,
+When asked to _"fill in hanzi/word content for HSK N"_ or _"tag HSK N by topic"_,
 **read [docs/RESEARCH-PLAYBOOK.md](docs/RESEARCH-PLAYBOOK.md) first and follow
 it.** The rules most easily got wrong:
 

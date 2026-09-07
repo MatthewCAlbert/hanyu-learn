@@ -1,7 +1,62 @@
-import type { Dataset, HanziIndex, Level, Radical, Topic, WordIndex } from "./types";
+import { pinyinMatches } from "./pinyin";
+import type {
+  Dataset,
+  HanziIndex,
+  Level,
+  PhoneticAnchor,
+  Radical,
+  Topic,
+  WordIndex,
+} from "./types";
+
+/** One phonetic series narrowed to a level selection. */
+export interface PhoneticSeriesRow {
+  meta: PhoneticAnchor;
+  members: HanziIndex[];
+}
+
+/**
+ * Visible phonetic series that have at least one member in the selected levels.
+ * Membership is the hanzi indexes' effective `phonetic`; metadata comes from
+ * the compact phonetics file. Sorted by member count, then component.
+ */
+export function phoneticsAtLevels(
+  phonetics: Record<string, PhoneticAnchor>,
+  hanzi: HanziIndex[],
+  levels: Level[],
+): PhoneticSeriesRow[] {
+  const byComponent = new Map<string, HanziIndex[]>();
+  for (const h of hanzi) {
+    if (!levels.includes(h.level) || !h.phonetic) continue;
+    const cur = byComponent.get(h.phonetic);
+    if (cur) cur.push(h);
+    else byComponent.set(h.phonetic, [h]);
+  }
+  const rows: PhoneticSeriesRow[] = [];
+  for (const [component, members] of byComponent) {
+    const meta = phonetics[component];
+    if (!meta) continue;
+    rows.push({
+      meta,
+      members: [...members].sort(
+        (a, b) =>
+          (a.frequency ?? Infinity) - (b.frequency ?? Infinity) || a.char.localeCompare(b.char),
+      ),
+    });
+  }
+  rows.sort(
+    (a, b) =>
+      b.members.length - a.members.length || a.meta.component.localeCompare(b.meta.component),
+  );
+  return rows;
+}
 
 /** Radicals appearing in the selected levels, with membership narrowed to them. */
-export function radicalsAtLevels(radicals: Radical[], hanzi: HanziIndex[], levels: Level[]): Radical[] {
+export function radicalsAtLevels(
+  radicals: Radical[],
+  hanzi: HanziIndex[],
+  levels: Level[],
+): Radical[] {
   const chars = new Set(hanzi.filter((h) => levels.includes(h.level)).map((h) => h.char));
   return radicals
     .map((r) => ({ ...r, hanzi: r.hanzi.filter((c) => chars.has(c)) }))
@@ -32,11 +87,12 @@ export function topicsAtLevels(
 }
 
 /**
- * The search predicates for the topic and radical tabs.
+ * The search predicates for the topic, radical and phonetic tabs.
  *
  * Shared with the tab bar so a badge can never disagree with the list it
- * labels. Neither tab lists entries, so neither goes through the pinyin and
- * gloss matching that `filters.ts` does for hanzi and words.
+ * labels. These tabs do not list entries, so they skip the pinyin and gloss
+ * matching that `filters.ts` does for hanzi and words — except phonetics,
+ * which match a series' own reading.
  */
 export const matchesTopic = (q: string, t: Pick<Topic, "id" | "label">): boolean =>
   !q || t.label.toLowerCase().includes(q.toLowerCase()) || t.id.includes(q.toLowerCase());
@@ -49,6 +105,17 @@ export const matchesRadical = (
   r.char.includes(q) ||
   r.variants.some((v) => v.includes(q)) ||
   r.gloss.toLowerCase().includes(q.toLowerCase());
+
+export const matchesPhonetic = (
+  q: string,
+  series: { meta: Pick<PhoneticAnchor, "component" | "anchor" | "pinyin" | "meaning"> },
+): boolean => {
+  if (!q) return true;
+  const { component, anchor, pinyin, meaning } = series.meta;
+  if (component.includes(q) || anchor.includes(q)) return true;
+  if (pinyin.some((p) => pinyinMatches(q, p))) return true;
+  return Boolean(meaning?.toLowerCase().includes(q.toLowerCase()));
+};
 
 /** Per-level counts summed over a selection. */
 export function countsFor(counts: Dataset["counts"], levels: Level[]) {

@@ -3,12 +3,14 @@ import clsx from "clsx";
 import type { Route } from "./+types/level";
 import {
   countsFor,
+  matchesPhonetic,
   matchesRadical,
   matchesTopic,
+  phoneticsAtLevels,
   radicalsAtLevels,
   topicsAtLevels,
 } from "~/lib/catalog";
-import { getHanziIndexes, getMeta, getWordIndexes } from "~/lib/data.client";
+import { getHanziIndexes, getMeta, getPhonetics, getWordIndexes } from "~/lib/data.client";
 import { LEVELS, formatLevels, levelLabel, parseLevels, toggleLevel } from "~/lib/levels";
 import {
   UNTAGGED,
@@ -29,13 +31,11 @@ export function meta({ params }: Route.MetaArgs) {
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
   const filters = readFilters(new URL(request.url).searchParams);
-  const [{ radicals: allRadicals, topics: allTopics, counts }, hanzi, words] = await Promise.all([
-    getMeta(),
-    getHanziIndexes(levels),
-    getWordIndexes(levels),
-  ]);
+  const [{ radicals: allRadicals, topics: allTopics, counts }, hanzi, words, phonetics] =
+    await Promise.all([getMeta(), getHanziIndexes(levels), getWordIndexes(levels), getPhonetics()]);
   const radicals = radicalsAtLevels(allRadicals, hanzi, levels);
   const { topics, untagged } = topicsAtLevels(allTopics, hanzi, words, levels);
+  const phoneticSeries = phoneticsAtLevels(phonetics, hanzi, levels);
   const totals = countsFor(counts, levels);
 
   /**
@@ -54,11 +54,17 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     ).length,
     topics: topics.filter((t) => matchesTopic(filters.q, t)).length,
     radicals: radicals.filter((r) => matchesRadical(filters.q, r)).length,
+    phonetics: phoneticSeries.filter((row) => matchesPhonetic(filters.q, row)).length,
   };
 
   return {
     levels,
-    counts: { ...totals, radicals: radicals.length, topics: topics.length },
+    counts: {
+      ...totals,
+      radicals: radicals.length,
+      topics: topics.length,
+      phonetics: phoneticSeries.length,
+    },
     shown,
     untagged,
     topics: topics.map((t) => ({
@@ -140,7 +146,10 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   };
 
   const activeFilters =
-    filters.radicals.length + filters.status.length + filters.standards.length + filters.topics.length;
+    filters.radicals.length +
+    filters.status.length +
+    filters.standards.length +
+    filters.topics.length;
   const search = toSearch(filters);
   const listOwnsFooter = tab === "hanzi" || tab === "words";
 
@@ -153,13 +162,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
             aria-label="Hanzi index"
             className="flex shrink-0 items-center gap-1.5"
           >
-            <img
-              src="/app-mark.png"
-              alt=""
-              width={64}
-              height={64}
-              className="size-8 rounded-lg"
-            />
+            <img src="/app-mark.png" alt="" width={64} height={64} className="size-8 rounded-lg" />
             <span className="han text-lg tracking-tight">汉字</span>
           </NavLink>
 
@@ -237,6 +240,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
               ["words", "Words", shown.words, counts.words],
               ["topics", "Topics", shown.topics, counts.topics],
               ["radicals", "Radicals", shown.radicals, counts.radicals],
+              ["phonetics", "Phonetics", shown.phonetics, counts.phonetics],
             ] as const
           ).map(([slug, label, count, total]) => (
             <NavLink
@@ -351,7 +355,6 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
               ))}
             </div>
           </FilterGroup>
-
         </aside>
 
         <main className="min-w-0 flex-1 px-4 py-5 lg:px-6">
@@ -443,8 +446,7 @@ function ActiveFilters({
     chips.push({
       key: "topic",
       value: t,
-      label:
-        t === UNTAGGED ? <span className="italic">untagged</span> : (topicLabel(t) ?? t),
+      label: t === UNTAGGED ? <span className="italic">untagged</span> : (topicLabel(t) ?? t),
     });
   }
   for (const s of filters.status) chips.push({ key: "s", value: s, label: s });
@@ -466,10 +468,7 @@ function ActiveFilters({
           className="group inline-flex items-center gap-1 rounded-full border border-line bg-surface py-0.5 pr-1.5 pl-2.5 text-xs text-ink-2 transition-colors hover:border-accent hover:text-ink"
         >
           {c.label}
-          <span
-            aria-hidden
-            className="text-ink-3 transition-colors group-hover:text-accent"
-          >
+          <span aria-hidden className="text-ink-3 transition-colors group-hover:text-accent">
             ✕
           </span>
         </button>

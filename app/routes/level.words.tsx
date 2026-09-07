@@ -115,7 +115,8 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     }
     for (const key of order) {
       const rows = grouped.get(key)!;
-      const label = key === UNTAGGED ? "Untagged" : (TOPICS.find((t) => t.id === key)?.label ?? key);
+      const label =
+        key === UNTAGGED ? "Untagged" : (TOPICS.find((t) => t.id === key)?.label ?? key);
       for (let i = 0; i < rows.length; i += CHUNK) {
         sections.push({
           id: `${key}:${i}`,
@@ -220,29 +221,29 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
                 </div>
               )}
               <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
-              {s.rows.map((r) => (
-                <Link
-                  key={r.word}
-                  to={`/words/${encodeURIComponent(r.word)}`}
-                  className="group flex flex-col rounded-lg border border-line bg-surface px-3 py-2.5 transition-colors hover:border-accent"
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="han text-2xl group-hover:text-accent">{r.word}</span>
-                    <span className="truncate text-xs text-ink-2">{r.pinyin}</span>
-                    {showLevel && <span className="text-[10px] text-ink-3">HSK {r.level}</span>}
-                    <StatusDot status={r.status} />
-                  </div>
-                  <span title={r.meaning} className="mt-0.5 truncate text-xs text-ink-2">
-                    <Highlighted text={r.meaning} at={r.at} />
-                  </span>
-                  {r.literal && (
-                    <span className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-3">
-                      <span className="truncate">literally “{r.literal}”</span>
-                      {r.transparency === "opaque" && <Chip tone="accent">opaque</Chip>}
+                {s.rows.map((r) => (
+                  <Link
+                    key={r.word}
+                    to={`/words/${encodeURIComponent(r.word)}`}
+                    className="group flex flex-col rounded-lg border border-line bg-surface px-3 py-2.5 transition-colors hover:border-accent"
+                  >
+                    <div className="flex items-baseline gap-2">
+                      <span className="han text-2xl group-hover:text-accent">{r.word}</span>
+                      <span className="truncate text-xs text-ink-2">{r.pinyin}</span>
+                      {showLevel && <span className="text-[10px] text-ink-3">HSK {r.level}</span>}
+                      <StatusDot status={r.status} />
+                    </div>
+                    <span title={r.meaning} className="mt-0.5 truncate text-xs text-ink-2">
+                      <Highlighted text={r.meaning} at={r.at} />
                     </span>
-                  )}
-                </Link>
-              ))}
+                    {r.literal && (
+                      <span className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-3">
+                        <span className="truncate">literally “{r.literal}”</span>
+                        {r.transparency === "opaque" && <Chip tone="accent">opaque</Chip>}
+                      </span>
+                    )}
+                  </Link>
+                ))}
               </div>
             </div>
           )}

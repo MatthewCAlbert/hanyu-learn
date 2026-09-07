@@ -10,6 +10,7 @@ export default [
     route("words", "routes/level.words.tsx"),
     route("topics", "routes/level.topics.tsx"),
     route("radicals", "routes/level.radicals.tsx"),
+    route("phonetics", "routes/level.phonetics.tsx"),
   ]),
 
   route("credits", "routes/credits.tsx"),
@@ -18,5 +19,6 @@ export default [
   route("hanzi/:char", "routes/hanzi.$char.tsx"),
   route("words/:word", "routes/words.$word.tsx"),
   route("radicals/:radical", "routes/radicals.$radical.tsx"),
+  route("phonetic/:component", "routes/phonetic.$component.tsx"),
   route("topics/:topic", "routes/topics.$topic.tsx"),
 ] satisfies RouteConfig;

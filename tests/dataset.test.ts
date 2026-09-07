@@ -11,6 +11,7 @@ import counts from "~/data/generated/counts.json";
 import radicalIndex from "../data/sources/radical-index.json";
 import type { Hanzi, Level, Radical, Word } from "~/lib/types";
 import { parseIds, idsLeaves, isAtomic } from "~/lib/ids";
+import { effectivePhonetic } from "~/lib/etymology";
 
 const H = hanzi as unknown as Hanzi[];
 const W = words as unknown as Word[];
@@ -107,6 +108,10 @@ describe("referential integrity", () => {
     expect(R.find((r) => r.number === 37)?.gloss).toBe("big");
     // 买 is written with 大 but indexed under 乙; it must not pollute乙's variants.
     expect(R.find((r) => r.number === 5)?.variants).not.toContain("大");
+    expect(H.find((h) => h.char === "视")?.radicalNumber).toBe(113);
+    expect(H.find((h) => h.char === "视")?.radicalCanonical).toBe("示");
+    expect(H.find((h) => h.char === "酒")?.radicalNumber).toBe(164);
+    expect(H.find((h) => h.char === "买")?.radicalNumber).toBe(5);
   });
 
   it("only records variants Unihan confirms for that radical", () => {
@@ -175,6 +180,23 @@ describe("decomposition", () => {
       const leaves = new Set(idsLeaves(parseIds(h.decomposition)!));
       expect(leaves.has(h.etymology.phonetic!)).toBe(false);
     }
+  });
+
+  it("does not treat a lost phonetic as a series member", () => {
+    expect(effectivePhonetic(H.find((h) => h.char === "场")!)).toBeNull();
+    expect(effectivePhonetic(H.find((h) => h.char === "商")!)).toBeNull();
+    const yang = H.find((h) => h.char === "扬");
+    if (yang) {
+      const key = effectivePhonetic(yang);
+      expect(key).toBeTruthy();
+      expect(
+        H.filter((h) => effectivePhonetic(h) === key).map((h) => h.char),
+      ).not.toContain("场");
+    }
+    expect(effectivePhonetic(H.find((h) => h.char === "视")!)).toBe("礻");
+    const ma = H.filter((h) => effectivePhonetic(h) === "马").map((h) => h.char);
+    expect(ma).toEqual(expect.arrayContaining(["妈", "吗", "骂"]));
+    expect(ma).not.toContain("神");
   });
 });
 

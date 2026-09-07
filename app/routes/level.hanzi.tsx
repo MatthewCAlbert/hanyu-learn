@@ -304,13 +304,14 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                       <span className="mt-1 max-w-full truncate text-[11px] text-ink-2">
                         {r.pinyin}
                       </span>
-                      <span title={r.meaning} className="max-w-full truncate text-[10px] text-ink-3">
+                      <span
+                        title={r.meaning}
+                        className="max-w-full truncate text-[10px] text-ink-3"
+                      >
                         <Highlighted text={r.meaning} at={r.at} />
                       </span>
                       <span className="mt-0.5 flex items-center gap-1">
-                        {showLevel && (
-                          <span className="text-[9px] text-ink-3">HSK {r.level}</span>
-                        )}
+                        {showLevel && <span className="text-[9px] text-ink-3">HSK {r.level}</span>}
                         <StatusDot status={r.status} />
                       </span>
                     </Link>

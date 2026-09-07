@@ -54,15 +54,15 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
           </div>
           {topics.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
-            {topics.map((t) => (
-              <Link
-                key={t.id}
-                to={`/topics/${t.id}`}
-                className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] leading-4 text-accent transition-opacity hover:opacity-75"
-              >
-                {t.label}
-              </Link>
-            ))}
+              {topics.map((t) => (
+                <Link
+                  key={t.id}
+                  to={`/topics/${t.id}`}
+                  className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] leading-4 text-accent transition-opacity hover:opacity-75"
+                >
+                  {t.label}
+                </Link>
+              ))}
             </div>
           )}
           <p className="mt-1.5 text-sm text-ink-2">{w.meanings.join("; ")}</p>

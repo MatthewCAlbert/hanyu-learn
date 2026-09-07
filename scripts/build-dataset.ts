@@ -15,6 +15,8 @@ import {
   sections,
 } from "../app/lib/content-schema.ts";
 import { SHARD_BUCKETS, shardBucket } from "../app/lib/shards.ts";
+import { effectivePhonetic, effectiveSemantic } from "../app/lib/etymology.ts";
+import { matchRadical } from "../app/lib/radicals.ts";
 import type {
   AuthoredHanzi,
   AuthoredWord,
@@ -26,6 +28,7 @@ import type {
   HanziIndex,
   HanziPage,
   Level,
+  PhoneticAnchor,
   Radical,
   Reading,
   Sentence,
@@ -431,6 +434,7 @@ async function main() {
     radicals,
     topics,
     counts,
+    mmah,
   });
 
   for (const level of LEVELS) {
@@ -470,16 +474,19 @@ async function writeWebShards(args: {
   radicals: Radical[];
   topics: Topic[];
   counts: Dataset["counts"];
+  mmah: Map<string, MmahEntry>;
 }): Promise<{ version: string; strokeEntries: number }> {
-  const { hanziList, words, radicals, topics, counts } = args;
+  const { hanziList, words, radicals, topics, counts, mmah } = args;
   const hanziByChar = new Map(hanziList.map((h) => [h.char, h]));
   const wordByText = new Map(words.map((w) => [w.word, w]));
   const topicById = new Map(topics.map((t) => [t.id, t]));
+  const phonetics = buildPhonetics(hanziList, hanziByChar, radicals, mmah);
 
   const version = createHash("sha256")
     .update(JSON.stringify(hanziList))
     .update(JSON.stringify(words))
     .update(JSON.stringify(topics))
+    .update(JSON.stringify(phonetics))
     .digest("hex")
     .slice(0, 12);
 
@@ -493,6 +500,7 @@ async function writeWebShards(args: {
   const meta: DatasetMeta = { radicals, topics, counts };
   await writeFile(`${web}/manifest.json`, JSON.stringify(manifest));
   await writeFile(`${root}/meta.json`, JSON.stringify(meta));
+  await writeFile(`${root}/phonetics.json`, JSON.stringify(phonetics));
 
   for (const level of LEVELS) {
     const hanziIndex: HanziIndex[] = hanziList
@@ -509,9 +517,8 @@ async function writeWebShards(args: {
         standards: h.standards,
         topics: h.topics,
         status: h.authored?.status ?? "stub",
-        phonetic:
-          h.authored?.phonetic ??
-          (h.etymology?.phoneticVisible === false ? null : (h.etymology?.phonetic ?? null)),
+        phonetic: effectivePhonetic(h),
+        semantic: effectiveSemantic(h),
       }));
     const wordIndex: WordIndex[] = words
       .filter((w) => w.level === level)
@@ -543,6 +550,7 @@ async function writeWebShards(args: {
       wordByText,
       radicals,
       topicById,
+      phonetics,
     );
   }
   for (const word of words) {
@@ -592,6 +600,108 @@ function overlayEtymology(hanzi: Hanzi): Hanzi["etymology"] {
   return null;
 }
 
+function firstGloss(text: string | undefined): string {
+  return text?.split(/[;,]/)[0]?.trim() ?? "";
+}
+
+function componentGloss(
+  form: string,
+  hanziByChar: Map<string, Hanzi>,
+  radicals: Radical[],
+): string {
+  const asHanzi = hanziByChar.get(form);
+  if (asHanzi) return firstGloss(asHanzi.meanings[0]);
+  const rad = matchRadical(form, radicals);
+  if (rad) {
+    const canonHanzi = hanziByChar.get(rad.canonical) ?? hanziByChar.get(rad.display);
+    if (canonHanzi) return firstGloss(canonHanzi.meanings[0]);
+    return rad.gloss;
+  }
+  return "";
+}
+
+function componentHref(
+  form: string,
+  role: "phonetic" | "other",
+  hanziByChar: Map<string, Hanzi>,
+  radicals: Radical[],
+): string | null {
+  if (role === "phonetic") return `/phonetic/${encodeURIComponent(form)}`;
+  if (hanziByChar.has(form)) return `/hanzi/${encodeURIComponent(form)}`;
+  const rad = matchRadical(form, radicals);
+  if (rad) {
+    if (hanziByChar.has(rad.canonical)) return `/hanzi/${encodeURIComponent(rad.canonical)}`;
+    const displayed = [...rad.variants, rad.display].find((v) => hanziByChar.has(v));
+    if (displayed) return `/hanzi/${encodeURIComponent(displayed)}`;
+    return `/radicals/${encodeURIComponent(rad.char)}`;
+  }
+  return null;
+}
+
+function radicalRef(
+  r: Radical,
+): Pick<Radical, "char" | "display" | "gloss" | "number" | "canonical"> {
+  return {
+    char: r.char,
+    display: r.display,
+    gloss: r.gloss,
+    number: r.number,
+    canonical: r.canonical,
+  };
+}
+
+function pickAnchor(
+  component: string,
+  rad: Radical | undefined,
+  hanziByChar: Map<string, Hanzi>,
+  mmah: Map<string, MmahEntry>,
+): string {
+  const opts = [...new Set([component, rad?.canonical, rad?.display, ...(rad?.variants ?? [])].filter(
+    (c): c is string => Boolean(c),
+  ))];
+  return (
+    opts.find((c) => hanziByChar.has(c)) ??
+    opts.find((c) => (mmah.get(c)?.pinyin.length ?? 0) > 0) ??
+    opts.find((c) => mmah.has(c)) ??
+    component
+  );
+}
+
+function buildPhonetics(
+  hanziList: Hanzi[],
+  hanziByChar: Map<string, Hanzi>,
+  radicals: Radical[],
+  mmah: Map<string, MmahEntry>,
+): Record<string, PhoneticAnchor> {
+  const out: Record<string, PhoneticAnchor> = {};
+  for (const h of hanziList) {
+    const component = effectivePhonetic(h);
+    if (!component || out[component]) continue;
+    const rad = matchRadical(component, radicals);
+    const anchor = pickAnchor(component, rad, hanziByChar, mmah);
+    const asHanzi = hanziByChar.get(anchor) ?? hanziByChar.get(component);
+    const mm = mmah.get(anchor);
+    const hanziChar = hanziByChar.has(component)
+      ? component
+      : hanziByChar.has(anchor)
+        ? anchor
+        : null;
+    out[component] = {
+      component,
+      anchor,
+      pinyin: asHanzi?.pinyin ?? mm?.pinyin ?? [],
+      meaning:
+        firstGloss(asHanzi?.meanings[0]) ||
+        firstGloss(mm?.definition) ||
+        rad?.gloss ||
+        null,
+      radical: rad ? radicalRef(rad) : null,
+      hanzi: hanziChar,
+    };
+  }
+  return out;
+}
+
 function buildHanziPage(
   hanzi: Hanzi,
   all: Hanzi[],
@@ -599,29 +709,28 @@ function buildHanziPage(
   wordByText: Map<string, Word>,
   radicals: Radical[],
   topicById: Map<string, Topic>,
+  phonetics: Record<string, PhoneticAnchor>,
 ): HanziPage {
   const radical = radicals.find((r) => r.char === hanzi.radicalCanonical) ?? null;
   const etymology = overlayEtymology(hanzi);
   const glosses: Record<string, string> = {};
+  const componentHrefs: Record<string, string | null> = {};
+  const phoneticKey = effectivePhonetic(hanzi);
   for (const c of hanzi.components) {
-    const asHanzi = hanziByChar.get(c);
-    if (asHanzi) glosses[c] = asHanzi.meanings[0]?.split(/[;,]/)[0]?.trim() ?? "";
-    else {
-      const asRadical = radicals.find((r) => r.char === c || r.canonical === c);
-      if (asRadical) glosses[c] = asRadical.gloss;
-    }
+    glosses[c] = componentGloss(c, hanziByChar, radicals);
+    const role = phoneticKey === c ? "phonetic" : "other";
+    componentHrefs[c] = componentHref(c, role, hanziByChar, radicals);
   }
-  const phonetic = hanzi.authored?.phonetic ?? hanzi.etymology?.phonetic;
-  const phoneticSeries =
-    phonetic && hanzi.etymology?.phoneticVisible !== false
-      ? all
-          .filter(
-            (h) =>
-              h.char !== hanzi.char &&
-              (h.authored?.phonetic ?? h.etymology?.phonetic) === phonetic,
-          )
-          .map((h) => ({ char: h.char, pinyin: h.pinyin[0] ?? "", meaning: h.meanings[0] ?? "" }))
-      : [];
+
+  const phoneticSeries = phoneticKey
+    ? all
+        .filter((h) => h.char !== hanzi.char && effectivePhonetic(h) === phoneticKey)
+        .map((h) => ({ char: h.char, pinyin: h.pinyin[0] ?? "", meaning: h.meanings[0] ?? "" }))
+    : [];
+
+  const semanticForm = effectiveSemantic(hanzi);
+  const phoneticMeta = phoneticKey ? phonetics[phoneticKey] : undefined;
+
   const pageWords = hanzi.words
     .map((w) => wordByText.get(w))
     .filter((w): w is Word => Boolean(w))
@@ -637,17 +746,26 @@ function buildHanziPage(
     .map((t) => ({ id: t.id, label: t.label }));
   return {
     hanzi,
-    radical: radical
-      ? {
-          char: radical.char,
-          display: radical.display,
-          gloss: radical.gloss,
-          number: radical.number,
-          canonical: radical.canonical,
-        }
-      : null,
+    radical: radical ? radicalRef(radical) : null,
     etymology,
     glosses,
+    componentHrefs,
+    semanticRole: semanticForm
+      ? {
+          form: semanticForm,
+          gloss: componentGloss(semanticForm, hanziByChar, radicals),
+          href: componentHref(semanticForm, "other", hanziByChar, radicals),
+        }
+      : null,
+    phoneticRole: phoneticKey
+      ? {
+          form: phoneticKey,
+          gloss: phoneticMeta?.meaning ?? componentGloss(phoneticKey, hanziByChar, radicals),
+          href: `/phonetic/${encodeURIComponent(phoneticKey)}`,
+          anchor: phoneticMeta?.anchor ?? phoneticKey,
+          pinyin: phoneticMeta?.pinyin ?? [],
+        }
+      : null,
     phoneticSeries,
     words: pageWords,
     topics: pageTopics,

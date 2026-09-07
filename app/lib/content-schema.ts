@@ -40,9 +40,7 @@ export const wordFrontmatter = z.object({
  * rather than 200 files. The set of files is the controlled vocabulary.
  */
 export const topicFrontmatter = z.object({
-  topic: z
-    .string()
-    .regex(/^[a-z][a-z0-9-]*$/, "must be lower-case kebab-case"),
+  topic: z.string().regex(/^[a-z][a-z0-9-]*$/, "must be lower-case kebab-case"),
   label: z.string().min(1),
   hanzi: z.array(z.string().length(1)).default([]),
   words: z.array(z.string().min(1)).default([]),

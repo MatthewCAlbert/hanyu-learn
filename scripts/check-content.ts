@@ -15,6 +15,7 @@ import {
   sections,
 } from "../app/lib/content-schema.ts";
 import { idsLeaves, isAtomic, parseIds } from "../app/lib/ids.ts";
+import { kRSUnicodeCitationError } from "../app/lib/unihan.ts";
 import type { Hanzi, Word } from "../app/lib/types.ts";
 
 const problems: string[] = [];
@@ -23,6 +24,9 @@ const fail = (file: string, msg: string) => problems.push(`${file}: ${msg}`);
 async function main() {
   const hanzi: Hanzi[] = JSON.parse(await readFile("app/data/generated/hanzi.json", "utf8"));
   const words: Word[] = JSON.parse(await readFile("app/data/generated/words.json", "utf8"));
+  const radicalIndex: {
+    kRSUnicode: Record<string, { radical: number; extra: number }>;
+  } = JSON.parse(await readFile("data/sources/radical-index.json", "utf8"));
   const byChar = new Map(hanzi.map((h) => [h.char, h]));
   const byWord = new Map(words.map((w) => [w.word, w]));
 
@@ -62,6 +66,11 @@ async function main() {
             `If it was lost in simplification, say so in prose and leave the field empty.`,
         );
       }
+    }
+
+    for (const source of fm.sources) {
+      const err = kRSUnicodeCitationError(source, fm.char, radicalIndex.kRSUnicode);
+      if (err) fail(path, err);
     }
 
     const s = sections(content);

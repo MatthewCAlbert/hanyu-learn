@@ -10,10 +10,15 @@ Most HSK apps give you 汉字 → pinyin → gloss and stop. This one adds two l
 - **Radical-first organisation.** 妈, 她, 好 and 姐 are learned as one family
   under 女 rather than four unrelated shapes. Every character links to its
   decomposition tree, with the semantic component highlighted and the phonetic
-  marked as sound-only.
+  marked as sound-only. Dictionary radical, meaning component, and sound
+  component are shown as separate facts: they often do not coincide.
 - **Written explanations.** Per hanzi: what the etymology actually is, separated
   from an invented mnemonic. Per word: the literal reading, the real meaning, and
   the reason for the gap — 爱好 is "love + good" until you notice 好 is *hào*.
+- **Phonetic series pages.** Characters that share a visible sound component
+  (`/phonetic/马`, `/phonetic/礻`) so a learner can see how 妈 mā / 吗 ma / 骂 mà
+  get their reading — without mixing that family into the radical page. Browse
+  them from `/hsk/:level/phonetics`.
 
 ## Quick start
 
@@ -61,7 +66,8 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 - **Multi-select levels** in the path (`/hsk/1`, `/hsk/1,2`), so any selection is
   bookmarkable.
 - **Group by radical, topic or frequency**; filter by radical, topic, status and
-  the older HSK standards.
+  the older HSK standards. A Phonetics tab lists sound families in the selected
+  levels.
 - **i+1 example sentences** — every example at a level uses *only* characters
   learned at or below it. Enforced by a test, not by hope.
 - Stroke-order animation, dark mode, and windowed lists (1,000 rows, +100 on
@@ -77,6 +83,12 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 | `scripts/` | Data pipeline: build, MD lists, validation |
 | `app/data/generated/` | Build artefacts — **gitignored**, rebuilt automatically |
 | `docs/hsk/level-N/` | Generated study lists — **never edit by hand** |
+
+Detail routes: `/hanzi/:char`, `/words/:word`, `/radicals/:radical`,
+`/phonetic/:component`, `/topics/:topic`. Level indexes:
+`/hsk/:level/hanzi` (also `words`, `topics`, `radicals`, `phonetics`).
+Phonetic pages are generated from visible sound components; they are not
+another Kangxi grouping.
 
 ## Where the data comes from
 
@@ -102,6 +114,21 @@ To extend it, ask Claude Code to *"fill in hanzi content for HSK 1"*. It follows
 hanzi etymology in circulation is Victorian invention: attested etymology and
 invented mnemonics are kept in separate sections, claims need sources, and
 `pnpm check:content` rejects a component the character does not actually contain.
+
+A `Unihan kRSUnicode: N.extra` source must match
+`data/sources/radical-index.json` — that is the dictionary radical, which is not
+always the meaning component. Shuowen’s 部 is a separate citation; do not copy
+it into the Unihan line (视 is Shuowen 見部, Unihan `113.4` 示). After a batch,
+paste:
+
+> Audit Unihan kRSUnicode citations for the HSK *N* hanzi files just written.
+> Formal grouping is Unihan (`data/sources/radical-index.json`), not Shuowen.
+> For each `Unihan kRSUnicode: N.extra` source, radical and residual strokes
+> must equal the index (apostrophe optional). If they disagree, fix **only**
+> that source line — keep Shuowen, etymology, `semantic`, and `phonetic`. Do
+> not edit `radical-index.json` or override grouping. Semantic ≠ dictionary
+> radical is valid (视, 酒, 到). Then `pnpm check:content` and `pnpm data:md`.
+> One level, ≤25 files.
 
 `?topic=untagged` is the tagging backlog; the Topics tab shows coverage per level.
 

@@ -14,10 +14,12 @@ export function Decomposition({
   decomposition,
   etymology,
   glosses,
+  hrefs = {},
 }: {
   decomposition: string;
   etymology: Etymology | null;
   glosses: Record<string, string>;
+  hrefs?: Record<string, string | null>;
 }) {
   const tree = parseIds(decomposition);
   if (!tree || tree.kind === "unknown" || tree.kind === "leaf") {
@@ -27,22 +29,26 @@ export function Decomposition({
       </p>
     );
   }
-  return <Node node={tree} etymology={etymology} glosses={glosses} depth={0} />;
+  return <Node node={tree} etymology={etymology} glosses={glosses} hrefs={hrefs} depth={0} />;
 }
 
 function Node({
   node,
   etymology,
   glosses,
+  hrefs,
   depth,
 }: {
   node: IdsNode;
   etymology: Etymology | null;
   glosses: Record<string, string>;
+  hrefs: Record<string, string | null>;
   depth: number;
 }) {
   if (node.kind === "unknown") {
-    return <span className="rounded-md border border-dashed border-line px-3 py-2 text-ink-3">?</span>;
+    return (
+      <span className="rounded-md border border-dashed border-line px-3 py-2 text-ink-3">?</span>
+    );
   }
 
   if (node.kind === "leaf") {
@@ -53,16 +59,16 @@ function Node({
           ? "phonetic"
           : null;
     const gloss = glosses[node.char];
-    return (
-      <Link
-        to={`/hanzi/${encodeURIComponent(node.char)}`}
-        className={clsx(
-          "group flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-colors",
-          role === "semantic" && "border-accent bg-accent-soft",
-          role === "phonetic" && "border-accent border-dashed",
-          !role && "border-line bg-surface hover:border-ink-3",
-        )}
-      >
+    const href = hrefs[node.char];
+    const className = clsx(
+      "group flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-colors",
+      role === "semantic" && "border-accent bg-accent-soft",
+      role === "phonetic" && "border-accent border-dashed",
+      !role && "border-line bg-surface",
+      href && "hover:border-accent",
+    );
+    const inner = (
+      <>
         <span className={clsx("han text-3xl", role === "semantic" ? "text-accent" : "text-ink")}>
           {node.char}
         </span>
@@ -72,8 +78,16 @@ function Node({
             {role === "semantic" ? "meaning" : "sound"}
           </span>
         )}
-      </Link>
+      </>
     );
+    if (href) {
+      return (
+        <Link to={href} className={className}>
+          {inner}
+        </Link>
+      );
+    }
+    return <div className={className}>{inner}</div>;
   }
 
   const vertical = node.idc === "⿱" || node.idc === "⿳";
@@ -87,7 +101,14 @@ function Node({
         )}
       >
         {node.children.map((child, i) => (
-          <Node key={i} node={child} etymology={etymology} glosses={glosses} depth={depth + 1} />
+          <Node
+            key={i}
+            node={child}
+            etymology={etymology}
+            glosses={glosses}
+            hrefs={hrefs}
+            depth={depth + 1}
+          />
         ))}
       </div>
       {depth === 0 && (

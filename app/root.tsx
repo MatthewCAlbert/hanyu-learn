@@ -60,12 +60,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <div className="flex min-h-screen flex-col bg-paper">
       <main className="mx-auto flex-1 px-6 py-24 text-center">
         <p className="han text-6xl text-accent">{is404 ? "无" : "错"}</p>
-        <h1 className="mt-6 text-xl font-medium">
-          {is404 ? "Not found" : "Something went wrong"}
-        </h1>
+        <h1 className="mt-6 text-xl font-medium">{is404 ? "Not found" : "Something went wrong"}</h1>
         <p className="mt-2 text-sm text-ink-2">
           {is404
-            ? "That character, word or radical isn't in HSK 1–9."
+            ? "That character, word, radical or phonetic series isn't in HSK 1–9."
             : error instanceof Error
               ? error.message
               : "Unknown error."}

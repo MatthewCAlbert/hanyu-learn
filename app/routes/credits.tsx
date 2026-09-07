@@ -46,8 +46,8 @@ export default function Credits() {
           Stroke-order graphics come from{" "}
           <Ext href="https://github.com/chanind/hanzi-writer-data">hanzi-writer-data</Ext>,
           extracted from the Arphic PL KaitiM GB font. Redistributed under the{" "}
-          <Ext href="/licenses/ARPHICPL.TXT">Arphic Public License</Ext>. The stroke files are
-          used as published; no glyphs have been modified.
+          <Ext href="/licenses/ARPHICPL.TXT">Arphic Public License</Ext>. The stroke files are used
+          as published; no glyphs have been modified.
         </p>
       </section>
 

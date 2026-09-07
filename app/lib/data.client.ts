@@ -4,12 +4,15 @@
  * the HTTP cache for repeat visits.
  */
 import { shardBucket, SHARD_BUCKETS } from "./shards";
+import { LEVELS } from "./levels";
+import { matchRadical } from "./radicals";
 import type {
   DatasetManifest,
   DatasetMeta,
   HanziIndex,
   HanziPage,
   Level,
+  PhoneticAnchor,
   Radical,
   Topic,
   WordIndex,
@@ -83,12 +86,32 @@ export async function getStrokes(char: string): Promise<unknown | null> {
 
 export async function getRadical(char: string): Promise<Radical | undefined> {
   const { radicals } = await getMeta();
-  return radicals.find((r) => r.char === char);
+  return matchRadical(char, radicals);
 }
 
 export async function getTopic(id: string): Promise<Topic | undefined> {
   const { topics } = await getMeta();
   return topics.find((t) => t.id === id);
+}
+
+export async function getPhonetics(): Promise<Record<string, PhoneticAnchor>> {
+  return asset<Record<string, PhoneticAnchor>>("phonetics.json");
+}
+
+export async function getPhoneticSeries(component: string): Promise<
+  | {
+      meta: PhoneticAnchor;
+      members: HanziIndex[];
+    }
+  | undefined
+> {
+  const [phonetics, hanzi] = await Promise.all([getPhonetics(), getHanziIndexes(LEVELS)]);
+  const meta = phonetics[component];
+  if (!meta) return undefined;
+  return {
+    meta,
+    members: hanzi.filter((h) => h.phonetic === component),
+  };
 }
 
 export { SHARD_BUCKETS };
