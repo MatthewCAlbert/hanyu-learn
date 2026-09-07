@@ -1,10 +1,23 @@
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import clsx from "clsx";
 import type { Route } from "./+types/level";
-import { countsFor, radicalsAtLevels, topicsAtLevels } from "~/lib/catalog";
+import {
+  countsFor,
+  matchesRadical,
+  matchesTopic,
+  radicalsAtLevels,
+  topicsAtLevels,
+} from "~/lib/catalog";
 import { getHanziIndexes, getMeta, getWordIndexes } from "~/lib/data.client";
 import { LEVELS, formatLevels, levelLabel, parseLevels, toggleLevel } from "~/lib/levels";
-import { UNTAGGED, readFilters, toSearch, type Filters } from "~/lib/filters";
+import {
+  UNTAGGED,
+  filterHanzi,
+  filterWords,
+  readFilters,
+  toSearch,
+  type Filters,
+} from "~/lib/filters";
 import type { Status } from "~/lib/types";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { CreditsFooter } from "~/components/CreditsFooter";
@@ -13,8 +26,9 @@ export function meta({ params }: Route.MetaArgs) {
   return [{ title: `HSK ${params.level?.replaceAll(",", " + ")} — Mandarin` }];
 }
 
-export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
+  const filters = readFilters(new URL(request.url).searchParams);
   const [{ radicals: allRadicals, topics: allTopics, counts }, hanzi, words] = await Promise.all([
     getMeta(),
     getHanziIndexes(levels),
@@ -22,9 +36,30 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   ]);
   const radicals = radicalsAtLevels(allRadicals, hanzi, levels);
   const { topics, untagged } = topicsAtLevels(allTopics, hanzi, words, levels);
+  const totals = countsFor(counts, levels);
+
+  /**
+   * Each badge counts what its own tab would list, using that tab's own
+   * predicate — otherwise the bar reads "Hanzi 300" over two visible rows. The
+   * indexes are already in hand, so this is a filter pass, not a fetch.
+   */
+  const shown = {
+    hanzi: filterHanzi(
+      hanzi.filter((h) => levels.includes(h.level)),
+      filters,
+    ).length,
+    words: filterWords(
+      words.filter((w) => levels.includes(w.level)),
+      filters,
+    ).length,
+    topics: topics.filter((t) => matchesTopic(filters.q, t)).length,
+    radicals: radicals.filter((r) => matchesRadical(filters.q, r)).length,
+  };
+
   return {
     levels,
-    counts: { ...countsFor(counts, levels), radicals: radicals.length, topics: topics.length },
+    counts: { ...totals, radicals: radicals.length, topics: topics.length },
+    shown,
     untagged,
     topics: topics.map((t) => ({
       id: t.id,
@@ -54,7 +89,7 @@ const STANDARDS = [
 ];
 
 export default function LevelShell({ loaderData }: Route.ComponentProps) {
-  const { levels, counts, radicals, topics, untagged } = loaderData;
+  const { levels, counts, shown, radicals, topics, untagged } = loaderData;
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
   const { pathname } = useLocation();
@@ -198,15 +233,19 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
         <nav className="flex gap-1 px-4 lg:px-6">
           {(
             [
-              ["hanzi", `Hanzi ${counts.hanzi}`],
-              ["words", `Words ${counts.words}`],
-              ["topics", `Topics ${counts.topics}`],
-              ["radicals", `Radicals ${counts.radicals}`],
+              ["hanzi", "Hanzi", shown.hanzi, counts.hanzi],
+              ["words", "Words", shown.words, counts.words],
+              ["topics", "Topics", shown.topics, counts.topics],
+              ["radicals", "Radicals", shown.radicals, counts.radicals],
             ] as const
-          ).map(([slug, label]) => (
+          ).map(([slug, label, count, total]) => (
             <NavLink
               key={slug}
               to={`/hsk/${selected}/${slug}${search}`}
+              // The badge shows what the tab would list; the full total moves
+              // to the tooltip rather than into the label, which would reflow
+              // the bar on every keystroke.
+              title={count === total ? undefined : `${count} of ${total}`}
               className={({ isActive }) =>
                 clsx(
                   "-mb-px border-b-2 px-2 py-2 text-sm transition-colors",
@@ -216,7 +255,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
                 )
               }
             >
-              {label}
+              {label} {count}
             </NavLink>
           ))}
         </nav>

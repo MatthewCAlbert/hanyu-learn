@@ -93,8 +93,32 @@ export function HanziLink({
   );
 }
 
-/** Renders a sentence with every occurrence of `highlight` picked out. */
-export function Highlighted({ text, highlight }: { text: string; highlight: string }) {
+/**
+ * Picks part of a string out in the accent colour.
+ *
+ * Two forms: `highlight` marks every occurrence of a substring (sentences),
+ * while `at` marks one already-located `[start, end)` slice. Search uses `at`
+ * because the loader knows the exact hit — including when the reader typed
+ * "WAIT" and the gloss reads "to wait".
+ */
+export function Highlighted({
+  text,
+  highlight,
+  at,
+}: {
+  text: string;
+  highlight?: string;
+  at?: [number, number] | null;
+}) {
+  if (at) {
+    return (
+      <>
+        {text.slice(0, at[0])}
+        <span className="text-accent">{text.slice(at[0], at[1])}</span>
+        {text.slice(at[1])}
+      </>
+    );
+  }
   if (!highlight) return <>{text}</>;
   const parts = text.split(highlight);
   return (
