@@ -206,7 +206,7 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
           renderSection={(s) => (
             <div className="mb-1.5">
               {s.header && (
-                <div className="sticky top-[92px] z-10 -mx-1 mb-2 flex items-baseline gap-2 bg-paper/90 px-1 py-1.5 backdrop-blur">
+                <div className="sticky top-(--app-header-height) z-10 -mx-1 mb-2 flex items-baseline gap-2 border-b border-line/70 bg-paper/95 px-1 py-2 backdrop-blur">
                   {s.header.route ? (
                     <Link
                       to={`/topics/${s.header.route.slice(6)}`}
@@ -220,25 +220,29 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
                   <span className="text-xs text-ink-3">{s.header.count}</span>
                 </div>
               )}
-              <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {s.rows.map((r) => (
                   <Link
                     key={r.word}
                     to={`/words/${encodeURIComponent(r.word)}`}
-                    className="group flex flex-col rounded-lg border border-line bg-surface px-3 py-2.5 transition-colors hover:border-accent"
+                    className="ui-card ui-card-interactive group flex min-h-24 min-w-0 flex-col px-3.5 py-3"
                   >
-                    <div className="flex items-baseline gap-2">
-                      <span className="han text-2xl group-hover:text-accent">{r.word}</span>
-                      <span className="truncate text-xs text-ink-2">{r.pinyin}</span>
-                      {showLevel && <span className="text-[10px] text-ink-3">HSK {r.level}</span>}
+                    <div className="flex min-w-0 items-baseline gap-2">
+                      <span className="han shrink-0 text-2xl group-hover:text-accent">
+                        {r.word}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-xs text-ink-2">{r.pinyin}</span>
+                      {showLevel && (
+                        <span className="shrink-0 text-xs text-ink-3">HSK {r.level}</span>
+                      )}
                       <StatusDot status={r.status} />
                     </div>
                     <span title={r.meaning} className="mt-0.5 truncate text-xs text-ink-2">
                       <Highlighted text={r.meaning} at={r.at} />
                     </span>
                     {r.literal && (
-                      <span className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-3">
-                        <span className="truncate">literally “{r.literal}”</span>
+                      <span className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-ink-3">
+                        <span className="min-w-0 truncate">literally “{r.literal}”</span>
                         {r.transparency === "opaque" && <Chip tone="accent">opaque</Chip>}
                       </span>
                     )}

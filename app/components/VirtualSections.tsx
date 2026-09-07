@@ -55,11 +55,11 @@ function ListFooter({ context }: { context?: FooterContext }) {
             type="button"
             onClick={ctx.onEndReached}
             disabled={ctx.pending}
-            className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+            className="ui-touch rounded-lg border border-line bg-surface px-4 text-xs font-medium text-ink-2 transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
           >
             {ctx.pending ? "Loading…" : `Load ${ctx.step} more`}
           </button>
-          <span className="text-[11px] text-ink-3">{ctx.progressLabel}</span>
+          <span className="text-xs text-ink-3">{ctx.progressLabel}</span>
         </div>
       ) : (
         <div className="py-6 text-center text-xs text-ink-3">{ctx?.loadedLabel}</div>

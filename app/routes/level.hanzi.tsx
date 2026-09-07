@@ -263,7 +263,7 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
           renderSection={(s) => (
             <section className="mb-4">
               {s.header && (
-                <div className="sticky top-[92px] z-10 -mx-1 mb-2 flex items-baseline gap-2 bg-paper/90 px-1 py-1.5 backdrop-blur">
+                <div className="sticky top-(--app-header-height) z-10 -mx-1 mb-2 flex flex-wrap items-baseline gap-2 border-b border-line/70 bg-paper/95 px-1 py-2 backdrop-blur">
                   {s.header.route.startsWith("topic:") ? (
                     <Link
                       to={`/topics/${s.header.route.slice(6)}`}
@@ -293,57 +293,58 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
               )}
 
               {view === "grid" ? (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-1.5">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2">
                   {s.rows.map((r) => (
                     <Link
                       key={r.char}
                       to={`/hanzi/${encodeURIComponent(r.char)}`}
-                      className="group flex flex-col items-center rounded-lg border border-line bg-surface px-1 py-2.5 transition-colors hover:border-accent"
+                      className="ui-card ui-card-interactive group flex min-h-28 flex-col items-center justify-center px-2 py-3"
                     >
                       <span className="han text-3xl group-hover:text-accent">{r.char}</span>
-                      <span className="mt-1 max-w-full truncate text-[11px] text-ink-2">
+                      <span className="mt-1 max-w-full truncate text-xs text-ink-2">
                         {r.pinyin}
                       </span>
-                      <span
-                        title={r.meaning}
-                        className="max-w-full truncate text-[10px] text-ink-3"
-                      >
+                      <span title={r.meaning} className="max-w-full truncate text-xs text-ink-3">
                         <Highlighted text={r.meaning} at={r.at} />
                       </span>
                       <span className="mt-0.5 flex items-center gap-1">
-                        {showLevel && <span className="text-[9px] text-ink-3">HSK {r.level}</span>}
+                        {showLevel && <span className="text-xs text-ink-3">HSK {r.level}</span>}
                         <StatusDot status={r.status} />
                       </span>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {s.rows.map((r) => (
-                      <tr key={r.char} className="border-b border-line/60 hover:bg-sunk">
-                        <td className="w-12 py-1.5">
-                          <Link
-                            to={`/hanzi/${encodeURIComponent(r.char)}`}
-                            className="han text-2xl hover:text-accent"
-                          >
-                            {r.char}
-                          </Link>
-                        </td>
-                        <td className="w-28 text-ink-2">{r.pinyin}</td>
-                        <td className="truncate text-ink-2" title={r.meaning}>
-                          <Highlighted text={r.meaning} at={r.at} />
-                        </td>
-                        {showLevel && (
-                          <td className="w-14 text-right text-[11px] text-ink-3">HSK {r.level}</td>
-                        )}
-                        <td className="w-8 text-right">
-                          <StatusDot status={r.status} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="-mx-4 overflow-x-auto px-4">
+                  <table className="min-w-136 w-full text-sm">
+                    <tbody>
+                      {s.rows.map((r) => (
+                        <tr key={r.char} className="border-b border-line/60 hover:bg-sunk">
+                          <td className="w-12 py-1.5">
+                            <Link
+                              to={`/hanzi/${encodeURIComponent(r.char)}`}
+                              className="han text-2xl hover:text-accent"
+                            >
+                              {r.char}
+                            </Link>
+                          </td>
+                          <td className="w-28 text-ink-2">{r.pinyin}</td>
+                          <td className="truncate text-ink-2" title={r.meaning}>
+                            <Highlighted text={r.meaning} at={r.at} />
+                          </td>
+                          {showLevel && (
+                            <td className="w-14 text-right text-[11px] text-ink-3">
+                              HSK {r.level}
+                            </td>
+                          )}
+                          <td className="w-8 text-right">
+                            <StatusDot status={r.status} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
           )}
@@ -382,7 +383,7 @@ export function Toolbar({
           {total.toLocaleString()} distinct
         </Chip>
       )}
-      <div className="ml-auto flex gap-2">{controls}</div>
+      <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">{controls}</div>
     </div>
   );
 }
@@ -397,7 +398,7 @@ export function Toggle<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="flex rounded-lg border border-line p-0.5">
+    <div className="flex max-w-full overflow-x-auto rounded-xl border border-line bg-surface p-0.5">
       {options.map(([v, label]) => (
         <button
           key={v}
@@ -405,7 +406,7 @@ export function Toggle<T extends string>({
           onClick={() => onChange(v)}
           aria-pressed={v === value}
           className={clsx(
-            "rounded-md px-2 py-0.5 text-xs transition-colors",
+            "ui-touch shrink-0 rounded-lg px-3 text-xs font-medium transition-colors sm:min-h-8",
             v === value ? "bg-sunk text-ink" : "text-ink-3 hover:text-ink-2",
           )}
         >

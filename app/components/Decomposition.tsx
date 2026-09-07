@@ -29,7 +29,18 @@ export function Decomposition({
       </p>
     );
   }
-  return <Node node={tree} etymology={etymology} glosses={glosses} hrefs={hrefs} depth={0} />;
+  return (
+    <div
+      className="-mx-4 overflow-x-auto px-4 pb-2"
+      role="region"
+      aria-label="Character decomposition"
+      tabIndex={0}
+    >
+      <div className="min-w-max">
+        <Node node={tree} etymology={etymology} glosses={glosses} hrefs={hrefs} depth={0} />
+      </div>
+    </div>
+  );
 }
 
 function Node({
@@ -61,7 +72,7 @@ function Node({
     const gloss = glosses[node.char];
     const href = hrefs[node.char];
     const className = clsx(
-      "group flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-colors",
+      "group flex min-h-16 min-w-14 flex-col items-center gap-1 rounded-xl border px-3 py-2 transition-colors",
       role === "semantic" && "border-accent bg-accent-soft",
       role === "phonetic" && "border-accent border-dashed",
       !role && "border-line bg-surface",
@@ -72,9 +83,9 @@ function Node({
         <span className={clsx("han text-3xl", role === "semantic" ? "text-accent" : "text-ink")}>
           {node.char}
         </span>
-        {gloss && <span className="max-w-20 truncate text-[10px] text-ink-3">{gloss}</span>}
+        {gloss && <span className="max-w-20 truncate text-xs text-ink-3">{gloss}</span>}
         {role && (
-          <span className="text-[10px] tracking-wide text-accent">
+          <span className="text-xs tracking-wide text-accent">
             {role === "semantic" ? "meaning" : "sound"}
           </span>
         )}
@@ -112,7 +123,7 @@ function Node({
         ))}
       </div>
       {depth === 0 && (
-        <span className="text-[11px] text-ink-3">
+        <span className="text-xs text-ink-3">
           <span className="han">{node.idc}</span> {IDC_LABEL[node.idc]}
         </span>
       )}

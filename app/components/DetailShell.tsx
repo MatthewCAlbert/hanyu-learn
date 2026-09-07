@@ -11,12 +11,22 @@ export function DetailShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-paper">
-      <header className="sticky top-0 z-20 border-b border-line bg-paper/85 px-4 py-2.5 backdrop-blur lg:px-6">
-        <Link to={back.to} className="text-sm text-ink-2 transition-colors hover:text-accent">
-          ← {back.label}
-        </Link>
+      <header className="safe-top sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center px-3 lg:px-6">
+          <Link
+            to={back.to}
+            className="ui-touch inline-flex items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent"
+          >
+            <span aria-hidden className="mr-2 text-lg">
+              ←
+            </span>
+            {back.label}
+          </Link>
+        </div>
       </header>
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 lg:px-6">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8 lg:px-8 lg:py-10">
+        {children}
+      </main>
       <CreditsFooter />
     </div>
   );
@@ -25,7 +35,7 @@ export function DetailShell({
 /** Authored prose. Kept deliberately plain — it is read, not skimmed. */
 export function Prose({ children }: { children: string }) {
   return (
-    <div className="space-y-3 text-sm leading-relaxed text-ink-2">
+    <div className="max-w-3xl space-y-3 text-[15px] leading-7 text-ink-2">
       {children
         .split(/\n{2,}/)
         .filter((p) => p.trim() && !p.trim().startsWith("<!--"))

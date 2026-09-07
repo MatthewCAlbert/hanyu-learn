@@ -31,8 +31,8 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <DetailShell back={{ to: `/hsk/${w.level}/words`, label: `HSK ${w.level} words` }}>
-      <div className="flex flex-wrap items-baseline gap-3">
-        <span className="han text-6xl leading-none">{w.word}</span>
+      <div className="ui-card flex flex-wrap items-baseline gap-4 px-4 py-5 sm:px-6">
+        <span className="han text-5xl leading-none sm:text-6xl">{w.word}</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-lg text-ink">{w.pinyin}</span>
@@ -47,7 +47,7 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
                 <span className="han">{w.traditional}</span>
               </Chip>
             )}
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-3">
+            <span className="flex w-full items-center gap-1.5 text-xs text-ink-3 sm:ml-auto sm:w-auto">
               <StatusDot status={a?.status ?? "stub"} />
               {a?.status ?? "not yet written"}
             </span>
@@ -58,7 +58,7 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
                 <Link
                   key={t.id}
                   to={`/topics/${t.id}`}
-                  className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] leading-4 text-accent transition-opacity hover:opacity-75"
+                  className="ui-touch inline-flex items-center rounded-full bg-accent-soft px-3 text-xs text-accent transition-opacity hover:opacity-75 sm:min-h-8"
                 >
                   {t.label}
                 </Link>
@@ -80,25 +80,25 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
           <Section
             title="Literal vs actual"
             aside={
-              <span className="text-[11px] text-ink-3">
+              <span className="text-xs text-ink-3">
                 {a.formation} · confidence: {a.confidence}
               </span>
             }
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-line bg-sunk px-4 py-3">
-                <p className="text-[11px] tracking-wide text-ink-3 uppercase">Literally</p>
+              <div className="rounded-xl border border-line bg-sunk px-4 py-3">
+                <p className="ui-eyebrow">Literally</p>
                 <p className="mt-1 text-sm text-ink-2">{a.literal}</p>
               </div>
               <div
                 className={clsx(
-                  "rounded-lg border px-4 py-3",
+                  "rounded-xl border px-4 py-3",
                   a.transparency === "opaque"
                     ? "border-accent bg-accent-soft"
                     : "border-line bg-surface",
                 )}
               >
-                <p className="text-[11px] tracking-wide text-ink-3 uppercase">Actually</p>
+                <p className="ui-eyebrow">Actually</p>
                 <p
                   className={clsx(
                     "mt-1 text-sm",
@@ -117,7 +117,7 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
           <Section title="Why this combination">
             <Prose>{a.why}</Prose>
             {a.sources.length > 0 && (
-              <ul className="mt-3 space-y-0.5 text-[11px] text-ink-3">
+              <ul className="mt-3 space-y-0.5 text-xs text-ink-3">
                 {a.sources.map((s) => (
                   <li key={s}>· {s}</li>
                 ))}
@@ -145,12 +145,12 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
               <Link
                 key={`${c.char}-${i}`}
                 to={`/hanzi/${encodeURIComponent(c.char)}`}
-                className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 hover:border-accent"
+                className="ui-card ui-card-interactive flex min-h-16 items-center gap-3 px-3 py-2"
               >
                 <span className="han w-10 shrink-0 text-center text-3xl">{c.char}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs text-ink-2">{c.pinyin}</span>
-                  <span className="block truncate text-[11px] text-ink-3">{c.meaning}</span>
+                  <span className="block truncate text-xs text-ink-3">{c.meaning}</span>
                 </span>
                 {c.level && <Chip tone="quiet">HSK {c.level}</Chip>}
               </Link>
@@ -161,9 +161,7 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
         <Section
           title="Examples"
           aside={
-            <span className="text-[11px] text-ink-3">
-              only characters from HSK {w.level} and below
-            </span>
+            <span className="text-xs text-ink-3">only characters from HSK {w.level} and below</span>
           }
         >
           <Sentences sentences={w.sentences} highlight={w.word} />

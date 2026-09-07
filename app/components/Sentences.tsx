@@ -20,11 +20,14 @@ export function Sentences({ sentences, highlight }: { sentences: Sentence[]; hig
   return (
     <div className="space-y-3">
       {shown.map((s) => (
-        <div key={s.id} className="border-l-2 border-line pl-3">
+        <div
+          key={s.id}
+          className="rounded-r-lg border-l-2 border-line bg-surface/50 py-2 pr-3 pl-3"
+        >
           <p className="han text-lg leading-relaxed">
             <Highlighted text={s.cmn} highlight={highlight} />
           </p>
-          <p className="mt-0.5 flex items-baseline gap-2 text-xs text-ink-2">
+          <p className="mt-1 flex flex-wrap items-baseline gap-2 text-sm text-ink-2">
             <span>{s.eng}</span>
             <a
               href={`https://tatoeba.org/en/sentences/show/${s.id}`}
@@ -42,12 +45,12 @@ export function Sentences({ sentences, highlight }: { sentences: Sentence[]; hig
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-accent underline underline-offset-4"
+          className="ui-touch rounded-lg px-2 text-xs text-accent underline underline-offset-4"
         >
           {expanded ? "Show fewer" : `Show ${sentences.length - 3} more`}
         </button>
       )}
-      <p className="text-[11px] text-ink-3">
+      <p className="text-xs text-ink-3">
         From{" "}
         <a
           href="https://tatoeba.org"

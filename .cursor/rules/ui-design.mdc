@@ -1,0 +1,17 @@
+---
+description: Mobile-first UI and design-system requirements
+globs: app/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# UI design requirements
+
+- Read and follow `docs/UI-DESIGN.md` before changing UI.
+- Preserve every existing fact and feature across responsive layouts.
+- Design from 320px up; mobile must support the complete workflow.
+- Keep touch targets at least 44×44px and supporting text at least 12px.
+- Never synthesize bold Hanzi. Use the existing `.han` class.
+- Reuse `ui-card`, `ui-card-interactive`, `ui-eyebrow`, and `ui-touch`.
+- Use `--app-header-height` for sticky content; never hardcode header offsets.
+- Give wide tables and decomposition trees explicit overflow handling.
+- Maintain keyboard semantics, focus visibility, reduced motion, and dark mode.

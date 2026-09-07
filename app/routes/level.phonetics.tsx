@@ -25,13 +25,13 @@ export default function LevelPhonetics({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <Toolbar total={total} noun="phonetic" />
-      <p className="mb-5 max-w-2xl text-xs leading-relaxed text-ink-3">
+      <p className="mb-5 max-w-2xl text-sm leading-relaxed text-ink-3">
         These are sound families, not dictionary radicals. A component here suggested a
         pronunciation when the character was formed; modern Mandarin may match exactly, differ only
         by tone, or have diverged.
       </p>
       {total === 0 && <Empty>No phonetic series matches that search.</Empty>}
-      <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {series.map(({ meta, members }) => {
           const reading = meta.pinyin[0];
           const preview = members.slice(0, PREVIEW);
@@ -39,7 +39,7 @@ export default function LevelPhonetics({ loaderData }: Route.ComponentProps) {
             <Link
               key={meta.component}
               to={`/phonetic/${encodeURIComponent(meta.component)}`}
-              className="group flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 transition-colors hover:border-accent"
+              className="ui-card ui-card-interactive group flex min-h-16 items-center gap-3 px-3.5 py-2.5"
             >
               <span className="han w-8 shrink-0 text-center text-2xl group-hover:text-accent">
                 {meta.component}
@@ -52,7 +52,7 @@ export default function LevelPhonetics({ loaderData }: Route.ComponentProps) {
                   {reading ?? <span className="text-ink-3">no standalone reading</span>}
                   {meta.meaning && <span className="text-ink-3"> · {meta.meaning}</span>}
                 </span>
-                <span className="mt-0.5 block truncate text-[11px] text-ink-3">
+                <span className="mt-0.5 block truncate text-xs text-ink-3">
                   <span className="han">{preview.map((m) => m.char).join(" ")}</span>
                   {members.length > PREVIEW && <> +{members.length - PREVIEW}</>}
                 </span>

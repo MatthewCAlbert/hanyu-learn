@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/level";
 import {
@@ -100,6 +101,9 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const filters = readFilters(params);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const headerRef = useRef<HTMLElement>(null);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const tab = pathname.split("/").pop() ?? "hanzi";
   const selected = formatLevels(levels);
 
@@ -113,13 +117,32 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
     setParams(next, { preventScrollReset: true });
   };
 
-  const setQ = (q: string) => {
-    const next = new URLSearchParams(params);
-    if (q) next.set("q", q);
-    else next.delete("q");
-    next.delete("take");
-    setParams(next, { preventScrollReset: true, replace: true });
-  };
+  const setQ = useCallback(
+    (q: string) => {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (q) next.set("q", q);
+          else next.delete("q");
+          next.delete("take");
+          return next;
+        },
+        { preventScrollReset: true, replace: true },
+      );
+    },
+    [setParams],
+  );
+
+  /** Keep the field snappy; the URL (and therefore the list) follows after a pause. */
+  const [draft, setDraft] = useState(filters.q);
+  useEffect(() => {
+    setDraft(filters.q);
+  }, [filters.q]);
+  useEffect(() => {
+    if (draft === filters.q) return;
+    const id = window.setTimeout(() => setQ(draft), 250);
+    return () => window.clearTimeout(id);
+  }, [draft, filters.q, setQ]);
 
   /** Drop every value in one filter group, leaving the others untouched. */
   const clearGroup = (key: FilterKey | "q") => {
@@ -153,24 +176,46 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const search = toSearch(filters);
   const listOwnsFooter = tab === "hanzi" || tab === "words";
 
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const update = () =>
+      document.documentElement.style.setProperty("--app-header-height", `${header.offsetHeight}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--app-header-height");
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-paper">
-      <header className="sticky top-0 z-20 border-b border-line bg-paper/85 backdrop-blur">
-        <div className="flex items-center gap-4 px-4 py-2.5 lg:px-6">
+      <header
+        ref={headerRef}
+        className="safe-top sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur-xl"
+      >
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-2.5 lg:flex lg:gap-4 lg:px-6">
           <NavLink
             to={`/hsk/${selected}/hanzi`}
             aria-label="Hanzi index"
-            className="flex shrink-0 items-center gap-1.5"
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-lg"
           >
             <img src="/app-mark.png" alt="" width={64} height={64} className="size-8 rounded-lg" />
-            <span className="han text-lg tracking-tight">汉字</span>
+            <span>
+              <span className="han block text-lg tracking-tight">汉字</span>
+              <span className="hidden text-[10px] tracking-wide text-ink-3 uppercase sm:block">
+                Hanyu Learn
+              </span>
+            </span>
           </NavLink>
 
           {/* Levels are multi-select: study one, or both at once. The
               selection lives in the path so it stays bookmarkable. */}
           {/* Seven levels, so the boxes are compact: "HSK" labels the group
               once and each toggle carries only its number. */}
-          <fieldset className="flex shrink-0 items-center gap-0.5 rounded-lg border border-line p-0.5">
+          <fieldset className="hide-scrollbar order-3 col-span-3 flex w-full min-w-0 shrink-0 items-center gap-0.5 overflow-x-auto rounded-xl border border-line bg-surface p-0.5 lg:order-0 lg:col-span-1 lg:w-auto">
             <legend className="sr-only">HSK levels</legend>
             <span aria-hidden className="px-1 text-[11px] text-ink-3">
               HSK
@@ -187,7 +232,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
                       : `HSK ${levelLabel(l)}${l === 7 ? " (the wordlist merges 7-9)" : ""}`
                   }
                   className={clsx(
-                    "cursor-pointer rounded-md px-1.5 py-1 text-xs font-medium transition-colors",
+                    "ui-touch inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg px-2 text-xs font-medium transition-colors lg:min-h-8 lg:min-w-8",
                     on ? "bg-ink text-paper" : "text-ink-2 hover:bg-sunk hover:text-ink",
                     only && "cursor-default",
                   )}
@@ -215,25 +260,37 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
                   { preventScrollReset: true },
                 )
               }
-              className="ml-0.5 rounded-md px-1.5 py-1 text-[11px] text-accent transition-colors hover:bg-sunk"
+              className="ui-touch ml-0.5 shrink-0 rounded-lg px-2 text-xs text-accent transition-colors hover:bg-sunk lg:min-h-8"
             >
               {levels.length === LEVELS.length ? "only 1" : "all"}
             </button>
           </fieldset>
 
-          <input
-            type="search"
-            value={filters.q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search 好, hao, hǎo or “good”…"
-            aria-label="Search hanzi, pinyin or English"
-            className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-ink-3 focus:border-accent"
-          />
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setQ(draft);
+            }}
+            className="order-4 col-span-3 min-w-0 lg:order-0 lg:col-span-1 lg:flex-1"
+          >
+            <input
+              type="search"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Search 好, hao, hǎo or “good”…"
+              aria-label="Search hanzi, pinyin or English"
+              className="min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface px-4 text-base outline-none placeholder:text-ink-3 focus:border-accent lg:min-h-9 lg:text-sm"
+            />
+          </form>
 
           <ThemeToggle />
         </div>
 
-        <nav className="flex gap-1 px-4 lg:px-6">
+        <nav
+          aria-label="Browse"
+          className="hide-scrollbar flex snap-x gap-1 overflow-x-auto px-4 lg:px-6"
+        >
           {(
             [
               ["hanzi", "Hanzi", shown.hanzi, counts.hanzi],
@@ -252,7 +309,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
               title={count === total ? undefined : `${count} of ${total}`}
               className={({ isActive }) =>
                 clsx(
-                  "-mb-px border-b-2 px-2 py-2 text-sm transition-colors",
+                  "ui-touch -mb-px flex shrink-0 snap-start items-center border-b-2 px-2.5 text-sm font-medium transition-colors lg:min-h-10",
                   isActive
                     ? "border-accent text-ink"
                     : "border-transparent text-ink-3 hover:text-ink-2",
@@ -267,97 +324,33 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
 
       <div className="flex flex-1">
         <aside className="hidden w-56 shrink-0 border-r border-line px-4 py-5 lg:block">
-          <FilterGroup
-            label="Topic"
-            active={filters.topics.length}
-            onReset={() => clearGroup("topic")}
-          >
-            {/* Untagged first: while tagging is in progress it is the most
-                useful filter on the page — it is the backlog. */}
-            <Check
-              checked={filters.topics.includes(UNTAGGED)}
-              onChange={() => toggle("topic", UNTAGGED)}
-              label={
-                <span className="flex w-full items-baseline gap-1.5">
-                  <span className="italic text-ink-3">untagged</span>
-                  <span className="ml-auto tabular-nums text-ink-3">{untagged}</span>
-                </span>
-              }
-            />
-            <div className="-mx-1 max-h-[30vh] overflow-y-auto px-1">
-              {topics.map((t) => (
-                <Check
-                  key={t.id}
-                  checked={filters.topics.includes(t.id)}
-                  onChange={() => toggle("topic", t.id)}
-                  label={
-                    <span className="flex w-full items-baseline gap-1.5">
-                      <span className={clsx("truncate", t.count === 0 && "text-ink-3")}>
-                        {t.label}
-                      </span>
-                      <span className="ml-auto tabular-nums text-ink-3">{t.count}</span>
-                    </span>
-                  }
-                />
-              ))}
-            </div>
-          </FilterGroup>
-
-          <FilterGroup
-            label="Status"
-            active={filters.status.length}
-            onReset={() => clearGroup("s")}
-          >
-            {STATUSES.map((s) => (
-              <Check
-                key={s}
-                checked={filters.status.includes(s)}
-                onChange={() => toggle("s", s)}
-                label={s}
-              />
-            ))}
-          </FilterGroup>
-
-          <FilterGroup
-            label="Also in"
-            active={filters.standards.length}
-            onReset={() => clearGroup("std")}
-          >
-            {STANDARDS.map((t) => (
-              <Check
-                key={t.value}
-                checked={filters.standards.includes(t.value)}
-                onChange={() => toggle("std", t.value)}
-                label={t.label}
-              />
-            ))}
-          </FilterGroup>
-
-          <FilterGroup
-            label={`Radical (${radicals.length})`}
-            active={filters.radicals.length}
-            onReset={() => clearGroup("r")}
-          >
-            <div className="-mx-1 max-h-[45vh] overflow-y-auto px-1">
-              {radicals.map((r) => (
-                <Check
-                  key={r.char}
-                  checked={filters.radicals.includes(r.char)}
-                  onChange={() => toggle("r", r.char)}
-                  label={
-                    <span className="flex w-full items-baseline gap-1.5">
-                      <span className="han text-base">{r.display}</span>
-                      <span className="truncate text-ink-3">{r.gloss}</span>
-                      <span className="ml-auto tabular-nums text-ink-3">{r.count}</span>
-                    </span>
-                  }
-                />
-              ))}
-            </div>
-          </FilterGroup>
+          <FilterControls
+            filters={filters}
+            topics={topics}
+            radicals={radicals}
+            untagged={untagged}
+            toggle={toggle}
+            clearGroup={clearGroup}
+          />
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-5 lg:px-6">
+        <main className="min-w-0 flex-1 px-4 py-4 lg:px-6 lg:py-5">
+          <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+            <p className="text-xs text-ink-3">Refine this collection</p>
+            <button
+              ref={filterButtonRef}
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="ui-touch inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink"
+            >
+              Filters
+              {activeFilters > 0 && (
+                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[11px] text-white">
+                  {activeFilters}
+                </span>
+              )}
+            </button>
+          </div>
           <ActiveFilters
             filters={filters}
             radicalLabel={radicalLabel}
@@ -368,8 +361,195 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           <Outlet />
         </main>
       </div>
+      <MobileFilters
+        open={filtersOpen}
+        onClose={() => {
+          setFiltersOpen(false);
+          requestAnimationFrame(() => filterButtonRef.current?.focus());
+        }}
+      >
+        <FilterControls
+          filters={filters}
+          topics={topics}
+          radicals={radicals}
+          untagged={untagged}
+          toggle={toggle}
+          clearGroup={clearGroup}
+        />
+      </MobileFilters>
       {!listOwnsFooter && <CreditsFooter />}
     </div>
+  );
+}
+
+function MobileFilters({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) {
+      dialog.showModal();
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previous;
+        if (dialog.open) dialog.close();
+      };
+    }
+  }, [open]);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="mobile-filter-title"
+      onClose={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      className="safe-bottom fixed inset-x-0 top-auto bottom-0 m-0 max-h-[82dvh] w-full max-w-none overflow-hidden rounded-t-2xl border border-line bg-paper p-0 text-ink backdrop:bg-ink/45 lg:hidden"
+    >
+      <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line" aria-hidden />
+      <div className="flex items-center justify-between border-b border-line px-4 py-2">
+        <div>
+          <h2 id="mobile-filter-title" className="text-base font-medium">
+            Refine results
+          </h2>
+          <p className="text-xs text-ink-3">Changes apply immediately</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ui-touch rounded-lg px-3 text-sm font-medium text-accent"
+        >
+          Done
+        </button>
+      </div>
+      <div className="max-h-[calc(82dvh-72px)] overflow-y-auto px-4 py-4">{children}</div>
+    </dialog>
+  );
+}
+
+function FilterControls({
+  filters,
+  topics,
+  radicals,
+  untagged,
+  toggle,
+  clearGroup,
+}: {
+  filters: Filters;
+  topics: { id: string; label: string; count: number }[];
+  radicals: {
+    char: string;
+    display: string;
+    gloss: string;
+    strokes: number;
+    count: number;
+  }[];
+  untagged: number;
+  toggle: (key: FilterKey, value: string) => void;
+  clearGroup: (key: FilterKey | "q") => void;
+}) {
+  return (
+    <>
+      <FilterGroup label="Topic" active={filters.topics.length} onReset={() => clearGroup("topic")}>
+        <Check
+          checked={filters.topics.includes(UNTAGGED)}
+          onChange={() => toggle("topic", UNTAGGED)}
+          label={
+            <span className="flex w-full items-baseline gap-1.5">
+              <span className="italic text-ink-3">untagged</span>
+              <span className="ml-auto tabular-nums text-ink-3">{untagged}</span>
+            </span>
+          }
+        />
+        <div className="-mx-1 max-h-[30vh] overflow-y-auto px-1">
+          {topics.map((topic) => (
+            <Check
+              key={topic.id}
+              checked={filters.topics.includes(topic.id)}
+              onChange={() => toggle("topic", topic.id)}
+              label={
+                <span className="flex w-full items-baseline gap-1.5">
+                  <span className={clsx("truncate", topic.count === 0 && "text-ink-3")}>
+                    {topic.label}
+                  </span>
+                  <span className="ml-auto tabular-nums text-ink-3">{topic.count}</span>
+                </span>
+              }
+            />
+          ))}
+        </div>
+      </FilterGroup>
+
+      <FilterGroup label="Status" active={filters.status.length} onReset={() => clearGroup("s")}>
+        {STATUSES.map((status) => (
+          <Check
+            key={status}
+            checked={filters.status.includes(status)}
+            onChange={() => toggle("s", status)}
+            label={status}
+          />
+        ))}
+      </FilterGroup>
+
+      <FilterGroup
+        label="Also in"
+        active={filters.standards.length}
+        onReset={() => clearGroup("std")}
+      >
+        {STANDARDS.map((standard) => (
+          <Check
+            key={standard.value}
+            checked={filters.standards.includes(standard.value)}
+            onChange={() => toggle("std", standard.value)}
+            label={standard.label}
+          />
+        ))}
+      </FilterGroup>
+
+      <FilterGroup
+        label={`Radical (${radicals.length})`}
+        active={filters.radicals.length}
+        onReset={() => clearGroup("r")}
+      >
+        <div className="-mx-1 max-h-[45vh] overflow-y-auto px-1">
+          {radicals.map((radical) => (
+            <Check
+              key={radical.char}
+              checked={filters.radicals.includes(radical.char)}
+              onChange={() => toggle("r", radical.char)}
+              label={
+                <span className="flex w-full items-baseline gap-1.5">
+                  <span className="han text-base">{radical.display}</span>
+                  <span className="truncate text-ink-3">{radical.gloss}</span>
+                  <span className="ml-auto tabular-nums text-ink-3">{radical.count}</span>
+                </span>
+              }
+            />
+          ))}
+        </div>
+      </FilterGroup>
+    </>
   );
 }
 
@@ -387,13 +567,13 @@ function FilterGroup({
   return (
     <div className="mb-5">
       <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <h3 className="text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">{label}</h3>
+        <h3 className="ui-eyebrow">{label}</h3>
         {/* Only offered when the group has something to reset. */}
         {active > 0 && (
           <button
             type="button"
             onClick={onReset}
-            className="text-[11px] text-accent underline underline-offset-2 hover:no-underline"
+            className="ui-touch -my-2 rounded-lg px-2 text-xs text-accent underline underline-offset-2 hover:no-underline lg:min-h-8"
           >
             reset{active > 1 ? ` (${active})` : ""}
           </button>
@@ -458,14 +638,14 @@ function ActiveFilters({
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b border-line pb-3">
-      <span className="text-[11px] tracking-[0.12em] text-ink-3 uppercase">Filtering by</span>
+      <span className="ui-eyebrow">Filtering by</span>
       {chips.map((c) => (
         <button
           key={`${c.key}:${c.value}`}
           type="button"
           onClick={() => onRemove(c.key, c.value)}
           title={`Remove this filter`}
-          className="group inline-flex items-center gap-1 rounded-full border border-line bg-surface py-0.5 pr-1.5 pl-2.5 text-xs text-ink-2 transition-colors hover:border-accent hover:text-ink"
+          className="ui-touch group inline-flex items-center gap-1 rounded-full border border-line bg-surface pr-2 pl-3 text-xs text-ink-2 transition-colors hover:border-accent hover:text-ink lg:min-h-8"
         >
           {c.label}
           <span aria-hidden className="text-ink-3 transition-colors group-hover:text-accent">
@@ -477,7 +657,7 @@ function ActiveFilters({
         <button
           type="button"
           onClick={onClearAll}
-          className="ml-1 text-xs text-accent underline underline-offset-4 hover:no-underline"
+          className="ui-touch ml-1 rounded-lg px-2 text-xs text-accent underline underline-offset-4 hover:no-underline lg:min-h-8"
         >
           Clear all
         </button>
@@ -496,12 +676,12 @@ function Check({
   label: React.ReactNode;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs text-ink-2 hover:bg-sunk">
+    <label className="ui-touch flex cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-ink-2 hover:bg-sunk lg:min-h-8 lg:text-xs">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="size-3.5 shrink-0 accent-[var(--color-accent)]"
+        className="accent-accent size-4 shrink-0"
       />
       <span className="min-w-0 flex-1">{label}</span>
     </label>

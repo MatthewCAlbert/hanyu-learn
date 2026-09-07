@@ -6,8 +6,8 @@ const link = "underline underline-offset-2 hover:text-accent";
  */
 export function CreditsFooter() {
   return (
-    <footer className="relative z-10 mt-auto border-t border-line bg-paper px-4 py-3 text-[11px] leading-relaxed text-ink-3 lg:px-6">
-      <p>
+    <footer className="relative z-10 mt-auto border-t border-line bg-paper px-4 py-4 text-xs leading-relaxed text-ink-3 lg:px-6">
+      <p className="mx-auto max-w-5xl">
         Sentences from{" "}
         <a href="https://tatoeba.org" target="_blank" rel="noreferrer" className={link}>
           Tatoeba

@@ -36,7 +36,7 @@ export function ThemeToggle() {
       onClick={cycle}
       title={`Theme: ${theme ?? "system"}`}
       aria-label={`Theme: ${theme ?? "system"}. Click to change.`}
-      className="shrink-0 rounded-md border border-line px-2 py-1 text-xs text-ink-2 transition-colors hover:border-accent hover:text-accent"
+      className="ui-touch inline-flex size-11 shrink-0 items-center justify-center justify-self-end rounded-xl border border-line bg-surface p-0 text-sm text-ink-2 transition-colors hover:border-accent hover:text-accent lg:size-9"
     >
       {theme === "dark" ? "☾" : theme === "light" ? "☀" : "◐"}
     </button>

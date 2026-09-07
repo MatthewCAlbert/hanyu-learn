@@ -63,20 +63,19 @@ export function StrokeOrder({ char, data }: { char: string; data: CharacterJson 
 
   if (!data) {
     return (
-      <div className="flex size-[220px] items-center justify-center rounded-lg border border-dashed border-line">
+      <div className="flex size-[min(220px,calc(100vw-32px))] items-center justify-center rounded-xl border border-dashed border-line">
         <span className="han text-6xl text-ink-3">{char}</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full max-w-[220px] flex-col items-center gap-3">
       <div
         ref={target}
-        className="rounded-lg border border-line bg-surface"
-        style={{ width: 220, height: 220 }}
+        className="aspect-square w-full rounded-xl border border-line bg-surface [&>svg]:h-full [&>svg]:w-full"
       />
-      <div className="flex gap-1.5">
+      <div className="flex w-full gap-1.5">
         <Btn disabled={!ready} onClick={() => writer.current?.animateCharacter()}>
           Play
         </Btn>
@@ -111,7 +110,7 @@ function Btn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-md border border-line px-2.5 py-1 text-xs text-ink-2 transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+      className="ui-touch flex-1 rounded-lg border border-line bg-surface px-3 text-xs font-medium text-ink-2 transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
     >
       {children}
     </button>

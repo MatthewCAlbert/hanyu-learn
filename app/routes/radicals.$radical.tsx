@@ -41,7 +41,7 @@ export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <DetailShell back={{ to: `/hsk/${formatLevels(LEVELS)}/radicals`, label: "All radicals" }}>
-      <div className="flex flex-wrap items-center gap-5">
+      <div className="ui-card flex flex-wrap items-center gap-5 px-4 py-5 sm:px-6">
         <span className="han text-7xl leading-none">{r.display}</span>
         <div>
           <h1 className="text-xl text-ink">{r.gloss}</h1>
@@ -72,25 +72,25 @@ export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
           <Section
             key={level}
             title={`HSK ${level}`}
-            aside={<span className="text-[11px] text-ink-3">{members.length}</span>}
+            aside={<span className="text-xs text-ink-3">{members.length}</span>}
           >
             <div className="grid gap-1.5 sm:grid-cols-2">
               {members.map((m) => (
                 <div
                   key={m.char}
-                  className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 hover:border-accent"
+                  className="ui-card ui-card-interactive flex min-h-16 flex-wrap items-center gap-2 px-3 py-2"
                 >
                   <Link
                     to={`/hanzi/${encodeURIComponent(m.char)}`}
-                    className="flex min-w-0 flex-1 items-center gap-3"
+                    className="flex min-w-[12rem] flex-1 items-center gap-3"
                   >
                     <span className="han w-10 shrink-0 text-center text-3xl">{m.char}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs text-ink-2">{m.pinyin}</span>
-                      <span className="block truncate text-[11px] text-ink-3">{m.meaning}</span>
+                      <span className="block truncate text-xs text-ink-3">{m.meaning}</span>
                     </span>
                     {m.semantic && (
-                      <span className="shrink-0 text-[11px] text-ink-3" title="meaning component">
+                      <span className="shrink-0 text-xs text-ink-3" title="meaning component">
                         义 <span className="han">{m.semantic}</span>
                       </span>
                     )}
@@ -98,7 +98,7 @@ export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
                   {m.phonetic && (
                     <Link
                       to={`/phonetic/${encodeURIComponent(m.phonetic)}`}
-                      className="shrink-0 text-[11px] text-ink-3 hover:text-accent"
+                      className="ui-touch inline-flex shrink-0 items-center rounded-lg px-2 text-xs text-ink-3 hover:text-accent sm:min-h-8"
                       title="phonetic component"
                     >
                       声 <span className="han">{m.phonetic}</span>

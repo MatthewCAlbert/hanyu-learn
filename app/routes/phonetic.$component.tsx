@@ -57,7 +57,7 @@ export default function PhoneticDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <DetailShell back={{ to: `/hsk/${formatLevels(LEVELS)}/phonetics`, label: "All phonetics" }}>
-      <div className="flex flex-wrap items-center gap-5">
+      <div className="ui-card flex flex-wrap items-center gap-5 px-4 py-5 sm:px-6">
         <span className="han text-7xl leading-none">{meta.component}</span>
         <div>
           <h1 className="text-xl text-ink">
@@ -119,7 +119,7 @@ export default function PhoneticDetail({ loaderData }: Route.ComponentProps) {
           <Section
             key={level}
             title={`HSK ${levelLabel(level as Level)}`}
-            aside={<span className="text-[11px] text-ink-3">{members.length}</span>}
+            aside={<span className="text-xs text-ink-3">{members.length}</span>}
           >
             <div className="grid gap-1.5 sm:grid-cols-2">
               {members.map((m) => {
@@ -128,21 +128,19 @@ export default function PhoneticDetail({ loaderData }: Route.ComponentProps) {
                   <Link
                     key={m.char}
                     to={`/hanzi/${encodeURIComponent(m.char)}`}
-                    className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 hover:border-accent"
+                    className="ui-card ui-card-interactive flex min-h-16 flex-wrap items-center gap-2 px-3 py-2"
                   >
                     <span className="han w-10 shrink-0 text-center text-3xl">{m.char}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs text-ink-2">{m.pinyin[0]}</span>
-                      <span className="block truncate text-[11px] text-ink-3">{m.meanings[0]}</span>
+                      <span className="block truncate text-xs text-ink-3">{m.meanings[0]}</span>
                     </span>
                     {m.semantic && (
-                      <span className="shrink-0 text-[11px] text-ink-3" title="meaning component">
+                      <span className="shrink-0 text-xs text-ink-3" title="meaning component">
                         义 <span className="han">{m.semantic}</span>
                       </span>
                     )}
-                    {fit && (
-                      <span className="shrink-0 text-[10px] text-ink-3">{FIT_LABEL[fit]}</span>
-                    )}
+                    {fit && <span className="shrink-0 text-xs text-ink-3">{FIT_LABEL[fit]}</span>}
                     <StatusDot status={m.status} />
                   </Link>
                 );

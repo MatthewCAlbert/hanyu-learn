@@ -15,7 +15,7 @@ export function Chip({
     <span
       title={title}
       className={clsx(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] leading-4 whitespace-nowrap",
+        "inline-flex min-h-6 items-center rounded-full px-2.5 py-0.5 text-xs leading-4 whitespace-nowrap",
         tone === "accent" && "bg-accent-soft text-accent",
         tone === "neutral" && "bg-sunk text-ink-2",
         tone === "quiet" && "text-ink-3 ring-1 ring-line ring-inset",
@@ -58,9 +58,9 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-line pt-5">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">{title}</h2>
+    <section className="border-t border-line pt-6">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="ui-eyebrow">{title}</h2>
         {aside}
       </div>
       {children}
@@ -81,8 +81,8 @@ export function HanziLink({
     <Link
       to={`/hanzi/${encodeURIComponent(char)}`}
       className={clsx(
-        "han inline-flex items-center justify-center rounded-md border border-line bg-surface text-ink transition-colors hover:border-accent hover:text-accent",
-        size === "sm" && "size-8 text-lg",
+        "han inline-flex items-center justify-center rounded-lg border border-line bg-surface text-ink transition-colors hover:border-accent hover:text-accent",
+        size === "sm" && "size-11 text-xl",
         size === "md" && "size-11 text-2xl",
         size === "lg" && "size-16 text-4xl",
         className,
@@ -135,7 +135,7 @@ export function Highlighted({
 
 export function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-lg border border-dashed border-line px-4 py-10 text-center text-sm text-ink-3">
+    <p className="rounded-xl border border-dashed border-line bg-surface/50 px-4 py-12 text-center text-sm text-ink-3">
       {children}
     </p>
   );

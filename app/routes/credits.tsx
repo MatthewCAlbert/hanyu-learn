@@ -14,7 +14,7 @@ export default function Credits() {
       </p>
 
       <section className="mt-8 border-t border-line pt-5">
-        <h2 className="text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">Tatoeba</h2>
+        <h2 className="ui-eyebrow">Tatoeba</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-2">
           Example sentences come from <Ext href="https://tatoeba.org">Tatoeba</Ext>, licensed under{" "}
           <Ext href="https://creativecommons.org/licenses/by/2.0/fr/">CC-BY 2.0 FR</Ext>. The export
@@ -24,9 +24,7 @@ export default function Credits() {
       </section>
 
       <section className="mt-8 border-t border-line pt-5">
-        <h2 className="text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">
-          Make Me a Hanzi
-        </h2>
+        <h2 className="ui-eyebrow">Make Me a Hanzi</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-2">
           Character decompositions, written radical forms, and etymology types come from{" "}
           <Ext href="https://github.com/skishore/makemeahanzi">skishore/makemeahanzi</Ext>{" "}
@@ -39,9 +37,7 @@ export default function Credits() {
       </section>
 
       <section className="mt-8 border-t border-line pt-5">
-        <h2 className="text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">
-          hanzi-writer-data
-        </h2>
+        <h2 className="ui-eyebrow">hanzi-writer-data</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-2">
           Stroke-order graphics come from{" "}
           <Ext href="https://github.com/chanind/hanzi-writer-data">hanzi-writer-data</Ext>,
@@ -52,9 +48,7 @@ export default function Credits() {
       </section>
 
       <section className="mt-8 border-t border-line pt-5">
-        <h2 className="text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">
-          Also used
-        </h2>
+        <h2 className="ui-eyebrow">Also used</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-ink-2">
           <li>
             HSK word lists from{" "}

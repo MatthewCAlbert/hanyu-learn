@@ -1,0 +1,18 @@
+---
+description: Required mobile and desktop browser verification for UI changes
+globs: app/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# UI verification
+
+Before completing UI work:
+
+1. Run `pnpm typecheck`, `pnpm test`, and `pnpm build`.
+2. Verify affected flows at 390×844 and 1280×800 in a real browser.
+3. Test immediately below and above every changed responsive breakpoint.
+4. Exercise changed controls with keyboard and touch-sized targets.
+5. Check light and dark themes, sticky positioning, and page-level overflow.
+6. Confirm no information or functionality present before the change was removed.
+7. Report exact routes and viewports tested; do not claim mobile verification
+   without completing the 390px-width pass.

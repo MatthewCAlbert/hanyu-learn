@@ -41,8 +41,8 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
   return (
     <DetailShell back={{ to: `/hsk/${h.level}/hanzi`, label: `HSK ${h.level} hanzi` }}>
       {/* ---------------------------------------------------------- header */}
-      <div className="flex flex-wrap items-start gap-6">
-        <span className="han text-8xl leading-none">{h.char}</span>
+      <div className="ui-card flex flex-wrap items-start gap-5 px-4 py-5 sm:gap-7 sm:px-6">
+        <span className="han text-7xl leading-none sm:text-8xl">{h.char}</span>
         <div className="min-w-0 flex-1 pt-1">
           <div className="flex flex-wrap items-center gap-2">
             {h.readings.map((r) => (
@@ -61,7 +61,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
                 <span className="han">{h.traditional}</span>
               </Chip>
             )}
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-3">
+            <span className="flex w-full items-center gap-1.5 text-xs text-ink-3 sm:ml-auto sm:w-auto">
               <StatusDot status={a?.status ?? "stub"} />
               {a?.status ?? "not yet written"}
             </span>
@@ -73,7 +73,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
                 <Link
                   key={t.id}
                   to={`/topics/${t.id}`}
-                  className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] leading-4 text-accent transition-opacity hover:opacity-75"
+                  className="ui-touch inline-flex items-center rounded-full bg-accent-soft px-3 text-xs text-accent transition-opacity hover:opacity-75 sm:min-h-8"
                 >
                   {t.label}
                 </Link>
@@ -144,7 +144,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
       <div className="mt-8 space-y-6">
         {/* ------------------------------ how it's written / how it's built */}
         <Section title="Written & built">
-          <div className="flex flex-wrap items-start gap-8">
+          <div className="flex flex-col items-center gap-8 sm:items-start lg:flex-row">
             <StrokeOrder key={h.char} char={h.char} data={strokes as never} />
             <div className="min-w-0 flex-1">
               <Decomposition
@@ -173,11 +173,11 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         {a?.etymology && (
           <Section
             title="Etymology"
-            aside={<span className="text-[11px] text-ink-3">confidence: {a.confidence}</span>}
+            aside={<span className="text-xs text-ink-3">confidence: {a.confidence}</span>}
           >
             <Prose>{a.etymology}</Prose>
             {a.sources.length > 0 && (
-              <ul className="mt-3 space-y-0.5 text-[11px] text-ink-3">
+              <ul className="mt-3 space-y-0.5 text-xs text-ink-3">
                 {a.sources.map((s) => (
                   <li key={s}>· {s}</li>
                 ))}
@@ -189,7 +189,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         {a?.mnemonic && (
           <Section
             title="Mnemonic"
-            aside={<span className="text-[11px] text-ink-3">invented aid</span>}
+            aside={<span className="text-xs text-ink-3">invented aid</span>}
           >
             <Prose>{a.mnemonic}</Prose>
           </Section>
@@ -212,7 +212,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
                 Phonetic series <span className="han">{e?.phonetic ?? phoneticRole.form}</span>
               </Link>
             }
-            aside={<span className="text-[11px] text-ink-3">same sound component</span>}
+            aside={<span className="text-xs text-ink-3">same sound component</span>}
           >
             <p className="mb-3 text-xs text-ink-3">
               These share <span className="han">{e?.phonetic}</span> for its sound. Their meanings
@@ -223,11 +223,11 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
                 <Link
                   key={p.char}
                   to={`/hanzi/${encodeURIComponent(p.char)}`}
-                  className="flex items-baseline gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 hover:border-accent"
+                  className="ui-card ui-card-interactive ui-touch flex items-center gap-1.5 px-3"
                 >
                   <span className="han text-xl">{p.char}</span>
                   <span className="text-xs text-ink-2">{p.pinyin}</span>
-                  <span className="max-w-28 truncate text-[11px] text-ink-3">{p.meaning}</span>
+                  <span className="max-w-28 truncate text-xs text-ink-3">{p.meaning}</span>
                 </Link>
               ))}
             </div>
@@ -244,20 +244,18 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         {words.length > 0 && (
           <Section
             title={`Words using ${h.char}`}
-            aside={<span className="text-[11px] text-ink-3">{words.length}</span>}
+            aside={<span className="text-xs text-ink-3">{words.length}</span>}
           >
             <div className="grid gap-1.5 sm:grid-cols-2">
               {words.map((w) => (
                 <Link
                   key={w.word}
                   to={`/words/${encodeURIComponent(w.word)}`}
-                  className="flex items-baseline gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 hover:border-accent"
+                  className="ui-card ui-card-interactive flex min-h-14 min-w-0 flex-wrap items-center gap-x-2 px-3 py-2"
                 >
                   <span className="han text-lg">{w.word}</span>
                   <span className="text-xs text-ink-2">{w.pinyin}</span>
-                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-3">
-                    {w.meaning}
-                  </span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-ink-3">{w.meaning}</span>
                   <Chip tone="quiet">{w.level}</Chip>
                 </Link>
               ))}
@@ -269,9 +267,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
         <Section
           title="Examples"
           aside={
-            <span className="text-[11px] text-ink-3">
-              only characters from HSK {h.level} and below
-            </span>
+            <span className="text-xs text-ink-3">only characters from HSK {h.level} and below</span>
           }
         >
           <Sentences sentences={h.sentences} highlight={h.char} />
@@ -283,7 +279,7 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
               {h.components.map((c) => {
                 const href = componentHrefs[c];
                 const className =
-                  "han inline-flex size-8 items-center justify-center rounded-md border border-line bg-surface text-lg text-ink";
+                  "han inline-flex size-11 items-center justify-center rounded-lg border border-line bg-surface text-xl text-ink";
                 if (href) {
                   return (
                     <Link

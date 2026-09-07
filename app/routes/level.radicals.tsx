@@ -34,22 +34,22 @@ export default function LevelRadicals({ loaderData }: Route.ComponentProps) {
       {total === 0 && <Empty>No radical matches that search.</Empty>}
       {byStrokes.map(({ strokes, radicals }) => (
         <section key={strokes} className="mb-6">
-          <h2 className="mb-2 text-[11px] font-medium tracking-[0.12em] text-ink-3 uppercase">
+          <h2 className="ui-eyebrow mb-2">
             {strokes} stroke{strokes > 1 ? "s" : ""}
           </h2>
-          <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {radicals.map((r) => (
               <Link
                 key={r.char}
                 to={`/radicals/${encodeURIComponent(r.char)}`}
-                className="group flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 transition-colors hover:border-accent"
+                className="ui-card ui-card-interactive group flex min-h-16 items-center gap-3 px-3.5 py-2.5"
               >
                 <span className="han w-8 shrink-0 text-center text-2xl group-hover:text-accent">
                   {r.display}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-ink">{r.gloss}</span>
-                  <span className="block text-[11px] text-ink-3">
+                  <span className="block text-xs text-ink-3">
                     Kangxi #{r.number}
                     {r.variants.filter((v) => v !== r.display).length > 0 && (
                       <>

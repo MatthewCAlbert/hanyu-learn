@@ -47,7 +47,7 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
         honest headline is how much is still untagged. Lead with it rather than
         showing a page of zeros with no explanation.
       */}
-      <div className="mb-5 rounded-lg border border-line bg-surface px-4 py-3">
+      <div className="ui-card mb-5 px-4 py-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="text-sm text-ink">
             {done.toLocaleString()} of {total.toLocaleString()} entries tagged
@@ -55,7 +55,7 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
           </span>
           <Link
             to={`/hsk/${levelPath}/hanzi?topic=untagged`}
-            className="text-xs text-accent underline underline-offset-4"
+            className="ui-touch inline-flex items-center rounded-lg text-xs text-accent underline underline-offset-4"
           >
             {untagged.toLocaleString()} still untagged →
           </Link>
@@ -75,12 +75,12 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
       {rows.length === 0 ? (
         <Empty>No topic matches that search.</Empty>
       ) : (
-        <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((t) => (
             <Link
               key={t.id}
               to={`/topics/${t.id}`}
-              className="group flex flex-col rounded-lg border border-line bg-surface px-3 py-2.5 transition-colors hover:border-accent"
+              className="ui-card ui-card-interactive group flex min-h-24 flex-col px-3.5 py-3"
             >
               <div className="flex items-baseline gap-2">
                 <span className="text-sm text-ink group-hover:text-accent">{t.label}</span>
@@ -88,9 +88,11 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
                   {t.count === 0 ? "—" : t.count}
                 </span>
               </div>
-              <span className="mt-0.5 line-clamp-2 text-[11px] text-ink-3">{t.description}</span>
+              <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-3">
+                {t.description}
+              </span>
               {t.count > 0 && (
-                <span className="mt-1 text-[11px] text-ink-3">
+                <span className="mt-1 text-xs text-ink-3">
                   {t.hanzi} hanzi · {t.words} words
                 </span>
               )}

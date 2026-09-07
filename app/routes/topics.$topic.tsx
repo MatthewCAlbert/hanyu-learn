@@ -52,18 +52,20 @@ export default function TopicDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <DetailShell back={{ to: `/hsk/${formatLevels(LEVELS)}/topics`, label: "All topics" }}>
-      <h1 className="text-2xl text-ink">{topic.label}</h1>
-      <p className="mt-1 text-sm text-ink-3">
-        {total === 0 ? "Nothing tagged yet" : `${total} entr${total === 1 ? "y" : "ies"}`}
-        <span className="text-ink-3"> · </span>
-        <code className="rounded bg-sunk px-1 text-[11px]">content/topics/{topic.id}.md</code>
-      </p>
+      <div className="ui-card px-4 py-5 sm:px-6">
+        <h1 className="text-2xl text-ink">{topic.label}</h1>
+        <p className="mt-1 text-sm text-ink-3">
+          {total === 0 ? "Nothing tagged yet" : `${total} entr${total === 1 ? "y" : "ies"}`}
+          <span className="text-ink-3"> · </span>
+          <code className="rounded bg-sunk px-1 text-xs">content/topics/{topic.id}.md</code>
+        </p>
 
-      {topic.description && (
-        <div className="mt-4">
-          <Prose>{topic.description}</Prose>
-        </div>
-      )}
+        {topic.description && (
+          <div className="mt-4">
+            <Prose>{topic.description}</Prose>
+          </div>
+        )}
+      </div>
 
       <div className="mt-8 space-y-6">
         {total === 0 ? (
@@ -76,19 +78,19 @@ export default function TopicDetail({ loaderData }: Route.ComponentProps) {
             <Section
               key={level}
               title={`HSK ${levelLabel(level as Level)}`}
-              aside={<span className="text-[11px] text-ink-3">{members.length}</span>}
+              aside={<span className="text-xs text-ink-3">{members.length}</span>}
             >
               <div className="grid gap-1.5 sm:grid-cols-2">
                 {members.map((m) => (
                   <Link
                     key={`${m.kind}-${m.text}`}
                     to={`/${m.kind === "hanzi" ? "hanzi" : "words"}/${encodeURIComponent(m.text)}`}
-                    className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 hover:border-accent"
+                    className="ui-card ui-card-interactive flex min-h-16 flex-wrap items-center gap-3 px-3 py-2"
                   >
                     <span className="han shrink-0 text-2xl">{m.text}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs text-ink-2">{m.pinyin}</span>
-                      <span className="block truncate text-[11px] text-ink-3">{m.meaning}</span>
+                      <span className="block truncate text-xs text-ink-3">{m.meaning}</span>
                     </span>
                     {/* Shown because many-to-many membership is easy to forget. */}
                     {m.also.length > 0 && (
