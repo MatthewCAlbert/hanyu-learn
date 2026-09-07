@@ -107,6 +107,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const activeFilters =
     filters.radicals.length + filters.status.length + filters.standards.length + filters.topics.length;
   const search = toSearch(filters);
+  const listOwnsFooter = tab === "hanzi" || tab === "words";
 
   return (
     <div className="flex min-h-screen flex-col bg-paper">
@@ -325,7 +326,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           <Outlet />
         </main>
       </div>
-      <CreditsFooter />
+      {!listOwnsFooter && <CreditsFooter />}
     </div>
   );
 }

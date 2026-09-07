@@ -3,6 +3,7 @@ import type { Route } from "./+types/level.words";
 import { getMeta, getWordIndexes } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
 import { PAGE_STEP, UNTAGGED, filterWords, readFilters, readTake, statusOf } from "~/lib/filters";
+import { CreditsFooter } from "~/components/CreditsFooter";
 import { Chip, Empty, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 import { Toggle, Toolbar } from "./level.hanzi";
@@ -150,7 +151,10 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
         }
       />
       {total === 0 ? (
-        <Empty>Nothing matches those filters.</Empty>
+        <>
+          <Empty>Nothing matches those filters.</Empty>
+          <CreditsFooter />
+        </>
       ) : (
         <VirtualSections
           sections={sections}

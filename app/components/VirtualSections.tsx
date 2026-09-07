@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
+import { CreditsFooter } from "./CreditsFooter";
 
 export interface Section<Row> {
   id: string;
@@ -18,13 +19,9 @@ interface FooterContext {
 }
 
 /**
- * The footer only exists once the last section is rendered, so a sentinel
- * inside it is an exact "reached the end" signal — more reliable than Virtuoso's
- * `endReached`, which can miss when the item stream is re-created by a loader
- * revalidation.
- *
- * Declared at module scope on purpose: passing an inline component to
- * `components` gives it a new identity every render, remounting it constantly.
+ * Kept in Virtuoso's `Footer` slot so it is positioned after the final
+ * virtualized item. A sibling after a window-scrolling Virtuoso can otherwise
+ * appear before the final item because the reported outer height is estimated.
  */
 function ListFooter({ context }: { context?: FooterContext }) {
   const sentinel = useRef<HTMLDivElement>(null);
@@ -44,27 +41,30 @@ function ListFooter({ context }: { context?: FooterContext }) {
     return () => io.disconnect();
   }, [ctx?.hasMore, ctx?.pending, ctx?.onEndReached]);
 
-  if (!ctx?.hasMore) {
-    return <div className="py-6 text-center text-xs text-ink-3">{ctx?.loadedLabel}</div>;
-  }
-
   return (
-    <div ref={sentinel} className="flex flex-col items-center gap-2 py-6">
-      {/*
-        Scrolling loads the next page automatically, but an explicit control is
-        still needed: infinite scroll alone is unreachable by keyboard and
-        screen-reader users, and it silently does nothing wherever the observer
-        cannot fire.
-      */}
-      <button
-        type="button"
-        onClick={ctx.onEndReached}
-        disabled={ctx.pending}
-        className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
-      >
-        {ctx.pending ? "Loading…" : `Load ${ctx.step} more`}
-      </button>
-      <span className="text-[11px] text-ink-3">{ctx.progressLabel}</span>
+    <div ref={sentinel}>
+      {ctx?.hasMore ? (
+        <div className="flex flex-col items-center gap-2 py-6">
+          {/*
+            Scrolling loads the next page automatically, but an explicit control is
+            still needed: infinite scroll alone is unreachable by keyboard and
+            screen-reader users, and it silently does nothing wherever the observer
+            cannot fire.
+          */}
+          <button
+            type="button"
+            onClick={ctx.onEndReached}
+            disabled={ctx.pending}
+            className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+          >
+            {ctx.pending ? "Loading…" : `Load ${ctx.step} more`}
+          </button>
+          <span className="text-[11px] text-ink-3">{ctx.progressLabel}</span>
+        </div>
+      ) : (
+        <div className="py-6 text-center text-xs text-ink-3">{ctx?.loadedLabel}</div>
+      )}
+      <CreditsFooter />
     </div>
   );
 }
@@ -113,7 +113,6 @@ export function VirtualSections<Row>({
     () => ({ hasMore, pending, loadedLabel, progressLabel, step, onEndReached: loadMore }),
     [hasMore, pending, loadedLabel, progressLabel, step, loadMore],
   );
-
   const components = useMemo(() => ({ Footer: ListFooter }), []);
 
   return (

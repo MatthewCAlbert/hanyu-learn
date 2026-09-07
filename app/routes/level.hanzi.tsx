@@ -4,6 +4,7 @@ import type { Route } from "./+types/level.hanzi";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
 import { PAGE_STEP, UNTAGGED, filterHanzi, readFilters, readTake, statusOf } from "~/lib/filters";
+import { CreditsFooter } from "~/components/CreditsFooter";
 import { Chip, Empty, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 
@@ -209,7 +210,10 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
       />
 
       {total === 0 ? (
-        <Empty>Nothing matches those filters.</Empty>
+        <>
+          <Empty>Nothing matches those filters.</Empty>
+          <CreditsFooter />
+        </>
       ) : (
         <VirtualSections
           sections={sections}
