@@ -55,7 +55,7 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 |              |                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------- |
 | Hanzi        | 2,970 across 7 level bands (300 per level through 6; 1,171 in the 7–9 band)         |
-| Words        | 9,443 HSK multi-character entries, plus Extra country/language names                |
+| Words        | 9,443 HSK multi-character entries, plus 229 Extra country/language names            |
 | Radicals     | 205, grouped by canonical Kangxi number                                             |
 | Topics       | 42 themes; an entry carries zero, one or many                                       |
 | Sentences    | 50,416 Tatoeba pairs, filtered so an example never uses a character above its level |
@@ -75,7 +75,8 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
   the older HSK standards. A Phonetics tab lists sound families in the selected
   levels.
 - **Compare any two entries** — hanzi, words, radicals, phonetic series or
-  topics — side by side from `/compare` or the VS action on a detail page.
+  topics — side by side from a bookmarkable URL such as
+  `/compare?left=hanzi:好&right=word:爱好`, or the VS action on a detail page.
 - **Page-aware study chat** streams answers about the current hanzi, word or
   comparison. It supports `@` entry mentions, searches the local corpus before
   guessing, can use web search, and exposes tool activity, citations, token
@@ -89,15 +90,18 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 ## Optional study chat
 
 The reference library works without AI. To enable the floating study chat, open
-`/settings` and add an OpenRouter API key plus a model slug that supports tool
-calling. Reasoning, reasoning effort and response verbosity are configurable.
+`/settings` and add an OpenRouter API key (`sk-or-…`) plus a model slug. The app
+checks that the key works and the model advertises tool calling before saving.
+Reasoning, reasoning effort and response verbosity are configurable.
 
-The model and key are stored in `localStorage`; conversations are written to
-IndexedDB only when explicitly saved. Inference and optional web-search requests
-go directly from the browser to OpenRouter — there is no app server — so anything
-that can run script on the app origin can read the key. Each response shows its
-reported usage and cost, with per-run limits of six agent steps, US$0.75 and
-48,000 tokens.
+The model and key are stored in `localStorage`. Unsaved chats are in memory and
+disappear on reload; chats are written to IndexedDB only when explicitly saved,
+and saved threads can be renamed or deleted. Messages, prior history, page
+snapshots and local corpus-tool results go directly from the browser to
+OpenRouter; optional web search also runs through OpenRouter. There is no app
+server, so anything that can run script on the app origin can read the key. Each
+response shows its reported usage and cost, with per-run limits of six agent
+steps, US$0.75 and 48,000 tokens.
 
 ## Layout
 
@@ -133,8 +137,8 @@ The explanations are hand-written, level by level. Coverage today:
 
 |                                   | Written | Total  |
 | --------------------------------- | ------- | ------ |
-| Prose (etymology, word formation) | 107     | 12,471 |
-| Topic-tagged                      | 505     | 12,471 |
+| Prose (etymology, word formation) | 2,795   | 12,642 |
+| Topic-tagged                      | 1,507   | 12,642 |
 
 These move as batches land — `docs/hsk/level-N/` and the Topics tab carry the
 current figures.
