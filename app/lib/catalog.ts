@@ -31,6 +31,25 @@ export function topicsAtLevels(
   return { topics: narrowed, untagged, total: chars.size + wordSet.size };
 }
 
+/**
+ * The search predicates for the topic and radical tabs.
+ *
+ * Shared with the tab bar so a badge can never disagree with the list it
+ * labels. Neither tab lists entries, so neither goes through the pinyin and
+ * gloss matching that `filters.ts` does for hanzi and words.
+ */
+export const matchesTopic = (q: string, t: Pick<Topic, "id" | "label">): boolean =>
+  !q || t.label.toLowerCase().includes(q.toLowerCase()) || t.id.includes(q.toLowerCase());
+
+export const matchesRadical = (
+  q: string,
+  r: Pick<Radical, "char" | "variants" | "gloss">,
+): boolean =>
+  !q ||
+  r.char.includes(q) ||
+  r.variants.some((v) => v.includes(q)) ||
+  r.gloss.toLowerCase().includes(q.toLowerCase());
+
 /** Per-level counts summed over a selection. */
 export function countsFor(counts: Dataset["counts"], levels: Level[]) {
   return levels.reduce(

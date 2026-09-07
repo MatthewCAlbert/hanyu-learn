@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/level.radicals";
-import { radicalsAtLevels } from "~/lib/catalog";
+import { matchesRadical, radicalsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
@@ -10,16 +10,9 @@ import { Toolbar } from "./level.hanzi";
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const levels = parseLevels(params.level);
   const { q } = readFilters(new URL(request.url).searchParams);
-  const lower = q.toLowerCase();
   const [{ radicals: allRadicals }, hanzi] = await Promise.all([getMeta(), getHanziIndexes(levels)]);
 
-  const radicals = radicalsAtLevels(allRadicals, hanzi, levels).filter(
-    (r) =>
-      !q ||
-      r.char.includes(q) ||
-      r.variants.some((v) => v.includes(q)) ||
-      r.gloss.toLowerCase().includes(lower),
-  );
+  const radicals = radicalsAtLevels(allRadicals, hanzi, levels).filter((r) => matchesRadical(q, r));
 
   // Sectioned by stroke count — the index a paper dictionary would use.
   const byStrokes = [...new Set(radicals.map((r) => r.strokes))]

@@ -3,9 +3,19 @@ import clsx from "clsx";
 import type { Route } from "./+types/level.hanzi";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
 import { parseLevels } from "~/lib/levels";
-import { PAGE_STEP, UNTAGGED, filterHanzi, readFilters, readTake, statusOf } from "~/lib/filters";
+import {
+  PAGE_STEP,
+  UNTAGGED,
+  type Match,
+  glossFor,
+  rankOf,
+  readFilters,
+  readTake,
+  searchHanzi,
+  statusOf,
+} from "~/lib/filters";
 import { CreditsFooter } from "~/components/CreditsFooter";
-import { Chip, Empty, StatusDot } from "~/components/ui";
+import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 
 /** Rows per virtualized chunk. Bounded so each mounted item stays small. */
@@ -15,6 +25,8 @@ interface Row {
   char: string;
   pinyin: string;
   meaning: string;
+  /** Slice of `meaning` the search hit, for highlighting. */
+  at: [number, number] | null;
   status: ReturnType<typeof statusOf>;
   frequency: number | null;
   level: number;
@@ -31,7 +43,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
   ]);
   const gloss = new Map(RADICALS.map((r) => [r.char, r]));
 
-  const matched = filterHanzi(
+  const matched = searchHanzi(
     HANZI.filter((h) => levels.includes(h.level)),
     filters,
   );
@@ -47,48 +59,73 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
    * rebuilds sections from the slice.
    */
   const topicOrder = new Map(TOPICS.map((t, i) => [t.id, i]));
-  type Pair = { h: (typeof matched)[number]; key: string };
+  type Pair = { h: (typeof matched)[number]["h"]; match: Match | null; key: string };
 
-  const ordered: Pair[] =
+  const pairs: Pair[] =
     filters.group === "topic"
-      ? matched
-          .flatMap((h) =>
-            h.topics.length > 0
-              ? h.topics.map((t) => ({ h, key: t }))
-              : [{ h, key: UNTAGGED }],
-          )
-          // Untagged sorts last: it is a backlog, not a topic.
-          .sort(
-            (a, b) =>
-              (a.key === UNTAGGED ? Infinity : (topicOrder.get(a.key) ?? Infinity)) -
-                (b.key === UNTAGGED ? Infinity : (topicOrder.get(b.key) ?? Infinity)) ||
-              byFreq(a.h, b.h),
-          )
+      ? matched.flatMap(({ h, match }) =>
+          h.topics.length > 0
+            ? h.topics.map((key) => ({ h, match, key }))
+            : [{ h, match, key: UNTAGGED }],
+        )
       : filters.group === "frequency"
-        ? [...matched].sort(byFreq).map((h) => ({ h, key: "" }))
-        : [...matched]
-            .sort((a, b) => {
-              const ra = gloss.get(a.radicalCanonical);
-              const rb = gloss.get(b.radicalCanonical);
-              return (
-                (ra?.strokes ?? 0) - (rb?.strokes ?? 0) ||
-                (ra?.number ?? 0) - (rb?.number ?? 0) ||
-                byFreq(a, b)
-              );
-            })
-            .map((h) => ({ h, key: h.radicalCanonical }));
+        ? matched.map(({ h, match }) => ({ h, match, key: "" }))
+        : matched.map(({ h, match }) => ({ h, match, key: h.radicalCanonical }));
+
+  /** Where the sections themselves sit when nothing is being searched for. */
+  const byGroup: (a: Pair, b: Pair) => number =
+    filters.group === "topic"
+      ? (a, b) => {
+          // Untagged sorts last: it is a backlog, not a topic.
+          const ra = a.key === UNTAGGED ? Infinity : (topicOrder.get(a.key) ?? Infinity);
+          const rb = b.key === UNTAGGED ? Infinity : (topicOrder.get(b.key) ?? Infinity);
+          return ra === rb ? 0 : ra - rb; // Infinity - Infinity is NaN
+        }
+      : filters.group === "frequency"
+        ? () => 0
+        : (a, b) => {
+            const ra = gloss.get(a.key);
+            const rb = gloss.get(b.key);
+            return (ra?.strokes ?? 0) - (rb?.strokes ?? 0) || (ra?.number ?? 0) - (rb?.number ?? 0);
+          };
+
+  /**
+   * A section sits where its strongest member does, so the best hit leads the
+   * page rather than hiding under whichever radical happens to have fewest
+   * strokes.
+   */
+  const sectionRank = new Map<string, number>();
+  for (const p of pairs) {
+    const r = rankOf(p.match);
+    const cur = sectionRank.get(p.key);
+    if (cur === undefined || r < cur) sectionRank.set(p.key, r);
+  }
+  const bySection = (a: Pair, b: Pair) =>
+    (sectionRank.get(a.key) ?? 0) - (sectionRank.get(b.key) ?? 0);
+
+  /**
+   * With a query the page is ranked; without one it is browsed. Both relevance
+   * terms are 0 when nothing matched (`rankOf` is finite by design), so an
+   * unqueried list keeps exactly the radical/topic/frequency order it had.
+   */
+  const ordered = pairs.sort(
+    (a, b) =>
+      bySection(a, b) || byGroup(a, b) || rankOf(a.match) - rankOf(b.match) || byFreq(a.h, b.h),
+  );
 
   const slice = ordered.slice(0, take);
-  const page = slice.map(
-    ({ h }): Row => ({
+  const page = slice.map(({ h, match }): Row => {
+    const { text, at } = glossFor(h.meanings, match);
+    return {
       char: h.char,
       pinyin: h.pinyin[0] ?? "",
-      meaning: h.meanings[0] ?? "",
+      meaning: text,
+      at,
       status: statusOf(h),
       frequency: h.frequency,
       level: h.level,
-    }),
-  );
+    };
+  });
 
   // Rebuild sections from the revealed rows only.
   const sections: Section<Row>[] = [];
@@ -267,8 +304,8 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                       <span className="mt-1 max-w-full truncate text-[11px] text-ink-2">
                         {r.pinyin}
                       </span>
-                      <span className="max-w-full truncate text-[10px] text-ink-3">
-                        {r.meaning}
+                      <span title={r.meaning} className="max-w-full truncate text-[10px] text-ink-3">
+                        <Highlighted text={r.meaning} at={r.at} />
                       </span>
                       <span className="mt-0.5 flex items-center gap-1">
                         {showLevel && (
@@ -293,7 +330,9 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                           </Link>
                         </td>
                         <td className="w-28 text-ink-2">{r.pinyin}</td>
-                        <td className="truncate text-ink-2">{r.meaning}</td>
+                        <td className="truncate text-ink-2" title={r.meaning}>
+                          <Highlighted text={r.meaning} at={r.at} />
+                        </td>
                         {showLevel && (
                           <td className="w-14 text-right text-[11px] text-ink-3">HSK {r.level}</td>
                         )}
