@@ -1,7 +1,7 @@
 ---
 topic: abstract-concepts
 label: Abstract concepts
-hanzi: [类, 式, 命, 格]
+hanzi: [类, 式, 命, 格, 缺]
 words: []
 ---
 
