@@ -1,7 +1,7 @@
 ---
 topic: daily-routine
 label: Daily routine
-hanzi: [醒]
+hanzi: [醒, 躺, 擦]
 words: [回家, 睡觉, 洗澡, 午睡, 整理, 散步, 理发]
 ---
 

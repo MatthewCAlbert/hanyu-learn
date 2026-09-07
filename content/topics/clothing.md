@@ -1,7 +1,7 @@
 ---
 topic: clothing
 label: Clothing
-hanzi: [布, 衫, 衬, 裙, 裤]
+hanzi: [布, 衫, 衬, 裙, 裤, 戴]
 words: [大衣, 球鞋, 服装, 裤子, 衬衫, 裙子, 上衣, 短裤, 衬衣]
 ---
 
