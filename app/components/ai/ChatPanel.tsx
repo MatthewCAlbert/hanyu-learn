@@ -139,7 +139,12 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
       ) : (
         <>
           {active ? (
-            <ChatMessages chat={active} suggestions={suggestions} onPick={pickSuggestion} />
+            <ChatMessages
+              chat={active}
+              suggestions={suggestions}
+              onPick={pickSuggestion}
+              streaming={sending}
+            />
           ) : null}
           {error && <p className="px-3 pb-1 text-xs text-accent">{error}</p>}
           <ChatComposer

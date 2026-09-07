@@ -1,8 +1,14 @@
 import "fake-indexeddb/auto";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { configInputSchema, maskApiKey, parseConfig } from "~/lib/ai/config";
-import { AI_PERSIST, createBlankChat } from "~/lib/ai/store";
+import {
+  configInputSchema,
+  maskApiKey,
+  parseConfig,
+  samplingFromConfig,
+  withSamplingDefaults,
+} from "~/lib/ai/config";
+import { CONFIG_SAMPLING_DEFAULTS } from "~/lib/ai/types";
 import {
   deleteSavedChat,
   getSavedChat,
@@ -10,7 +16,16 @@ import {
   putSavedChat,
   resetChatDbForTests,
 } from "~/lib/ai/chat-db.client";
-import { AGENT_LIMITS, dropCallModelHeader, historyToInput } from "~/lib/ai/agent";
+import {
+  AGENT_LIMITS,
+  dropCallModelHeader,
+  historyToInput,
+  mergeLiveText,
+  textFromItem,
+  withStreamFlag,
+} from "~/lib/ai/agent";
+import { AI_PERSIST, coalesce, createBlankChat } from "~/lib/ai/store";
+import { toolActivitySummary, visibleToolActivities } from "~/components/ai/UsageDetails";
 import {
   contextChanged,
   formatUserTurn,
@@ -37,7 +52,27 @@ describe("config", () => {
     expect(parseConfig({ v: 1, modelName: "", apiKey: "x" })).toBeNull();
     expect(
       parseConfig({ v: 1, modelName: "openai/gpt-4o", apiKey: "sk-or-v1-abcdefghijk" }),
-    ).toEqual({ modelName: "openai/gpt-4o", apiKey: "sk-or-v1-abcdefghijk" });
+    ).toEqual({
+      modelName: "openai/gpt-4o",
+      apiKey: "sk-or-v1-abcdefghijk",
+      ...CONFIG_SAMPLING_DEFAULTS,
+    });
+    expect(
+      parseConfig({
+        v: 1,
+        modelName: "openai/gpt-4o",
+        apiKey: "sk-or-v1-abcdefghijk",
+        reasoning: false,
+        reasoningEffort: "low",
+        verbosity: "high",
+      }),
+    ).toEqual({
+      modelName: "openai/gpt-4o",
+      apiKey: "sk-or-v1-abcdefghijk",
+      reasoning: false,
+      reasoningEffort: "low",
+      verbosity: "high",
+    });
   });
 
   it("rejects unknown config versions instead of silently migrating", () => {
@@ -45,6 +80,23 @@ describe("config", () => {
       parseConfig({ v: 2, modelName: "openai/gpt-4o", apiKey: "sk-or-v1-abcdefghijk" }),
     ).toBeNull();
     expect(parseConfig({ modelName: "openai/gpt-4o", apiKey: "sk-or-v1-abcdefghijk" })).toBeNull();
+  });
+
+  it("maps config to OpenRouter reasoning and verbosity", () => {
+    const base = withSamplingDefaults({
+      modelName: "anthropic/claude-sonnet-4",
+      apiKey: "sk-or-v1-abcdefghijk",
+    });
+    expect(samplingFromConfig(base)).toEqual({
+      reasoning: { enabled: true, effort: "medium" },
+      text: { verbosity: "medium" },
+    });
+    expect(
+      samplingFromConfig({ ...base, reasoning: false, reasoningEffort: "high", verbosity: "low" }),
+    ).toEqual({
+      reasoning: { enabled: false },
+      text: { verbosity: "low" },
+    });
   });
 });
 
@@ -136,6 +188,66 @@ describe("browser CORS workaround", () => {
     const next = await dropCallModelHeader.beforeRequest({} as never, req);
     expect(next.headers.get("x-openrouter-callmodel")).toBeNull();
     expect(next.headers.get("X-Title")).toBe("Hanyu Learn");
+  });
+
+  it("forces stream:true and SSE Accept on Responses API requests", async () => {
+    expect(withStreamFlag(JSON.stringify({ model: "x", input: "hi" }))).toBe(
+      JSON.stringify({ model: "x", input: "hi", stream: true }),
+    );
+    expect(withStreamFlag(JSON.stringify({ model: "x", stream: true }))).toBe(
+      JSON.stringify({ model: "x", stream: true }),
+    );
+
+    const next = dropCallModelHeader.beforeCreateRequest(
+      {} as never,
+      {
+        url: new URL("https://openrouter.ai/api/v1/responses"),
+        options: {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "openai/gpt-4o", input: "ping" }),
+        },
+      },
+    );
+    expect(JSON.parse(String(next.options?.body))).toMatchObject({ stream: true });
+    expect(new Headers(next.options?.headers).get("Accept")).toBe("text/event-stream");
+
+    const req = new Request("https://openrouter.ai/api/v1/responses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ model: "openai/gpt-4o" }),
+    });
+    const streamed = await dropCallModelHeader.beforeRequest({} as never, req);
+    expect(streamed.headers.get("Accept")).toBe("text/event-stream");
+    expect(JSON.parse(await streamed.text())).toMatchObject({ stream: true });
+  });
+});
+
+describe("live assistant text", () => {
+  it("reads output_text parts and keeps prefix-consistent snapshots", () => {
+    expect(
+      textFromItem({
+        type: "message",
+        content: [
+          { type: "output_text", text: "好" },
+          { type: "output_text", text: " is good" },
+        ],
+      }),
+    ).toBe("好 is good");
+    expect(mergeLiveText("Hel", "Hello")).toBe("Hello");
+    expect(mergeLiveText("Hello", "Hel")).toBe("Hello");
+    expect(mergeLiveText("I'll look that up.", "好 is an adjective.")).toBe("好 is an adjective.");
+  });
+
+  it("coalesces stream patches onto one frame", async () => {
+    const seen: string[] = [];
+    const live = coalesce((value: string) => seen.push(value));
+    live.push("H");
+    live.push("He");
+    live.push("Hel");
+    expect(seen).toEqual([]);
+    live.flush();
+    expect(seen).toEqual(["Hel"]);
   });
 });
 
@@ -247,5 +359,20 @@ describe("page context snapshots", () => {
     ]);
     const first = input[0];
     expect(first && "content" in first && String(first.content)).toContain("Hanzi: 好");
+  });
+});
+
+describe("tool activity summary", () => {
+  it("collapses calls into one line and hides raw function_call_output rows", () => {
+    const tools = [
+      { id: "1", name: "lookup_word", status: "done" as const, resultPreview: '{"word":"朋友"}' },
+      { id: "2", name: "lookup_hanzi", status: "done" as const, resultPreview: '{"char":"朋"}' },
+      { id: "3", name: "function_call_output", status: "done" as const, resultPreview: '{"found":true}' },
+    ];
+    expect(visibleToolActivities(tools).map((t) => t.name)).toEqual(["lookup_word", "lookup_hanzi"]);
+    expect(toolActivitySummary(tools)).toBe("2 tools · done");
+    expect(toolActivitySummary([{ id: "1", name: "lookup_hanzi", status: "running" }])).toBe(
+      "Look up hanzi · working",
+    );
   });
 });

@@ -97,7 +97,36 @@ export interface ChatSummary {
 export interface OpenRouterConfig {
   modelName: string;
   apiKey: string;
+  /** OpenRouter `reasoning.enabled`. */
+  reasoning: boolean;
+  /** OpenRouter `reasoning.effort`. */
+  reasoningEffort: ReasoningEffort;
+  /** OpenRouter Responses `text.verbosity`. */
+  verbosity: Verbosity;
 }
+
+export const REASONING_EFFORTS = [
+  "max",
+  "xhigh",
+  "high",
+  "medium",
+  "low",
+  "minimal",
+  "none",
+] as const;
+export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+
+export const VERBOSITY_LEVELS = ["low", "medium", "high", "xhigh", "max"] as const;
+export type Verbosity = (typeof VERBOSITY_LEVELS)[number];
+
+export const CONFIG_SAMPLING_DEFAULTS: Pick<
+  OpenRouterConfig,
+  "reasoning" | "reasoningEffort" | "verbosity"
+> = {
+  reasoning: true,
+  reasoningEffort: "medium",
+  verbosity: "medium",
+};
 
 export const MENTION_KINDS: MentionKind[] = ["hanzi", "word"];
 export const PAGE_CONTEXT_KINDS: PageContextKind[] = ["hanzi", "word", "compare", "none"];

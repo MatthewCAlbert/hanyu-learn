@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { usageExplanation, formatUsd } from "~/lib/ai/usage";
-import type { ChatMessage } from "~/lib/ai/types";
+import type { ChatMessage, ToolActivity } from "~/lib/ai/types";
 
 export function UsageDetails({ usage }: { usage: NonNullable<ChatMessage["usage"]> }) {
   return (
@@ -15,6 +15,37 @@ export function UsageDetails({ usage }: { usage: NonNullable<ChatMessage["usage"
   );
 }
 
+export function visibleToolActivities(tools: ToolActivity[]): ToolActivity[] {
+  const calls = tools.filter((t) => t.name !== "function_call_output");
+  return calls.length > 0 ? calls : tools;
+}
+
+export function toolActivitySummary(tools: ToolActivity[]): string {
+  const list = visibleToolActivities(tools);
+  if (list.length === 0) return "Tools";
+  const running = list.some((t) => t.status === "running");
+  const error = list.some((t) => t.status === "error");
+  const status = running ? "working" : error ? "error" : "done";
+  const first = list[0];
+  if (list.length === 1 && first) return `${labelFor(first.name)} · ${status}`;
+  return `${list.length} tools · ${status}`;
+}
+
+export function ToolActivityList({ tools }: { tools: ToolActivity[] }) {
+  const list = visibleToolActivities(tools);
+  if (list.length === 0) return null;
+  return (
+    <details className="mb-2 text-xs text-ink-3">
+      <summary className="cursor-pointer select-none hover:text-ink-2">{toolActivitySummary(tools)}</summary>
+      <div className="mt-1.5 space-y-1">
+        {list.map((t) => (
+          <ToolCallRow key={t.id} name={t.name} status={t.status} preview={t.resultPreview} />
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function ToolCallRow({
   name,
   status,
@@ -25,7 +56,7 @@ export function ToolCallRow({
   preview?: string;
 }) {
   return (
-    <div className="rounded-lg bg-sunk px-2.5 py-1.5 text-xs text-ink-2">
+    <div className="min-w-0 rounded-lg bg-sunk px-2.5 py-1.5 text-xs text-ink-2">
       <div className="flex items-center gap-2">
         <span
           className={clsx(
@@ -35,10 +66,10 @@ export function ToolCallRow({
             status === "error" && "bg-accent",
           )}
         />
-        <span className="font-medium text-ink">{labelFor(name)}</span>
-        <span className="text-ink-3">{status === "running" ? "working" : status}</span>
+        <span className="min-w-0 truncate font-medium text-ink">{labelFor(name)}</span>
+        <span className="shrink-0 text-ink-3">{status === "running" ? "working" : status}</span>
       </div>
-      {preview ? <p className="mt-1 truncate text-ink-3">{preview}</p> : null}
+      {preview ? <p className="mt-1 truncate font-mono text-ink-3">{preview}</p> : null}
     </div>
   );
 }

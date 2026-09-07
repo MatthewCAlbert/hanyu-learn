@@ -7,10 +7,21 @@ import {
   maskApiKey,
   readConfig,
   validateConfigRemote,
+  withSamplingDefaults,
   writeConfig,
 } from "~/lib/ai/config";
 import { aiStore } from "~/lib/ai/store";
-import type { OpenRouterConfig } from "~/lib/ai/types";
+import {
+  CONFIG_SAMPLING_DEFAULTS,
+  REASONING_EFFORTS,
+  VERBOSITY_LEVELS,
+  type OpenRouterConfig,
+  type ReasoningEffort,
+  type Verbosity,
+} from "~/lib/ai/types";
+
+const fieldClass =
+  "ui-touch mt-1.5 w-full rounded-xl border border-line bg-surface px-3 text-sm outline-none placeholder:text-ink-3";
 
 export function meta() {
   return [{ title: "Settings — Mandarin" }];
@@ -20,13 +31,22 @@ export default function Settings() {
   const [stored, setStored] = useState<OpenRouterConfig | null>(null);
   const [modelName, setModelName] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [reasoning, setReasoning] = useState(CONFIG_SAMPLING_DEFAULTS.reasoning);
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+    CONFIG_SAMPLING_DEFAULTS.reasoningEffort,
+  );
+  const [verbosity, setVerbosity] = useState<Verbosity>(CONFIG_SAMPLING_DEFAULTS.verbosity);
   const [status, setStatus] = useState<"idle" | "checking" | "saved" | "cleared">("idle");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const current = readConfig();
     setStored(current);
-    if (current) setModelName(current.modelName);
+    if (!current) return;
+    setModelName(current.modelName);
+    setReasoning(current.reasoning);
+    setReasoningEffort(current.reasoningEffort);
+    setVerbosity(current.verbosity);
   }, []);
 
   const save = async (event: FormEvent) => {
@@ -35,21 +55,25 @@ export default function Settings() {
     const parsed = configInputSchema.safeParse({
       modelName,
       apiKey: apiKey.trim() || stored?.apiKey || "",
+      reasoning,
+      reasoningEffort,
+      verbosity,
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Check the form.");
       return;
     }
     setStatus("checking");
-    const check = await validateConfigRemote(parsed.data);
+    const next = withSamplingDefaults(parsed.data);
+    const check = await validateConfigRemote(next);
     if (!check.ok) {
       setStatus("idle");
       setError(check.error ?? "Could not validate this configuration.");
       return;
     }
-    writeConfig(parsed.data);
-    await aiStore.getState().setConfig(parsed.data);
-    setStored(parsed.data);
+    writeConfig(next);
+    await aiStore.getState().setConfig(next);
+    setStored(next);
     setApiKey("");
     setStatus("saved");
   };
@@ -60,6 +84,9 @@ export default function Settings() {
     setStored(null);
     setModelName("");
     setApiKey("");
+    setReasoning(CONFIG_SAMPLING_DEFAULTS.reasoning);
+    setReasoningEffort(CONFIG_SAMPLING_DEFAULTS.reasoningEffort);
+    setVerbosity(CONFIG_SAMPLING_DEFAULTS.verbosity);
     setStatus("cleared");
     setError(null);
   };
@@ -85,7 +112,7 @@ export default function Settings() {
             onChange={(e) => setModelName(e.target.value)}
             placeholder="anthropic/claude-sonnet-4"
             autoComplete="off"
-            className="ui-touch mt-1.5 w-full rounded-xl border border-line bg-surface px-3 text-sm outline-none placeholder:text-ink-3"
+            className={fieldClass}
           />
         </div>
         <div>
@@ -100,13 +127,64 @@ export default function Settings() {
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={stored ? `Saved ${maskApiKey(stored.apiKey)}` : "sk-or-v1-…"}
             autoComplete="off"
-            className="ui-touch mt-1.5 w-full rounded-xl border border-line bg-surface px-3 text-sm outline-none placeholder:text-ink-3"
+            className={fieldClass}
           />
           {stored && (
             <p className="mt-1.5 text-xs text-ink-3">
               Leave blank to keep the saved key ({maskApiKey(stored.apiKey)}).
             </p>
           )}
+        </div>
+        <div>
+          <p className="ui-eyebrow">Reasoning</p>
+          <label className="mt-2 flex min-h-11 items-center gap-2.5 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={reasoning}
+              onChange={(e) => setReasoning(e.target.checked)}
+              className="size-4 accent-accent"
+            />
+            Enable reasoning
+          </label>
+          <p className="mt-1.5 text-xs text-ink-3">
+            Sent as OpenRouter <code className="rounded bg-sunk px-1">reasoning.enabled</code>. Models
+            that do not support thinking ignore it.
+          </p>
+        </div>
+        <div>
+          <label htmlFor="reasoning-effort" className="ui-eyebrow">
+            Reasoning effort
+          </label>
+          <select
+            id="reasoning-effort"
+            value={reasoningEffort}
+            disabled={!reasoning}
+            onChange={(e) => setReasoningEffort(e.target.value as ReasoningEffort)}
+            className={`${fieldClass} disabled:opacity-40`}
+          >
+            {REASONING_EFFORTS.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="verbosity" className="ui-eyebrow">
+            Verbosity
+          </label>
+          <select
+            id="verbosity"
+            value={verbosity}
+            onChange={(e) => setVerbosity(e.target.value as Verbosity)}
+            className={fieldClass}
+          >
+            {VERBOSITY_LEVELS.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
         </div>
         {error && <p className="text-sm text-accent">{error}</p>}
         {status === "saved" && !error && (

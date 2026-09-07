@@ -241,6 +241,22 @@
     background: var(--color-surface);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent);
   }
+
+  .chat-caret {
+    display: inline-block;
+    width: 0.4em;
+    height: 0.95em;
+    margin-left: 0.12em;
+    vertical-align: -0.12em;
+    background: var(--color-accent);
+    animation: chat-caret-blink 1s step-end infinite;
+  }
+}
+
+@keyframes chat-caret-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 @media (hover: none) {

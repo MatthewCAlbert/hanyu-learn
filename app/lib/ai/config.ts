@@ -1,12 +1,28 @@
 import { z } from "zod";
-import type { OpenRouterConfig } from "./types";
+import {
+  CONFIG_SAMPLING_DEFAULTS,
+  REASONING_EFFORTS,
+  VERBOSITY_LEVELS,
+  type OpenRouterConfig,
+  type ReasoningEffort,
+  type Verbosity,
+} from "./types";
 
 export const CONFIG_STORAGE_KEY = "hanyu-ai-config-v1";
+
+const samplingSchema = z.object({
+  reasoning: z.boolean(),
+  reasoningEffort: z.enum(REASONING_EFFORTS),
+  verbosity: z.enum(VERBOSITY_LEVELS),
+});
 
 const storedSchema = z.object({
   v: z.literal(1),
   modelName: z.string(),
   apiKey: z.string(),
+  reasoning: z.boolean().optional(),
+  reasoningEffort: z.enum(REASONING_EFFORTS).optional(),
+  verbosity: z.enum(VERBOSITY_LEVELS).optional(),
 });
 
 export const configInputSchema = z.object({
@@ -20,9 +36,40 @@ export const configInputSchema = z.object({
     .trim()
     .min(1, "API key is required")
     .regex(/^sk-or-/, "OpenRouter keys start with sk-or-"),
+  reasoning: z.boolean().default(CONFIG_SAMPLING_DEFAULTS.reasoning),
+  reasoningEffort: z.enum(REASONING_EFFORTS).default(CONFIG_SAMPLING_DEFAULTS.reasoningEffort),
+  verbosity: z.enum(VERBOSITY_LEVELS).default(CONFIG_SAMPLING_DEFAULTS.verbosity),
 });
 
 export type ConfigInput = z.infer<typeof configInputSchema>;
+
+export function withSamplingDefaults(
+  config: Pick<OpenRouterConfig, "modelName" | "apiKey"> & Partial<OpenRouterConfig>,
+): OpenRouterConfig {
+  const sampling = samplingSchema.parse({
+    reasoning: config.reasoning ?? CONFIG_SAMPLING_DEFAULTS.reasoning,
+    reasoningEffort: config.reasoningEffort ?? CONFIG_SAMPLING_DEFAULTS.reasoningEffort,
+    verbosity: config.verbosity ?? CONFIG_SAMPLING_DEFAULTS.verbosity,
+  });
+  return {
+    modelName: config.modelName,
+    apiKey: config.apiKey,
+    ...sampling,
+  };
+}
+
+/** Wire shape for OpenRouter Responses `reasoning` + `text.verbosity`. */
+export function samplingFromConfig(config: OpenRouterConfig): {
+  reasoning: { enabled: boolean; effort?: ReasoningEffort };
+  text: { verbosity: Verbosity };
+} {
+  return {
+    reasoning: config.reasoning
+      ? { enabled: true, effort: config.reasoningEffort }
+      : { enabled: false },
+    text: { verbosity: config.verbosity },
+  };
+}
 
 export function maskApiKey(key: string): string {
   const trimmed = key.trim();
@@ -38,7 +85,13 @@ export function parseConfig(raw: unknown): OpenRouterConfig | null {
     apiKey: parsed.data.apiKey,
   });
   if (!input.success) return null;
-  return { modelName: input.data.modelName, apiKey: input.data.apiKey };
+  return withSamplingDefaults({
+    modelName: input.data.modelName,
+    apiKey: input.data.apiKey,
+    reasoning: parsed.data.reasoning,
+    reasoningEffort: parsed.data.reasoningEffort,
+    verbosity: parsed.data.verbosity,
+  });
 }
 
 export function readConfig(): OpenRouterConfig | null {
@@ -52,9 +105,17 @@ export function readConfig(): OpenRouterConfig | null {
 }
 
 export function writeConfig(config: OpenRouterConfig): void {
+  const next = withSamplingDefaults(config);
   localStorage.setItem(
     CONFIG_STORAGE_KEY,
-    JSON.stringify({ v: 1, modelName: config.modelName, apiKey: config.apiKey }),
+    JSON.stringify({
+      v: 1,
+      modelName: next.modelName,
+      apiKey: next.apiKey,
+      reasoning: next.reasoning,
+      reasoningEffort: next.reasoningEffort,
+      verbosity: next.verbosity,
+    }),
   );
 }
 

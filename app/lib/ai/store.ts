@@ -36,6 +36,43 @@ function titleFrom(text: string): string {
   return t.length > 42 ? `${t.slice(0, 41)}…` : t;
 }
 
+function scheduleFrame(cb: () => void): number {
+  if (typeof requestAnimationFrame === "function") return requestAnimationFrame(cb);
+  return setTimeout(cb, 16) as unknown as number;
+}
+
+function cancelFrame(id: number): void {
+  if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+  else clearTimeout(id);
+}
+
+/** Coalesce high-frequency stream patches onto animation frames so the bubble can paint. */
+export function coalesce<T>(apply: (value: T) => void): { push: (value: T) => void; flush: () => void } {
+  let pending: T | undefined;
+  let queued = false;
+  let frame = 0;
+  const flush = () => {
+    queued = false;
+    frame = 0;
+    if (pending === undefined) return;
+    const value = pending;
+    pending = undefined;
+    apply(value);
+  };
+  return {
+    push(value) {
+      pending = value;
+      if (queued) return;
+      queued = true;
+      frame = scheduleFrame(flush);
+    },
+    flush() {
+      if (frame) cancelFrame(frame);
+      flush();
+    },
+  };
+}
+
 export function createBlankChat(): ChatRecord {
   const t = now();
   return {
@@ -296,6 +333,8 @@ export const aiStore = createStore<AiStore>()(
         if (updated.saved) queuePersist(get, set);
       };
 
+      const liveText = coalesce((content: string) => patchAssistant({ content }));
+
       try {
         const { runAgent } = await import("./agent");
         const result = await runAgent({
@@ -303,10 +342,11 @@ export const aiStore = createStore<AiStore>()(
           sessionId: nextChat.sessionId,
           messages: nextChat.messages.filter((m) => m.id !== assistantId),
           signal,
-          onText: (content) => patchAssistant({ content }),
+          onText: (content) => liveText.push(content),
           onTools: (toolActivities: ToolActivity[]) => patchAssistant({ toolActivities }),
           onCitations: (citations: Citation[]) => patchAssistant({ citations }),
         });
+        liveText.flush();
         if (signal.aborted && !result.content) {
           patchAssistant({ content: result.content, error: "Stopped." });
         } else {

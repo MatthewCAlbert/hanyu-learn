@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Link } from "react-router";
-import { ToolCallRow, UsageDetails } from "./UsageDetails";
+import { ToolActivityList, UsageDetails } from "./UsageDetails";
 import { MentionedText, mentionify } from "./MentionedText";
 import type { ChatMessage, ChatRecord } from "~/lib/ai/types";
 import type { PromptSuggestion } from "~/lib/ai/suggestions";
@@ -11,10 +11,12 @@ export function ChatMessages({
   chat,
   suggestions = [],
   onPick,
+  streaming = false,
 }: {
   chat: ChatRecord;
   suggestions?: PromptSuggestion[];
   onPick?: (prompt: string) => void;
+  streaming?: boolean;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const last = chat.messages[chat.messages.length - 1];
@@ -62,7 +64,10 @@ export function ChatMessages({
       <ol className="flex flex-col gap-3">
         {chat.messages.map((m) => (
           <li key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-            <MessageBubble message={m} />
+            <MessageBubble
+              message={m}
+              streaming={Boolean(streaming && m.role === "assistant" && m.id === last?.id)}
+            />
           </li>
         ))}
       </ol>
@@ -70,7 +75,7 @@ export function ChatMessages({
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({ message, streaming = false }: { message: ChatMessage; streaming?: boolean }) {
   if (message.role === "user") {
     return (
       <div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent-soft px-3.5 py-2.5 text-sm leading-relaxed text-ink">
@@ -83,13 +88,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
   return (
     <div className="max-w-[92%] rounded-2xl rounded-bl-md bg-surface px-3.5 py-2.5 text-sm text-ink ring-1 ring-line ring-inset">
-      {message.toolActivities && message.toolActivities.length > 0 && (
-        <div className="mb-2 space-y-1">
-          {message.toolActivities.map((t) => (
-            <ToolCallRow key={t.id} name={t.name} status={t.status} preview={t.resultPreview} />
-          ))}
-        </div>
-      )}
+      {message.toolActivities && message.toolActivities.length > 0 ? (
+        <ToolActivityList tools={message.toolActivities} />
+      ) : null}
       {message.content ? (
         <div className="chat-md max-w-none wrap-break-word">
           <Markdown
@@ -124,9 +125,13 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           >
             {message.content}
           </Markdown>
+          {streaming ? <span className="chat-caret" aria-hidden="true" /> : null}
         </div>
       ) : !message.error ? (
-        <p className="text-ink-3">Thinking…</p>
+        <p className="text-ink-3">
+          Thinking…
+          {streaming ? <span className="chat-caret" aria-hidden="true" /> : null}
+        </p>
       ) : null}
       {message.citations && message.citations.length > 0 && (
         <ul className="mt-2 space-y-0.5 text-xs">

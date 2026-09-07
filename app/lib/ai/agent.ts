@@ -2,6 +2,7 @@ import { OpenRouter } from "@openrouter/agent";
 import type { BeforeCreateRequestHook, BeforeRequestHook, Item } from "@openrouter/agent";
 import { maxCost, maxTokensUsed, stepCountIs } from "@openrouter/agent/stop-conditions";
 import { formatUserTurn } from "./context";
+import { samplingFromConfig } from "./config";
 import { isAbortError, normalizeAgentError } from "./errors";
 import { SYSTEM_INSTRUCTIONS } from "./instructions";
 import { agentTools } from "./tools";
@@ -13,18 +14,66 @@ const APP_TITLE = "Hanyu Learn";
 /** The Agent SDK tags browser fetches with this header; OpenRouter CORS rejects it. */
 export const CALL_MODEL_HEADER = "x-openrouter-callmodel";
 
+const STREAM_ACCEPT = "text/event-stream";
+
+function isResponsesUrl(url: URL | string): boolean {
+  const path = typeof url === "string" ? url : url.pathname;
+  return path.includes("/responses");
+}
+
+/** Force SSE on the Responses API body. CallModelInput omits `stream`. */
+export function withStreamFlag(body: string): string {
+  try {
+    const json = JSON.parse(body) as unknown;
+    if (!json || typeof json !== "object" || Array.isArray(json)) return body;
+    const rec = json as Record<string, unknown>;
+    if (rec.stream === true) return body;
+    return JSON.stringify({ ...rec, stream: true });
+  } catch {
+    return body;
+  }
+}
+
+function patchHeaders(headers: Headers, streaming: boolean): Headers {
+  const next = new Headers(headers);
+  next.delete(CALL_MODEL_HEADER);
+  if (streaming) next.set("Accept", STREAM_ACCEPT);
+  return next;
+}
+
+function headersChanged(before: Headers, after: Headers): boolean {
+  if (before.has(CALL_MODEL_HEADER) !== after.has(CALL_MODEL_HEADER)) return true;
+  return before.get("Accept") !== after.get("Accept");
+}
+
 export const dropCallModelHeader: BeforeCreateRequestHook & BeforeRequestHook = {
   beforeCreateRequest(_ctx, input) {
-    const headers = new Headers(input.options?.headers);
-    if (!headers.has(CALL_MODEL_HEADER)) return input;
-    headers.delete(CALL_MODEL_HEADER);
-    return { ...input, options: { ...input.options, headers } };
+    const streaming = isResponsesUrl(input.url);
+    const headers = patchHeaders(new Headers(input.options?.headers), streaming);
+    const body = input.options?.body;
+    const nextBody = streaming && typeof body === "string" ? withStreamFlag(body) : body;
+    const bodyChanged = nextBody !== body;
+    if (!bodyChanged && !headersChanged(new Headers(input.options?.headers), headers)) {
+      return input;
+    }
+    return { ...input, options: { ...input.options, headers, body: nextBody } };
   },
-  beforeRequest(_ctx, request) {
-    if (!request.headers.has(CALL_MODEL_HEADER)) return request;
-    const headers = new Headers(request.headers);
-    headers.delete(CALL_MODEL_HEADER);
-    return new Request(request, { headers });
+  async beforeRequest(_ctx, request) {
+    const streaming = isResponsesUrl(request.url);
+    const headers = patchHeaders(request.headers, streaming);
+    const rawHeaders = request.headers;
+    let body: BodyInit | null | undefined;
+    let bodyChanged = false;
+    if (streaming && request.method !== "GET" && request.method !== "HEAD") {
+      const text = await request.clone().text();
+      const next = withStreamFlag(text);
+      if (next !== text) {
+        body = next;
+        bodyChanged = true;
+      }
+    }
+    if (!bodyChanged && !headersChanged(rawHeaders, headers)) return request;
+    return new Request(request, { headers, ...(bodyChanged ? { body } : {}) });
   },
 };
 
@@ -101,6 +150,30 @@ function previewOf(value: unknown): string {
   } catch {
     return "";
   }
+}
+
+export function textFromItem(item: Record<string, unknown>): string {
+  const content = item.content;
+  if (typeof content === "string") return content;
+  if (typeof item.text === "string") return item.text;
+  if (!Array.isArray(content)) return "";
+  let out = "";
+  for (const part of content) {
+    const rec = asRecord(part);
+    if (!rec) continue;
+    if (typeof rec.text === "string") out += rec.text;
+  }
+  return out;
+}
+
+/** Prefer the longer prefix-consistent snapshot; otherwise take the new turn. */
+export function mergeLiveText(current: string, next: string): string {
+  if (!next) return current;
+  if (!current || next === current) return next;
+  if (next.startsWith(current) || current.startsWith(next)) {
+    return next.length >= current.length ? next : current;
+  }
+  return next;
 }
 
 function upsertTool(list: ToolActivity[], next: ToolActivity): ToolActivity[] {
@@ -188,6 +261,7 @@ export async function runAgent(input: AgentRunInput): Promise<AgentRunResult> {
   });
 
   const history = historyToInput(input.messages);
+  const sampling = samplingFromConfig(input.config);
   const result = client.callModel({
     model: input.config.modelName,
     instructions: SYSTEM_INSTRUCTIONS,
@@ -196,6 +270,8 @@ export async function runAgent(input: AgentRunInput): Promise<AgentRunResult> {
     sessionId: input.sessionId,
     promptCacheKey: input.sessionId,
     cacheControl: { type: "ephemeral" },
+    reasoning: sampling.reasoning,
+    text: sampling.text,
     stopWhen: [
       stepCountIs(AGENT_LIMITS.maxSteps),
       maxCost(AGENT_LIMITS.maxCostUsd),
@@ -206,15 +282,23 @@ export async function runAgent(input: AgentRunInput): Promise<AgentRunResult> {
   });
 
   let content = "";
+  let streamed = "";
   let tools: ToolActivity[] = [];
   let citations: Citation[] = [];
   const seenUrls = new Set<string>();
 
+  const publishText = (next: string) => {
+    const merged = mergeLiveText(content, next);
+    if (merged === content) return;
+    content = merged;
+    input.onText(content);
+  };
+
   const pumpText = (async () => {
     for await (const delta of result.getTextStream()) {
       if (!delta) continue;
-      content += delta;
-      input.onText(content);
+      streamed += delta;
+      publishText(streamed);
     }
   })();
 
@@ -226,7 +310,13 @@ export async function runAgent(input: AgentRunInput): Promise<AgentRunResult> {
       collectUrls(rec, citations, seenUrls);
       if (citations.length) input.onCitations(citations);
 
-      if (type === "function_call" || type.endsWith("_call") || type === "openrouter:web_search") {
+      if (type === "message") {
+        const text = textFromItem(rec);
+        if (text) {
+          streamed = mergeLiveText(streamed, text);
+          publishText(text);
+        }
+      } else if (type === "function_call" || type.endsWith("_call") || type === "openrouter:web_search") {
         const id = toolIdOf(rec, `${type}-${tools.length}`);
         const args = rec.arguments ?? rec.action ?? rec.params;
         tools = upsertTool(tools, {
@@ -287,10 +377,10 @@ export async function runAgent(input: AgentRunInput): Promise<AgentRunResult> {
     /* usage is optional */
   }
 
-  if (!content && !input.signal.aborted) {
+  if (!input.signal.aborted) {
     try {
-      content = (await result.getText()) || content;
-      input.onText(content);
+      const finalText = await result.getText();
+      if (finalText) publishText(finalText);
     } catch {
       /* ignore */
     }
