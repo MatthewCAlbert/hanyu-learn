@@ -61,7 +61,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-paper">
-      <header className="flex shrink-0 items-center gap-0.5 border-b border-line px-2 py-1.5">
+      <header className="flex shrink-0 items-center gap-0.5 border-b border-line px-2 pt-[max(0.375rem,env(safe-area-inset-top))] pb-1.5 sm:pt-1.5">
         <button
           type="button"
           aria-label={listOpen ? "Back to chat" : "Saved chats"}
@@ -107,16 +107,26 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               </button>
             )}
             {sending && (
-              <button type="button" aria-label="Stop generating" onClick={stop} className={headerIcon}>
+              <button
+                type="button"
+                aria-label="Stop generating"
+                onClick={stop}
+                className={headerIcon}
+              >
                 <LuSquare className="size-4" />
               </button>
             )}
           </div>
         )}
-        <Link to="/settings" aria-label="Settings" className={headerIcon}>
+        <Link to="/settings" aria-label="Settings" onClick={onClose} className={headerIcon}>
           <LuSettings className="size-4" />
         </Link>
-        <button type="button" aria-label="Close chat" onClick={onClose} className={`${headerIcon} text-ink-3`}>
+        <button
+          type="button"
+          aria-label="Close chat"
+          onClick={onClose}
+          className={`${headerIcon} text-ink-3`}
+        >
           <LuX className="size-4" />
         </button>
       </header>
@@ -163,10 +173,10 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
 export function chatPanelClass(open: boolean): string {
   return clsx(
-    "fixed z-40 flex flex-col overflow-hidden border-line bg-paper shadow-2xl",
-    "safe-bottom",
-    "inset-x-0 bottom-0 h-[min(85dvh,calc(100dvh-var(--app-header-height,0px)-1rem))] rounded-t-2xl border-t",
+    "fixed z-40 flex flex-col overflow-hidden overscroll-contain border-line bg-paper",
+    "inset-0 h-dvh w-screen",
     "sm:inset-auto sm:right-4 sm:bottom-20 sm:h-[min(640px,calc(100dvh-6rem))] sm:w-[min(100vw-2rem,380px)] sm:rounded-2xl sm:border",
+    "sm:shadow-2xl",
     open ? "pointer-events-auto" : "pointer-events-none",
   );
 }

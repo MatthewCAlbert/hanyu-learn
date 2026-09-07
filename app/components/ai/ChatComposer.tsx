@@ -9,7 +9,9 @@ import type { CompareCatalog } from "~/lib/detail-data";
 import type { CompareHit } from "~/lib/compare-search";
 import type { MentionKind, MentionRef } from "~/lib/ai/types";
 
-const fieldText = "min-h-11 w-full px-3 py-2 text-sm leading-5 [overflow-wrap:anywhere]";
+// iOS zooms focused controls below 16px. Keep the mobile composer at 16px.
+const fieldText =
+  "min-h-11 w-full px-3 py-2 text-base leading-6 [overflow-wrap:anywhere] sm:text-sm sm:leading-5";
 
 export function ChatComposer({
   value,
@@ -55,7 +57,9 @@ export function ChatComposer({
 
   const kinds = query?.choosingKind ? kindOptions(query.kindPrefix) : [];
   const hits = query && catalog && !query.choosingKind ? searchMentions(catalog, query) : [];
-  const show = Boolean(query) && (kinds.length > 0 || hits.length > 0 || Boolean(query && !query.choosingKind && query.q));
+  const show =
+    Boolean(query) &&
+    (kinds.length > 0 || hits.length > 0 || Boolean(query && !query.choosingKind && query.q));
 
   const kindCount = kinds.length;
   const total = kindCount + hits.length;
@@ -110,7 +114,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="relative border-t border-line bg-paper px-3 py-3">
+    <div className="relative shrink-0 border-t border-line bg-paper px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3">
       {show && (
         <ul
           id={listId}
@@ -153,7 +157,9 @@ export function ChatComposer({
                   onClick={() => chooseHit(hit)}
                 >
                   <span className="han text-lg text-ink">{hit.title}</span>
-                  <span className="shrink-0 text-xs text-ink-3">@/{hit.kind}/{hit.ref.id}</span>
+                  <span className="shrink-0 text-xs text-ink-3">
+                    @/{hit.kind}/{hit.ref.id}
+                  </span>
                   <span className="min-w-0 truncate text-xs text-ink-3">
                     {hit.reading}
                     {hit.gloss ? " · " : ""}
@@ -181,66 +187,70 @@ export function ChatComposer({
               fieldText,
             )}
           >
-          {segments.map((seg, i) => (
-            <span
-              key={i}
-              className={clsx(
-                seg.kind === "mention" && "rounded-sm bg-accent-soft text-accent",
-                seg.kind === "pending" && "underline decoration-accent/50 underline-offset-2",
-              )}
-            >
-              {seg.text}
-            </span>
-          ))}
-          {"\n"}
-        </div>
-        <textarea
-          ref={textareaRef}
-          id={`${reactId}-input`}
-          rows={2}
-          disabled={disabled}
-          value={value}
-          placeholder={disabled ? "Add a key in Settings to chat" : "Ask, or type @ to mention…"}
-          aria-controls={show ? listId : undefined}
-          aria-expanded={show}
-          aria-autocomplete="list"
-          aria-activedescendant={show && total ? `${listId}-opt-${active}` : undefined}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setCaret(e.target.selectionStart);
-            setDismissed(false);
-          }}
-          onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
-          onScroll={syncOverlay}
-          onKeyDown={(e) => {
-            if (show && total > 0 && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
-              e.preventDefault();
-              setActive((i) =>
-                e.key === "ArrowDown" ? (i + 1) % total : (i - 1 + total) % total,
-              );
-              return;
-            }
-            if (show && total > 0 && (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey && query))) {
-              e.preventDefault();
-              chooseIndex(active);
-              return;
-            }
-            if (e.key === "Escape" && show) {
-              e.preventDefault();
-              setDismissed(true);
-              return;
-            }
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              if (!sending && value.trim()) onSend();
-            }
-          }}
-          className={clsx(
-            fieldText,
-            "relative z-10 resize-none bg-transparent outline-none placeholder:text-ink-3",
-            value ? "text-transparent caret-ink" : "text-ink",
-          )}
-        />
+            {segments.map((seg, i) => (
+              <span
+                key={i}
+                className={clsx(
+                  seg.kind === "mention" && "rounded-sm bg-accent-soft text-accent",
+                  seg.kind === "pending" && "underline decoration-accent/50 underline-offset-2",
+                )}
+              >
+                {seg.text}
+              </span>
+            ))}
+            {"\n"}
+          </div>
+          <textarea
+            ref={textareaRef}
+            id={`${reactId}-input`}
+            rows={2}
+            disabled={disabled}
+            value={value}
+            placeholder={disabled ? "Add a key in Settings to chat" : "Ask, or type @ to mention…"}
+            aria-controls={show ? listId : undefined}
+            aria-expanded={show}
+            aria-autocomplete="list"
+            aria-activedescendant={show && total ? `${listId}-opt-${active}` : undefined}
+            onChange={(e) => {
+              onChange(e.target.value);
+              setCaret(e.target.selectionStart);
+              setDismissed(false);
+            }}
+            onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
+            onScroll={syncOverlay}
+            onKeyDown={(e) => {
+              if (show && total > 0 && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+                e.preventDefault();
+                setActive((i) =>
+                  e.key === "ArrowDown" ? (i + 1) % total : (i - 1 + total) % total,
+                );
+                return;
+              }
+              if (
+                show &&
+                total > 0 &&
+                (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey && query))
+              ) {
+                e.preventDefault();
+                chooseIndex(active);
+                return;
+              }
+              if (e.key === "Escape" && show) {
+                e.preventDefault();
+                setDismissed(true);
+                return;
+              }
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (!sending && value.trim()) onSend();
+              }
+            }}
+            className={clsx(
+              fieldText,
+              "relative z-10 resize-none bg-transparent outline-none placeholder:text-ink-3",
+              value ? "text-transparent caret-ink" : "text-ink",
+            )}
+          />
         </div>
         <div className="flex items-center justify-between gap-2 px-2 pb-2">
           <p className="min-w-0 truncate px-1 text-[11px] leading-4 text-ink-3">

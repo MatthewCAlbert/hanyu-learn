@@ -67,6 +67,18 @@ export function FloatingChat() {
     lastFocus.current = null;
   }, [panelOpen]);
 
+  useEffect(() => {
+    if (!panelOpen || !window.matchMedia("(max-width: 639px)").matches) return;
+    const htmlOverflow = document.documentElement.style.overflow;
+    const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = htmlOverflow;
+      document.body.style.overflow = bodyOverflow;
+    };
+  }, [panelOpen]);
+
   if (!ready) return null;
 
   return (
@@ -77,7 +89,7 @@ export function FloatingChat() {
         aria-expanded={panelOpen}
         aria-controls={titleId}
         onClick={() => (panelOpen ? closePanel() : openPanel())}
-        className="ui-touch safe-bottom fixed right-3 bottom-3 z-50 inline-flex size-12 items-center justify-center rounded-full border border-line bg-ink text-paper shadow-lg hover:bg-accent sm:right-4 sm:bottom-4"
+        className={`${panelOpen ? "hidden sm:inline-flex" : "inline-flex"} ui-touch fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 size-12 items-center justify-center rounded-full border border-line bg-ink text-paper shadow-lg hover:bg-accent sm:right-4 sm:bottom-4`}
       >
         {panelOpen ? <LuX className="size-5" /> : <LuMessageCircle className="size-5" />}
       </button>
