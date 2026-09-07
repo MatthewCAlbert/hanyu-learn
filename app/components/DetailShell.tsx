@@ -1,18 +1,20 @@
 import { Link } from "react-router";
 import { CreditsFooter } from "./CreditsFooter";
 
-/** Shared frame for the three detail pages. */
+/** Shared frame for the detail pages. */
 export function DetailShell({
   back,
+  action,
   children,
 }: {
   back: { to: string; label: string };
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <header className="safe-top sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center px-3 lg:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-3 lg:px-6">
           <Link
             to={back.to}
             className="ui-touch inline-flex items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent"
@@ -22,6 +24,7 @@ export function DetailShell({
             </span>
             {back.label}
           </Link>
+          {action}
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8 lg:px-8 lg:py-10">

@@ -14,6 +14,7 @@ export default [
   ]),
 
   route("credits", "routes/credits.tsx"),
+  route("compare", "routes/compare.tsx"),
 
   // Detail pages are level-independent: 好 is one character with one page.
   route("hanzi/:char", "routes/hanzi.$char.tsx"),
