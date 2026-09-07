@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import type { Route } from "./+types/level.phonetics";
 import { matchesPhonetic, phoneticsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getPhonetics } from "~/lib/data.client";
-import { parseLevels } from "~/lib/levels";
+import { parseBands } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
 import { Empty } from "~/components/ui";
 import { Toolbar } from "./level.hanzi";
@@ -10,10 +10,10 @@ import { Toolbar } from "./level.hanzi";
 const PREVIEW = 6;
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
-  const levels = parseLevels(params.level);
+  const bands = parseBands(params.level);
   const { q } = readFilters(new URL(request.url).searchParams);
-  const [phonetics, hanzi] = await Promise.all([getPhonetics(), getHanziIndexes(levels)]);
-  const series = phoneticsAtLevels(phonetics, hanzi, levels).filter((row) =>
+  const [phonetics, hanzi] = await Promise.all([getPhonetics(), getHanziIndexes(bands.levels)]);
+  const series = phoneticsAtLevels(phonetics, hanzi, bands.levels).filter((row) =>
     matchesPhonetic(q, row),
   );
   return { series, total: series.length };

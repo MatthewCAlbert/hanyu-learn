@@ -1,7 +1,7 @@
 import { Link, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/level.words";
-import { getMeta, getWordIndexes } from "~/lib/data.client";
-import { parseLevels } from "~/lib/levels";
+import { getMeta, getWordIndexesForBands } from "~/lib/data.client";
+import { parseBands } from "~/lib/levels";
 import {
   PAGE_STEP,
   UNTAGGED,
@@ -27,20 +27,24 @@ interface Row {
   /** Slice of `meaning` the search hit, for highlighting. */
   at: [number, number] | null;
   status: ReturnType<typeof statusOf>;
+  extra: boolean;
   level: number;
   literal: string | null;
   transparency: string | null;
 }
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
-  const levels = parseLevels(params.level);
+  const bands = parseBands(params.level);
   const url = new URL(request.url);
   const filters = readFilters(url.searchParams);
   const take = readTake(url.searchParams);
-  const [{ topics: TOPICS }, WORDS] = await Promise.all([getMeta(), getWordIndexes(levels)]);
+  const [{ topics: TOPICS }, WORDS] = await Promise.all([
+    getMeta(),
+    getWordIndexesForBands(bands),
+  ]);
 
   const matched = searchWords(
-    WORDS.filter((w) => levels.includes(w.level)),
+    WORDS.filter((w) => w.extra || bands.levels.includes(w.level)),
     filters,
   );
 
@@ -94,6 +98,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
       meaning: text,
       at,
       status: statusOf(w),
+      extra: w.extra,
       level: w.level,
       literal: w.literal,
       transparency: w.transparency,
@@ -147,7 +152,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     shown: page.length,
     hasMore: page.length < ordered.length,
     group: filters.group,
-    showLevel: levels.length > 1,
+    showLevel: bands.extra || bands.levels.length > 1,
   };
 }
 clientLoader.hydrate = true as const;
@@ -232,8 +237,12 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
                         {r.word}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-xs text-ink-2">{r.pinyin}</span>
-                      {showLevel && (
-                        <span className="shrink-0 text-xs text-ink-3">HSK {r.level}</span>
+                      {r.extra ? (
+                        <span className="shrink-0 text-xs text-ink-3">Extra</span>
+                      ) : (
+                        showLevel && (
+                          <span className="shrink-0 text-xs text-ink-3">HSK {r.level}</span>
+                        )
                       )}
                       <StatusDot status={r.status} />
                     </div>

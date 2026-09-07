@@ -1,11 +1,13 @@
 # Data Sources
 
-Everything in `data/sources/` is vendored — committed verbatim so builds need no
-network and upstream changes show up as reviewable diffs.
+Most of `data/sources/` is vendored — committed verbatim so builds need no
+network and upstream changes show up as reviewable diffs. `extra-vocabulary.json`
+is the exception: it is authored here.
 
 | File                           | Source                                                                                            | License                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------- |
 | `complete-hsk-vocabulary.json` | [drkameleon/complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary)       | MIT                       |
+| `extra-vocabulary.json`        | Authored here — country and language names **not** on HSK 3.0                                     | —                         |
 | `makemeahanzi-dictionary.txt`  | [skishore/makemeahanzi](https://github.com/skishore/makemeahanzi) `dictionary.txt`                | **LGPL-3.0-or-later**     |
 | `tatoeba-cmn-eng.tsv`          | [Tatoeba](https://tatoeba.org) cmn/eng exports, joined and pruned                                 | **CC-BY 2.0 FR**          |
 | `radical-index.json`           | [Unicode Unihan](https://www.unicode.org/charts/unihan.html) `kRSUnicode` + Kangxi Radicals block | Unicode License           |
@@ -36,7 +38,7 @@ publishing.
 ```bash
 pnpm data:tatoeba   # re-downloads ~130MB, rejoins, rewrites the pruned TSV. Rare.
 pnpm data:build     # sources + content/ -> app/data/generated/
-pnpm data:md        # -> docs/hsk/
+pnpm data:md        # -> docs/hsk/ and docs/extra/
 ```
 
 `data/sources/.raw/` holds the large downloads and is gitignored.
@@ -45,7 +47,10 @@ pnpm data:md        # -> docs/hsk/
 
 - **HSK 3.0 spine.** `level` tags are `new-*` (HSK 3.0, 2021), `old-*`
   (HSK 2.0, 2009) and `newest-*` (the 2026 revision). The app is built on
-  `new-1` and `new-2`; the others are carried through as filter tags.
+  `new-*`; the others are carried through as filter tags. Country names such as
+  法国 and 日本 are not on that list; they live in `extra-vocabulary.json` and
+  show up when the Extra band is on (`/hsk/extra`, `/hsk/1,2,extra`). Names the
+  HSK hanzi set cannot spell (韩国, 澳大利亚) are omitted.
 - **Character counts check out.** HSK 3.0 specifies 300 characters at Level 1
   and 600 by Level 2. The pipeline derives 300 and 598 independently from the
   word lists, which is a good sign the data is sound.

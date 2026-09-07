@@ -49,7 +49,7 @@ async function main() {
 
     const entry = byChar.get(fm.char);
     if (!entry) {
-      fail(path, `${fm.char} is not in the HSK 1-2 corpus`);
+      fail(path, `${fm.char} is not in the corpus`);
       continue;
     }
 
@@ -100,7 +100,7 @@ async function main() {
 
     const entry = byWord.get(fm.word);
     if (!entry) {
-      fail(path, `${fm.word} is not in the HSK 1-2 corpus`);
+      fail(path, `${fm.word} is not in the corpus`);
       continue;
     }
     // Every character of the word must itself be documented in the corpus.
@@ -146,7 +146,7 @@ async function main() {
         if (!exists(m)) {
           fail(
             path,
-            `${kind}: ${m} is not in the corpus — check it is a real HSK entry ` +
+            `${kind}: ${m} is not in the corpus — check it is a real entry ` +
               `and that a single character is not listed under "words" (or vice versa)`,
           );
         }

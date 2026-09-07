@@ -239,7 +239,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
                   <span className="han text-lg">{w.word}</span>
                   <span className="text-xs text-ink-2">{w.pinyin}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-ink-3">{w.meaning}</span>
-                  <Chip tone="quiet">{w.level}</Chip>
+                  <Chip tone="quiet">{w.extra ? "Extra" : w.level}</Chip>
                 </Link>
               ))}
             </div>

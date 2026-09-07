@@ -22,7 +22,7 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-lg text-ink">{w.pinyin}</span>
-            <Chip tone="accent">HSK {w.level}</Chip>
+            <Chip tone="accent">{w.extra ? "Extra" : `HSK ${w.level}`}</Chip>
             {w.pos.map((p) => (
               <Chip key={p} tone="quiet">
                 {p}
@@ -112,7 +112,8 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         ) : (
           <Section title="Why this combination">
             <p className="text-sm text-ink-3">
-              Not yet written. Ask Claude Code to “fill in word content for HSK {w.level}”.
+              Not yet written. Ask Claude Code to “fill in word content
+              {w.extra ? "" : ` for HSK ${w.level}`}”.
             </p>
           </Section>
         )}
@@ -145,7 +146,9 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         <Section
           title="Examples"
           aside={
-            <span className="text-xs text-ink-3">only characters from HSK {w.level} and below</span>
+            <span className="text-xs text-ink-3">
+              only characters from HSK {w.level} and below
+            </span>
           }
         >
           <Sentences sentences={w.sentences} highlight={w.word} />

@@ -1,21 +1,21 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/level.topics";
 import { matchesTopic, topicsAtLevels } from "~/lib/catalog";
-import { getHanziIndexes, getMeta, getWordIndexes } from "~/lib/data.client";
-import { parseLevels } from "~/lib/levels";
+import { getHanziIndexes, getMeta, getWordIndexesForBands } from "~/lib/data.client";
+import { parseBands } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
 import { Empty } from "~/components/ui";
 import { Toolbar } from "./level.hanzi";
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
-  const levels = parseLevels(params.level);
+  const bands = parseBands(params.level);
   const { q } = readFilters(new URL(request.url).searchParams);
   const [{ topics: allTopics }, hanzi, words] = await Promise.all([
     getMeta(),
-    getHanziIndexes(levels),
-    getWordIndexes(levels),
+    getHanziIndexes(bands.levels),
+    getWordIndexesForBands(bands),
   ]);
-  const { topics, untagged, total } = topicsAtLevels(allTopics, hanzi, words, levels);
+  const { topics, untagged, total } = topicsAtLevels(allTopics, hanzi, words, bands.levels);
 
   const rows = topics
     .map((t) => ({

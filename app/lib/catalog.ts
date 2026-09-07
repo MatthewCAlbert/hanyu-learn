@@ -74,7 +74,9 @@ export function topicsAtLevels(
   levels: Level[],
 ) {
   const chars = new Set(hanzi.filter((h) => levels.includes(h.level)).map((h) => h.char));
-  const wordSet = new Set(words.filter((w) => levels.includes(w.level)).map((w) => w.word));
+  const wordSet = new Set(
+    words.filter((w) => w.extra || levels.includes(w.level)).map((w) => w.word),
+  );
   const narrowed = topics.map((t) => ({
     ...t,
     hanzi: t.hanzi.filter((c) => chars.has(c)),
@@ -82,7 +84,7 @@ export function topicsAtLevels(
   }));
   const untagged =
     hanzi.filter((h) => levels.includes(h.level) && h.topics.length === 0).length +
-    words.filter((w) => levels.includes(w.level) && w.topics.length === 0).length;
+    words.filter((w) => (w.extra || levels.includes(w.level)) && w.topics.length === 0).length;
   return { topics: narrowed, untagged, total: chars.size + wordSet.size };
 }
 
@@ -117,8 +119,12 @@ export const matchesPhonetic = (
   return Boolean(meaning?.toLowerCase().includes(q.toLowerCase()));
 };
 
-/** Per-level counts summed over a selection. */
-export function countsFor(counts: Dataset["counts"], levels: Level[]) {
+/** Per-level counts summed over a selection, plus Extra words when that band is on. */
+export function countsFor(
+  counts: Dataset["counts"],
+  levels: Level[],
+  extraWords = 0,
+) {
   return levels.reduce(
     (acc, l) => ({
       entries: acc.entries + counts[l].entries,
@@ -126,6 +132,6 @@ export function countsFor(counts: Dataset["counts"], levels: Level[]) {
       words: acc.words + counts[l].words,
       radicals: 0,
     }),
-    { entries: 0, hanzi: 0, words: 0, radicals: 0 },
+    { entries: 0, hanzi: 0, words: extraWords, radicals: 0 },
   );
 }

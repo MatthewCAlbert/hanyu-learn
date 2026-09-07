@@ -11,8 +11,15 @@ import {
   radicalsAtLevels,
   topicsAtLevels,
 } from "~/lib/catalog";
-import { getHanziIndexes, getMeta, getPhonetics, getWordIndexes } from "~/lib/data.client";
-import { LEVELS, formatLevels, levelLabel, parseLevels, toggleLevel } from "~/lib/levels";
+import { getHanziIndexes, getMeta, getPhonetics, getWordIndexesForBands } from "~/lib/data.client";
+import {
+  LEVELS,
+  formatBands,
+  levelLabel,
+  parseBands,
+  toggleExtra,
+  toggleLevelInBands,
+} from "~/lib/levels";
 import {
   UNTAGGED,
   filterHanzi,
@@ -30,14 +37,20 @@ export function meta({ params }: Route.MetaArgs) {
 }
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
-  const levels = parseLevels(params.level);
+  const bands = parseBands(params.level);
+  const { levels, extra } = bands;
   const filters = readFilters(new URL(request.url).searchParams);
-  const [{ radicals: allRadicals, topics: allTopics, counts }, hanzi, words, phonetics] =
-    await Promise.all([getMeta(), getHanziIndexes(levels), getWordIndexes(levels), getPhonetics()]);
+  const [{ radicals: allRadicals, topics: allTopics, counts, extraWords }, hanzi, words, phonetics] =
+    await Promise.all([
+      getMeta(),
+      getHanziIndexes(levels),
+      getWordIndexesForBands(bands),
+      getPhonetics(),
+    ]);
   const radicals = radicalsAtLevels(allRadicals, hanzi, levels);
   const { topics, untagged } = topicsAtLevels(allTopics, hanzi, words, levels);
   const phoneticSeries = phoneticsAtLevels(phonetics, hanzi, levels);
-  const totals = countsFor(counts, levels);
+  const totals = countsFor(counts, levels, extra ? extraWords : 0);
 
   /**
    * Each badge counts what its own tab would list, using that tab's own
@@ -50,7 +63,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
       filters,
     ).length,
     words: filterWords(
-      words.filter((w) => levels.includes(w.level)),
+      words.filter((w) => w.extra || levels.includes(w.level)),
       filters,
     ).length,
     topics: topics.filter((t) => matchesTopic(filters.q, t)).length,
@@ -60,6 +73,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
 
   return {
     levels,
+    extra,
     counts: {
       ...totals,
       radicals: radicals.length,
@@ -96,7 +110,7 @@ const STANDARDS = [
 ];
 
 export default function LevelShell({ loaderData }: Route.ComponentProps) {
-  const { levels, counts, shown, radicals, topics, untagged } = loaderData;
+  const { levels, extra, counts, shown, radicals, topics, untagged } = loaderData;
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
   const { pathname } = useLocation();
@@ -105,7 +119,8 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const tab = pathname.split("/").pop() ?? "hanzi";
-  const selected = formatLevels(levels);
+  const bands = { levels, extra };
+  const selected = formatBands(bands);
 
   const toggle = (key: FilterKey, value: string) => {
     const next = new URLSearchParams(params);
@@ -216,13 +231,13 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           {/* Seven levels, so the boxes are compact: "HSK" labels the group
               once and each toggle carries only its number. */}
           <fieldset className="hide-scrollbar order-3 col-span-3 flex w-full min-w-0 shrink-0 items-center gap-0.5 overflow-x-auto rounded-xl border border-line bg-surface p-0.5 lg:order-0 lg:col-span-1 lg:w-auto">
-            <legend className="sr-only">HSK levels</legend>
+            <legend className="sr-only">HSK levels and Extra</legend>
             <span aria-hidden className="px-1 text-[11px] text-ink-3">
               HSK
             </span>
             {LEVELS.map((l) => {
               const on = levels.includes(l);
-              const only = on && levels.length === 1;
+              const only = on && levels.length === 1 && !extra;
               return (
                 <label
                   key={l}
@@ -242,9 +257,10 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
                     checked={on}
                     disabled={only}
                     onChange={() =>
-                      navigate(`/hsk/${formatLevels(toggleLevel(levels, l))}/${tab}${search}`, {
-                        preventScrollReset: true,
-                      })
+                      navigate(
+                        `/hsk/${formatBands(toggleLevelInBands(bands, l))}/${tab}${search}`,
+                        { preventScrollReset: true },
+                      )
                     }
                     className="sr-only"
                   />
@@ -256,7 +272,10 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
               type="button"
               onClick={() =>
                 navigate(
-                  `/hsk/${formatLevels(levels.length === LEVELS.length ? [1] : LEVELS)}/${tab}${search}`,
+                  `/hsk/${formatBands({
+                    levels: levels.length === LEVELS.length ? [1] : LEVELS,
+                    extra,
+                  })}/${tab}${search}`,
                   { preventScrollReset: true },
                 )
               }
@@ -264,6 +283,31 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
             >
               {levels.length === LEVELS.length ? "only 1" : "all"}
             </button>
+            <label
+              title={
+                extra && levels.length === 0
+                  ? "At least one band must stay selected"
+                  : "Country and language names not on the HSK 3.0 wordlist"
+              }
+              className={clsx(
+                "ui-touch ml-0.5 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border-l border-line px-2 text-xs font-medium transition-colors lg:min-h-8",
+                extra ? "bg-ink text-paper" : "text-ink-2 hover:bg-sunk hover:text-ink",
+                extra && levels.length === 0 && "cursor-default",
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={extra}
+                disabled={extra && levels.length === 0}
+                onChange={() =>
+                  navigate(`/hsk/${formatBands(toggleExtra(bands))}/${tab}${search}`, {
+                    preventScrollReset: true,
+                  })
+                }
+                className="sr-only"
+              />
+              Extra
+            </label>
           </fieldset>
 
           <form

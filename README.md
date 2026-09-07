@@ -53,7 +53,7 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 |              |                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------- |
 | Hanzi        | 2,970 across 7 level bands (300 per level through 6; 1,171 in the 7–9 band)         |
-| Words        | 9,443 multi-character entries                                                       |
+| Words        | 9,443 HSK multi-character entries, plus Extra country/language names        |
 | Radicals     | 205, grouped by canonical Kangxi number                                             |
 | Topics       | 42 themes; an entry carries zero, one or many                                       |
 | Sentences    | 50,416 Tatoeba pairs, filtered so an example never uses a character above its level |
@@ -64,7 +64,9 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 - **Search across three systems at once** — type `好`, `hao`, `hǎo`, `hao3` or
   `good`. Searching a component (`女`) finds every character containing it.
 - **Multi-select levels** in the path (`/hsk/1`, `/hsk/1,2`), so any selection is
-  bookmarkable.
+  bookmarkable. **Extra** (`/hsk/extra`, `/hsk/1,2,extra`) adds 200+ popular
+  country and language names that HSK 3.0 left out (法国, 日本, 美国, 乌克兰).
+  Names the 2,970-hanzi set cannot spell (韩国, 澳大利亚, 埃及, 匈牙利) are omitted.
 - **Group by radical, topic or frequency**; filter by radical, topic, status and
   the older HSK standards. A Phonetics tab lists sound families in the selected
   levels.
@@ -83,11 +85,13 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 | `scripts/`            | Data pipeline: build, MD lists, validation                                          |
 | `app/data/generated/` | Build artefacts — **gitignored**, rebuilt automatically                             |
 | `docs/hsk/level-N/`   | Generated study lists — **never edit by hand**                                      |
+| `docs/extra/`         | Generated Extra-band word list — **never edit by hand**                             |
 
 Detail routes: `/hanzi/:char`, `/words/:word`, `/radicals/:radical`,
 `/phonetic/:component`, `/topics/:topic`. Compare two of them side by side at
 `/compare` (or press VS on a detail page). Level indexes:
 `/hsk/:level/hanzi` (also `words`, `topics`, `radicals`, `phonetics`).
+`:level` may end with `extra` for supplement vocabulary.
 Phonetic pages are generated from visible sound components; they are not
 another Kangxi grouping.
 
@@ -104,8 +108,8 @@ The explanations are hand-written, level by level. Coverage today:
 
 |                                   | Written | Total  |
 | --------------------------------- | ------- | ------ |
-| Prose (etymology, word formation) | 94      | 12,413 |
-| Topic-tagged                      | 28      | 12,413 |
+| Prose (etymology, word formation) | 107     | 12,471 |
+| Topic-tagged                      | 505     | 12,471 |
 
 These move as batches land — `docs/hsk/level-N/` and the Topics tab carry the
 current figures.
