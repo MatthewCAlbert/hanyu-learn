@@ -1,7 +1,7 @@
 ---
 topic: animals
 label: Animals
-hanzi: [龙, 猪]
+hanzi: [龙, 猪, 羊]
 words: [动物, 动物园]
 ---
 
