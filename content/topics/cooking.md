@@ -1,7 +1,7 @@
 ---
 topic: cooking
 label: Cooking
-hanzi: [刀, 切]
+hanzi: [刀, 切, 烧]
 words: []
 ---
 
