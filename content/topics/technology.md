@@ -1,7 +1,7 @@
 ---
 topic: technology
 label: Technology
-hanzi: [电]
+hanzi: [电, 器]
 words: [电脑, 手机, 电视, 飞机, 电话, 电视机]
 ---
 
