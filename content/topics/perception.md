@@ -1,7 +1,7 @@
 ---
 topic: perception
 label: Perception
-hanzi: []
+hanzi: [香]
 words: [感觉, 感到, 声音, 味道]
 ---
 
