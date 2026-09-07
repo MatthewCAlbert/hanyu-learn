@@ -12,7 +12,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const text = decodeURIComponent(params.word);
   const page = await loadWordDetail(text);
-  if (!page) throw new Response(`${text} is not in HSK 1–9`, { status: 404 });
+  if (!page) throw new Response(`${text} is not in the corpus`, { status: 404 });
   return page;
 }
 clientLoader.hydrate = true as const;
@@ -21,7 +21,10 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
   const { word: w } = loaderData;
   return (
     <DetailShell
-      back={{ to: `/hsk/${w.level}/words`, label: `HSK ${w.level} words` }}
+      back={{
+        to: w.extra ? "/hsk/extra/words" : `/hsk/${w.level}/words`,
+        label: w.extra ? "Extra words" : `HSK ${w.level} words`,
+      }}
       action={<CompareVsButton entry={{ kind: "word", id: w.word }} />}
     >
       <WordDetailContent data={loaderData} />

@@ -106,6 +106,8 @@ export interface AuthoredHanzi {
 export interface Word {
   word: string;
   level: Level;
+  /** True for supplement vocabulary that is not on the HSK 3.0 wordlist. */
+  extra: boolean;
   readings: Reading[];
   pinyin: string;
   meanings: string[];
@@ -171,6 +173,7 @@ export interface HanziIndex {
 export interface WordIndex {
   word: string;
   level: Level;
+  extra: boolean;
   pinyin: string;
   meanings: string[];
   frequency: number | null;
@@ -185,6 +188,7 @@ export interface DatasetMeta {
   radicals: Radical[];
   topics: Topic[];
   counts: Dataset["counts"];
+  extraWords: number;
 }
 
 export interface DatasetManifest {
@@ -227,7 +231,7 @@ export interface HanziPage {
   semanticRole: ComponentRole | null;
   phoneticRole: PhoneticRole | null;
   phoneticSeries: { char: string; pinyin: string; meaning: string }[];
-  words: { word: string; pinyin: string; meaning: string; level: Level }[];
+  words: { word: string; pinyin: string; meaning: string; level: Level; extra: boolean }[];
   topics: { id: string; label: string }[];
 }
 

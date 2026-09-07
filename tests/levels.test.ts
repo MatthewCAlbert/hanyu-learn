@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { formatLevels, levelLabel, parseLevels, toggleLevel } from "~/lib/levels";
+import {
+  formatBands,
+  formatLevels,
+  levelLabel,
+  parseBands,
+  parseLevels,
+  toggleExtra,
+  toggleLevel,
+  toggleLevelInBands,
+} from "~/lib/levels";
 
 describe("level selection", () => {
   it("parses single and multiple levels from the path", () => {
@@ -10,7 +19,7 @@ describe("level selection", () => {
   });
 
   it("rejects anything that is not a real level", () => {
-    for (const bad of ["", undefined, "0", "8", "1,8", "x", "1,", "1,1", "2,1", " 1"]) {
+    for (const bad of ["", undefined, "0", "8", "1,8", "x", "1,", "1,1", "2,1", " 1", "extra", "1,extra"]) {
       expect(() => parseLevels(bad)).toThrow();
     }
   });
@@ -35,5 +44,47 @@ describe("level selection", () => {
   it("labels the 7-9 band, which the wordlist merges", () => {
     expect(levelLabel(1)).toBe("1");
     expect(levelLabel(7)).toBe("7–9");
+  });
+});
+
+describe("band selection", () => {
+  it("parses Extra last, alone or after levels", () => {
+    expect(parseBands("extra")).toEqual({ levels: [], extra: true });
+    expect(parseBands("1,extra")).toEqual({ levels: [1], extra: true });
+    expect(parseBands("1,2,extra")).toEqual({ levels: [1, 2], extra: true });
+    expect(parseBands("1,2")).toEqual({ levels: [1, 2], extra: false });
+  });
+
+  it("rejects Extra anywhere but last, and sloppy lists", () => {
+    for (const bad of ["extra,1", "1,extra,2", "extra,extra", "1,extra,", ",extra", "Extra"]) {
+      expect(() => parseBands(bad)).toThrow();
+    }
+  });
+
+  it("round-trips through formatBands", () => {
+    for (const raw of ["1", "1,2", "extra", "1,extra", "1,2,extra", "1,2,3,4,5,6,7,extra"]) {
+      expect(formatBands(parseBands(raw))).toBe(raw);
+    }
+  });
+
+  it("toggles Extra without emptying the selection", () => {
+    expect(toggleExtra({ levels: [1], extra: false })).toEqual({ levels: [1], extra: true });
+    expect(toggleExtra({ levels: [1], extra: true })).toEqual({ levels: [1], extra: false });
+    expect(toggleExtra({ levels: [], extra: true })).toEqual({ levels: [], extra: true });
+  });
+
+  it("lets the last HSK level turn off when Extra is on", () => {
+    expect(toggleLevelInBands({ levels: [1], extra: true }, 1)).toEqual({
+      levels: [],
+      extra: true,
+    });
+    expect(toggleLevelInBands({ levels: [1], extra: false }, 1)).toEqual({
+      levels: [1],
+      extra: false,
+    });
+    expect(toggleLevelInBands({ levels: [], extra: true }, 2)).toEqual({
+      levels: [2],
+      extra: true,
+    });
   });
 });

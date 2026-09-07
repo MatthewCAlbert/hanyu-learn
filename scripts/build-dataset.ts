@@ -72,6 +72,14 @@ interface MmahEntry {
   etymology?: { type: string; hint?: string; phonetic?: string; semantic?: string };
 }
 
+interface ExtraEntry {
+  word: string;
+  pinyin: string;
+  meanings: string[];
+  traditional?: string;
+  pos?: string[];
+}
+
 const isHanzi = (c: string) => HANZI_RE.test(c);
 const hanziOf = (s: string) => [...s].filter(isHanzi);
 
@@ -281,6 +289,7 @@ async function main() {
       words.push({
         word: e.simplified,
         level,
+        extra: false,
         readings,
         pinyin: primary.pinyin,
         meanings: primary.meanings,
@@ -295,6 +304,41 @@ async function main() {
         authored: authoredWords.get(e.simplified) ?? null,
       });
     }
+  }
+
+  const extraVocab: ExtraEntry[] = JSON.parse(
+    await readFile("data/sources/extra-vocabulary.json", "utf8"),
+  );
+  const hskWordSet = new Set(words.map((w) => w.word));
+  for (const e of extraVocab) {
+    if (hskWordSet.has(e.word)) {
+      throw new Error(`extra word ${e.word} is already in the HSK wordlist`);
+    }
+    const chars = hanziOf(e.word);
+    if (chars.length < 2) throw new Error(`extra word ${e.word} is not multi-character`);
+    const missing = chars.filter((c) => !hanziLevel.has(c));
+    if (missing.length) {
+      throw new Error(`extra word ${e.word} uses characters not in HSK: ${missing.join("")}`);
+    }
+    const level = Math.max(...chars.map((c) => hanziLevel.get(c)!)) as Level;
+    words.push({
+      word: e.word,
+      level,
+      extra: true,
+      readings: [{ pinyin: e.pinyin, meanings: e.meanings }],
+      pinyin: e.pinyin,
+      meanings: e.meanings,
+      frequency: null,
+      pos: e.pos ?? ["n"],
+      traditional: e.traditional && e.traditional !== e.word ? e.traditional : null,
+      classifiers: [],
+      chars,
+      sentences: pickSentences(e.word, level),
+      standards: [],
+      topics: topicsOfWord.get(e.word) ?? [],
+      authored: authoredWords.get(e.word) ?? null,
+    });
+    hskWordSet.add(e.word);
   }
 
   // hanzi -> words containing it
@@ -410,12 +454,13 @@ async function main() {
   const radicals = [...radMap.values()].sort((a, b) => a.strokes - b.strokes || a.number - b.number);
 
   // ------------------------------------------------------------------ output
+  const extraWordCount = words.filter((w) => w.extra).length;
   const counts = {} as Dataset["counts"];
   for (const level of LEVELS) {
     counts[level] = {
       entries: entriesByLevel.get(level)!.length,
       hanzi: hanziList.filter((h) => h.level === level).length,
-      words: words.filter((w) => w.level === level).length,
+      words: words.filter((w) => !w.extra && w.level === level).length,
       radicals: new Set(hanziList.filter((h) => h.level === level).map((h) => h.radicalNumber)).size,
     };
   }
@@ -434,6 +479,7 @@ async function main() {
     radicals,
     topics,
     counts,
+    extraWords: extraWordCount,
     mmah,
   });
 
@@ -452,6 +498,7 @@ async function main() {
   console.log(
     `topics ${topics.length} · ${tagged} of ${hanziList.length + words.length} entries tagged`,
   );
+  console.log(`extra ${extraWordCount} supplement words`);
 
   // Written last, so its mtime means "everything above finished". Using an
   // output written mid-build would make anything touched during the run look
@@ -474,9 +521,10 @@ async function writeWebShards(args: {
   radicals: Radical[];
   topics: Topic[];
   counts: Dataset["counts"];
+  extraWords: number;
   mmah: Map<string, MmahEntry>;
 }): Promise<{ version: string; strokeEntries: number }> {
-  const { hanziList, words, radicals, topics, counts, mmah } = args;
+  const { hanziList, words, radicals, topics, counts, extraWords, mmah } = args;
   const hanziByChar = new Map(hanziList.map((h) => [h.char, h]));
   const wordByText = new Map(words.map((w) => [w.word, w]));
   const topicById = new Map(topics.map((t) => [t.id, t]));
@@ -497,7 +545,7 @@ async function writeWebShards(args: {
   await mkdir(`${root}/st`, { recursive: true });
 
   const manifest: DatasetManifest = { version, buckets: SHARD_BUCKETS };
-  const meta: DatasetMeta = { radicals, topics, counts };
+  const meta: DatasetMeta = { radicals, topics, counts, extraWords };
   await writeFile(`${web}/manifest.json`, JSON.stringify(manifest));
   await writeFile(`${root}/meta.json`, JSON.stringify(meta));
   await writeFile(`${root}/phonetics.json`, JSON.stringify(phonetics));
@@ -521,22 +569,15 @@ async function writeWebShards(args: {
         semantic: effectiveSemantic(h),
       }));
     const wordIndex: WordIndex[] = words
-      .filter((w) => w.level === level)
-      .map((w) => ({
-        word: w.word,
-        level: w.level,
-        pinyin: w.pinyin,
-        meanings: w.meanings,
-        frequency: w.frequency,
-        standards: w.standards,
-        topics: w.topics,
-        status: w.authored?.status ?? "stub",
-        literal: w.authored?.literal ?? null,
-        transparency: w.authored?.transparency ?? null,
-      }));
+      .filter((w) => !w.extra && w.level === level)
+      .map(toWordIndex);
     await writeFile(`${root}/h${level}.json`, JSON.stringify(hanziIndex));
     await writeFile(`${root}/w${level}.json`, JSON.stringify(wordIndex));
   }
+  await writeFile(
+    `${root}/w-extra.json`,
+    JSON.stringify(words.filter((w) => w.extra).map(toWordIndex)),
+  );
 
   const hanziPages: Record<string, HanziPage>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
   const wordPages: Record<string, WordPage>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
@@ -739,6 +780,7 @@ function buildHanziPage(
       pinyin: w.pinyin,
       meaning: w.meanings[0] ?? "",
       level: w.level,
+      extra: w.extra,
     }));
   const pageTopics = hanzi.topics
     .map((id) => topicById.get(id))
@@ -792,6 +834,22 @@ function buildWordPage(
     .filter((t): t is Topic => Boolean(t))
     .map((t) => ({ id: t.id, label: t.label }));
   return { word, chars, topics: pageTopics };
+}
+
+function toWordIndex(w: Word): WordIndex {
+  return {
+    word: w.word,
+    level: w.level,
+    extra: w.extra,
+    pinyin: w.pinyin,
+    meanings: w.meanings,
+    frequency: w.frequency,
+    standards: w.standards,
+    topics: w.topics,
+    status: w.authored?.status ?? "stub",
+    literal: w.authored?.literal ?? null,
+    transparency: w.authored?.transparency ?? null,
+  };
 }
 
 function push(map: Map<string, string[]>, key: string, value: string) {

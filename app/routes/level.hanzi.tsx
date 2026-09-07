@@ -2,7 +2,7 @@ import { Link, useNavigation, useSearchParams } from "react-router";
 import clsx from "clsx";
 import type { Route } from "./+types/level.hanzi";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
-import { parseLevels } from "~/lib/levels";
+import { parseBands } from "~/lib/levels";
 import {
   PAGE_STEP,
   UNTAGGED,
@@ -33,18 +33,18 @@ interface Row {
 }
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
-  const levels = parseLevels(params.level);
+  const bands = parseBands(params.level);
   const url = new URL(request.url);
   const filters = readFilters(url.searchParams);
   const take = readTake(url.searchParams);
   const [{ radicals: RADICALS, topics: TOPICS }, HANZI] = await Promise.all([
     getMeta(),
-    getHanziIndexes(levels),
+    getHanziIndexes(bands.levels),
   ]);
   const gloss = new Map(RADICALS.map((r) => [r.char, r]));
 
   const matched = searchHanzi(
-    HANZI.filter((h) => levels.includes(h.level)),
+    HANZI.filter((h) => bands.levels.includes(h.level)),
     filters,
   );
 
@@ -189,7 +189,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     hasMore: page.length < ordered.length,
     view: filters.view,
     group: filters.group,
-    showLevel: levels.length > 1,
+    showLevel: bands.levels.length > 1,
   };
 }
 clientLoader.hydrate = true as const;

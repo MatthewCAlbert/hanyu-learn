@@ -4,7 +4,7 @@
  * the HTTP cache for repeat visits.
  */
 import { shardBucket, SHARD_BUCKETS } from "./shards";
-import { LEVELS } from "./levels";
+import { LEVELS, type Bands } from "./levels";
 import { matchRadical } from "./radicals";
 import type {
   DatasetManifest,
@@ -67,6 +67,18 @@ export async function getHanziIndexes(levels: Level[]): Promise<HanziIndex[]> {
 export async function getWordIndexes(levels: Level[]): Promise<WordIndex[]> {
   const parts = await Promise.all(levels.map(getWordIndex));
   return parts.flat();
+}
+
+export async function getExtraWordIndex(): Promise<WordIndex[]> {
+  return asset<WordIndex[]>("w-extra.json");
+}
+
+export async function getWordIndexesForBands(bands: Bands): Promise<WordIndex[]> {
+  const [hsk, extra] = await Promise.all([
+    bands.levels.length > 0 ? getWordIndexes(bands.levels) : Promise.resolve([] as WordIndex[]),
+    bands.extra ? getExtraWordIndex() : Promise.resolve([] as WordIndex[]),
+  ]);
+  return [...hsk, ...extra];
 }
 
 export async function getHanziPage(char: string): Promise<HanziPage | undefined> {

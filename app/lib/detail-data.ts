@@ -11,6 +11,7 @@ import {
   getRadical,
   getStrokes,
   getTopic,
+  getExtraWordIndex,
   getWordIndexes,
   getWordPage,
 } from "./data.client";
@@ -61,6 +62,7 @@ export interface TopicMember {
   pinyin: string;
   meaning: string;
   level: Level;
+  extra: boolean;
   status: Status;
   also: string[];
 }
@@ -68,6 +70,7 @@ export interface TopicMember {
 export interface TopicDetailData {
   topic: Topic;
   byLevel: { level: Level; members: TopicMember[] }[];
+  extra: TopicMember[];
   total: number;
 }
 
@@ -135,39 +138,88 @@ export async function loadPhoneticDetail(
   return { meta: series.meta, byLevel, total: members.length };
 }
 
+function asTopicMember(
+  kind: "hanzi" | "word",
+  text: string,
+  pinyin: string,
+  meaning: string,
+  level: Level,
+  extra: boolean,
+  topics: string[],
+  topicId: string,
+  status: Status,
+): TopicMember {
+  return {
+    kind,
+    text,
+    pinyin,
+    meaning,
+    level,
+    extra,
+    status,
+    also: topics.filter((t) => t !== topicId),
+  };
+}
+
 export async function loadTopicDetail(id: string): Promise<TopicDetailData | undefined> {
   const topic = await getTopic(id);
   if (!topic) return undefined;
 
-  const [HANZI, WORDS] = await Promise.all([getHanziIndexes(LEVELS), getWordIndexes(LEVELS)]);
+  const [HANZI, WORDS, EXTRA] = await Promise.all([
+    getHanziIndexes(LEVELS),
+    getWordIndexes(LEVELS),
+    getExtraWordIndex(),
+  ]);
 
-  const members: TopicMember[] = [
-    ...HANZI.filter((h) => h.topics.includes(topic.id)).map((h) => ({
-      kind: "hanzi" as const,
-      text: h.char,
-      pinyin: h.pinyin[0] ?? "",
-      meaning: h.meanings[0] ?? "",
-      level: h.level,
-      status: h.status,
-      also: h.topics.filter((t) => t !== topic.id),
-    })),
-    ...WORDS.filter((w) => w.topics.includes(topic.id)).map((w) => ({
-      kind: "word" as const,
-      text: w.word,
-      pinyin: w.pinyin,
-      meaning: w.meanings[0] ?? "",
-      level: w.level,
-      status: w.status,
-      also: w.topics.filter((t) => t !== topic.id),
-    })),
+  const hskMembers: TopicMember[] = [
+    ...HANZI.filter((h) => h.topics.includes(topic.id)).map((h) =>
+      asTopicMember(
+        "hanzi",
+        h.char,
+        h.pinyin[0] ?? "",
+        h.meanings[0] ?? "",
+        h.level,
+        false,
+        h.topics,
+        topic.id,
+        h.status,
+      ),
+    ),
+    ...WORDS.filter((w) => w.topics.includes(topic.id)).map((w) =>
+      asTopicMember(
+        "word",
+        w.word,
+        w.pinyin,
+        w.meanings[0] ?? "",
+        w.level,
+        false,
+        w.topics,
+        topic.id,
+        w.status,
+      ),
+    ),
   ];
+
+  const extra = EXTRA.filter((w) => w.topics.includes(topic.id)).map((w) =>
+    asTopicMember(
+      "word",
+      w.word,
+      w.pinyin,
+      w.meanings[0] ?? "",
+      w.level,
+      true,
+      w.topics,
+      topic.id,
+      w.status,
+    ),
+  );
 
   const byLevel = LEVELS.map((level) => ({
     level,
-    members: members.filter((m) => m.level === level),
+    members: hskMembers.filter((m) => m.level === level),
   })).filter((g) => g.members.length > 0);
 
-  return { topic, byLevel, total: members.length };
+  return { topic, byLevel, extra, total: hskMembers.length + extra.length };
 }
 
 export async function resolveComparePane(raw: string | null): Promise<ComparePane> {
@@ -251,15 +303,16 @@ export interface CompareCatalog {
 }
 
 export async function loadCompareCatalog(): Promise<CompareCatalog> {
-  const [hanzi, words, meta, phonetics] = await Promise.all([
+  const [hanzi, words, extra, meta, phonetics] = await Promise.all([
     getHanziIndexes(LEVELS),
     getWordIndexes(LEVELS),
+    getExtraWordIndex(),
     getMeta(),
     getPhonetics(),
   ]);
   return {
     hanzi,
-    words,
+    words: [...words, ...extra],
     radicals: meta.radicals,
     topics: meta.topics,
     phonetics: Object.values(phonetics),

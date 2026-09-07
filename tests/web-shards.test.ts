@@ -34,7 +34,16 @@ describe("web shards", () => {
     expect(manifest.buckets).toBe(SHARD_BUCKETS);
     const names = await readdir(`${WEB}/${manifest.version}`);
     expect(names).toEqual(
-      expect.arrayContaining(["meta.json", "h1.json", "w7.json", "phonetics.json", "hd", "wd", "st"]),
+      expect.arrayContaining([
+        "meta.json",
+        "h1.json",
+        "w7.json",
+        "w-extra.json",
+        "phonetics.json",
+        "hd",
+        "wd",
+        "st",
+      ]),
     );
   });
 
@@ -46,10 +55,13 @@ describe("web shards", () => {
       const h = await readJson<HanziIndex[]>(`${version}/h${level}.json`);
       const w = await readJson<WordIndex[]>(`${version}/w${level}.json`);
       expect(h.every((row) => row.level === level)).toBe(true);
-      expect(w.every((row) => row.level === level)).toBe(true);
+      expect(w.every((row) => row.level === level && !row.extra)).toBe(true);
       indexedHanzi.push(...h);
       indexedWords.push(...w);
     }
+    const extra = await readJson<WordIndex[]>(`${version}/w-extra.json`);
+    expect(extra.every((row) => row.extra)).toBe(true);
+    indexedWords.push(...extra);
     expect(indexedHanzi.map((h) => h.char).sort()).toEqual(H.map((h) => h.char).sort());
     expect(indexedWords.map((w) => w.word).sort()).toEqual(W.map((w) => w.word).sort());
   });
@@ -80,6 +92,7 @@ describe("web shards", () => {
     expect(meta.radicals).toHaveLength(205);
     expect(meta.topics.length).toBeGreaterThan(0);
     expect(meta.counts[1].hanzi).toBe(300);
+    expect(meta.extraWords).toBe(229);
   });
 
   it("phonetics.json covers every visible series key and does not add a bucket dir", async () => {

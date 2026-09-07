@@ -52,10 +52,12 @@ describe("level partition", () => {
 
   it("totals agree with the per-level counts", () => {
     const levels = Object.values(counts);
+    const hskWords = W.filter((w) => !w.extra);
     expect(H).toHaveLength(levels.reduce((n, c) => n + c.hanzi, 0));
-    expect(W).toHaveLength(levels.reduce((n, c) => n + c.words, 0));
+    expect(hskWords).toHaveLength(levels.reduce((n, c) => n + c.words, 0));
     expect(H).toHaveLength(2970);
-    expect(W).toHaveLength(9443);
+    expect(hskWords).toHaveLength(9443);
+    expect(W.filter((w) => w.extra)).toHaveLength(229);
   });
 });
 

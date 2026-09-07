@@ -43,6 +43,7 @@ function asWordIndex(w: Word): WordIndex {
   return {
     word: w.word,
     level: w.level,
+    extra: w.extra,
     pinyin: w.pinyin,
     meanings: w.meanings,
     frequency: w.frequency,
