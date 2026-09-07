@@ -34,6 +34,10 @@ export function CreditsFooter() {
         <a href="/credits" className={link}>
           Credits
         </a>
+        {" · "}
+        <a href="/settings" className={link}>
+          Settings
+        </a>
       </p>
     </footer>
   );

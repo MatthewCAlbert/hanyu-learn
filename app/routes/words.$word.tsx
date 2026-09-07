@@ -1,8 +1,11 @@
+import { useMemo } from "react";
 import type { Route } from "./+types/words.$word";
 import { loadWordDetail } from "~/lib/detail-data";
 import { DetailShell } from "~/components/DetailShell";
 import { WordDetailContent } from "~/components/details/WordDetailContent";
 import { CompareVsButton } from "~/components/CompareVsButton";
+import { PageContextBridge } from "~/components/ai/PageContextBridge";
+import { serializeWordContext } from "~/lib/ai/context";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [{ title: "Not found" }];
@@ -19,15 +22,19 @@ clientLoader.hydrate = true as const;
 
 export default function WordDetail({ loaderData }: Route.ComponentProps) {
   const { word: w } = loaderData;
+  const context = useMemo(() => serializeWordContext(loaderData), [loaderData]);
   return (
-    <DetailShell
-      back={{
-        to: w.extra ? "/hsk/extra/words" : `/hsk/${w.level}/words`,
-        label: w.extra ? "Extra words" : `HSK ${w.level} words`,
-      }}
-      action={<CompareVsButton entry={{ kind: "word", id: w.word }} />}
-    >
-      <WordDetailContent data={loaderData} />
-    </DetailShell>
+    <>
+      <PageContextBridge context={context} />
+      <DetailShell
+        back={{
+          to: w.extra ? "/hsk/extra/words" : `/hsk/${w.level}/words`,
+          label: w.extra ? "Extra words" : `HSK ${w.level} words`,
+        }}
+        action={<CompareVsButton entry={{ kind: "word", id: w.word }} />}
+      >
+        <WordDetailContent data={loaderData} />
+      </DetailShell>
+    </>
   );
 }

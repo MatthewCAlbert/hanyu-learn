@@ -1,5 +1,5 @@
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/compare";
 import { CreditsFooter } from "~/components/CreditsFooter";
@@ -21,6 +21,8 @@ import {
   resolveComparePane,
   type ComparePane,
 } from "~/lib/detail-data";
+import { PageContextBridge } from "~/components/ai/PageContextBridge";
+import { serializeCompareContext } from "~/lib/ai/context";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [{ title: "Compare — Mandarin" }];
@@ -76,6 +78,7 @@ function selectionOf(pane: ComparePane): CompareSelection | null {
 export default function ComparePage({ loaderData }: Route.ComponentProps) {
   const { left, right, catalog } = loaderData;
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const headerRef = useRef<HTMLElement>(null);
   const hasLeft = searchParams.has("left");
@@ -118,8 +121,14 @@ export default function ComparePage({ loaderData }: Route.ComponentProps) {
     return side === "right";
   };
 
+  const context = useMemo(
+    () => serializeCompareContext(left, right, `${location.pathname}${location.search}`),
+    [left, right, location.pathname, location.search],
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-paper lg:h-dvh lg:overflow-hidden">
+      <PageContextBridge context={context} />
       <header
         ref={headerRef}
         className="safe-top sticky top-0 z-20 shrink-0 border-b border-line bg-paper/90 backdrop-blur-xl"

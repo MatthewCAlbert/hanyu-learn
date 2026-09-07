@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 import { defineConfig, type Plugin } from "vite";
+
+const ssl = process.env.DEV_SSL === "1";
 
 const WEB = path.resolve("app/data/generated/web");
 
@@ -46,7 +49,7 @@ function ignoreDevtoolsProbe(): Plugin {
 
 export default defineConfig({
   appType: "spa",
-  plugins: [ignoreDevtoolsProbe(), tailwindcss(), reactRouter()],
+  plugins: [ignoreDevtoolsProbe(), tailwindcss(), reactRouter(), ssl && basicSsl()],
   resolve: { tsconfigPaths: true },
   define: {
     __DATASET_VERSION__: JSON.stringify(datasetVersion()),

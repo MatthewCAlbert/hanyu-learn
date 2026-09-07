@@ -13,3 +13,4 @@ node_modules
 /app/data/generated
 /public/data
 .vercel
+.env

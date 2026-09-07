@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/root";
 import { CreditsFooter } from "~/components/CreditsFooter";
+import { FloatingChat } from "~/components/ai/FloatingChat";
 import { PageLoading } from "~/components/PageLoading";
 import "./app.css";
 
@@ -47,7 +48,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <FloatingChat />
+    </>
+  );
 }
 
 export function HydrateFallback() {
