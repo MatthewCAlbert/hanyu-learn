@@ -1,7 +1,7 @@
 ---
 topic: city-and-places
 label: City & places
-hanzi: [区, 城, 村]
+hanzi: [区, 城, 村, 乡]
 words: [马路, 公园, 道路, 广场]
 ---
 
