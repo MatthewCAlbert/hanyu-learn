@@ -1,0 +1,10 @@
+---
+topic: direction
+label: Direction
+hanzi: [上, 下, 左, 右, 前, 后, 里, 外]
+words: [旁边, 中间, 右边, 左边, 里边, 外边, 后边, 西边, 上边, 东边, 南边, 北边, 下边, 前边, 方向, 南方, 对面, 西方, 北方, 东方, 东北, 西南, 西北, 东南]
+---
+
+Orientation and relative position. Note that several of these characters are
+locative rather than directional — 里 and 外 answer "where", not "which way" —
+but learners meet them as one set, so they live together here.

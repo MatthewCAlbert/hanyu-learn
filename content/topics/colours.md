@@ -1,0 +1,8 @@
+---
+topic: colours
+label: Colours
+hanzi: []
+words: [颜色, 红色, 黑色, 绿色, 白色, 蓝色, 黄色]
+---
+
+Colour terms and shades.
