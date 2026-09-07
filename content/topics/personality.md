@@ -1,7 +1,7 @@
 ---
 topic: personality
 label: Personality
-hanzi: [敢]
+hanzi: [敢, 善]
 words: [认真]
 ---
 
