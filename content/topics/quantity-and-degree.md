@@ -1,7 +1,7 @@
 ---
 topic: quantity-and-degree
 label: Quantity & degree
-hanzi: []
+hanzi: [整]
 words: [非常, 大小]
 ---
 

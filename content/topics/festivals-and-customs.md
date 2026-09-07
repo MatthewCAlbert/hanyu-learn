@@ -1,7 +1,7 @@
 ---
 topic: festivals-and-customs
 label: Festivals & customs
-hanzi: []
+hanzi: [祝]
 words: [生日, 新年, 节日, 过年, 春节]
 ---
 

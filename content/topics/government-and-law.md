@@ -1,7 +1,7 @@
 ---
 topic: government-and-law
 label: Government & law
-hanzi: []
+hanzi: [朝]
 words: [市长]
 ---
 

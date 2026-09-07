@@ -1,7 +1,7 @@
 ---
 topic: abstract-concepts
 label: Abstract concepts
-hanzi: []
+hanzi: [类]
 words: []
 ---
 

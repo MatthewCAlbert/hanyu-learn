@@ -1,7 +1,7 @@
 ---
 topic: housing
 label: Housing
-hanzi: []
+hanzi: [架]
 words: [房子, 房间, 桌子, 椅子, 住房, 洗衣机]
 ---
 

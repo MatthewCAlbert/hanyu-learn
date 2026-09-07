@@ -1,7 +1,7 @@
 ---
 topic: plants
 label: Plants
-hanzi: []
+hanzi: [根]
 words: []
 ---
 
