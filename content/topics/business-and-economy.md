@@ -1,7 +1,7 @@
 ---
 topic: business-and-economy
 label: Business & economy
-hanzi: []
+hanzi: [赢]
 words: [公司, 银行]
 ---
 

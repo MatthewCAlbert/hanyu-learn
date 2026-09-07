@@ -1,7 +1,7 @@
 ---
 topic: religion
 label: Religion
-hanzi: []
+hanzi: [神]
 words: []
 ---
 
