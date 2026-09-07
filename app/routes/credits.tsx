@@ -1,4 +1,5 @@
 import { DetailShell } from "~/components/DetailShell";
+import { defaultBrowseFallback } from "~/lib/navigation";
 
 export function meta() {
   return [{ title: "Credits — Mandarin" }];
@@ -6,7 +7,7 @@ export function meta() {
 
 export default function Credits() {
   return (
-    <DetailShell back={{ to: "/hsk/1/hanzi", label: "Hanzi index" }}>
+    <DetailShell current="Credits" fallback={defaultBrowseFallback()}>
       <h1 className="text-xl font-medium">Credits</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-2">
         This app is built from open data. Three sources require attribution on distribution; they

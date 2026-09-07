@@ -1,7 +1,8 @@
 import { redirect } from "react-router";
+import { defaultBrowsePath } from "~/lib/levels";
 
 export function clientLoader() {
-  return redirect("/hsk/1/hanzi");
+  return redirect(defaultBrowsePath());
 }
 clientLoader.hydrate = true as const;
 

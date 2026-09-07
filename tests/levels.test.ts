@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_BANDS,
+  DEFAULT_BANDS_PATH,
+  bandsSummary,
+  defaultBrowsePath,
   formatBands,
   formatLevels,
+  isDefaultBands,
   levelLabel,
   parseBands,
   parseLevels,
@@ -44,6 +49,18 @@ describe("level selection", () => {
   it("labels the 7-9 band, which the wordlist merges", () => {
     expect(levelLabel(1)).toBe("1");
     expect(levelLabel(7)).toBe("7–9");
+  });
+
+  it("defaults to every HSK band plus Extra", () => {
+    expect(DEFAULT_BANDS_PATH).toBe("1,2,3,4,5,6,7,extra");
+    expect(formatBands(DEFAULT_BANDS)).toBe(DEFAULT_BANDS_PATH);
+    expect(isDefaultBands(DEFAULT_BANDS)).toBe(true);
+    expect(defaultBrowsePath()).toBe("/hsk/1,2,3,4,5,6,7,extra/hanzi");
+    expect(defaultBrowsePath("words")).toBe("/hsk/1,2,3,4,5,6,7,extra/words");
+    expect(bandsSummary(DEFAULT_BANDS)).toBe("All levels + Extra");
+    expect(bandsSummary({ levels: [1, 3], extra: true })).toBe("HSK 1, 3 + Extra");
+    expect(bandsSummary({ levels: [], extra: true })).toBe("Extra");
+    expect(bandsSummary({ levels: [1, 2, 3, 4, 5, 6, 7], extra: false })).toBe("All levels");
   });
 });
 

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import type { Route } from "./+types/level.phonetics";
 import { matchesPhonetic, phoneticsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getPhonetics } from "~/lib/data.client";
@@ -36,7 +36,7 @@ export default function LevelPhonetics({ loaderData }: Route.ComponentProps) {
           const reading = meta.pinyin[0];
           const preview = members.slice(0, PREVIEW);
           return (
-            <Link
+            <DetailLink
               key={meta.component}
               to={`/phonetic/${encodeURIComponent(meta.component)}`}
               className="ui-card ui-card-interactive group flex min-h-16 items-center gap-3 px-3.5 py-2.5"
@@ -58,7 +58,7 @@ export default function LevelPhonetics({ loaderData }: Route.ComponentProps) {
                 </span>
               </span>
               <span className="shrink-0 text-xs tabular-nums text-ink-3">{members.length}</span>
-            </Link>
+            </DetailLink>
           );
         })}
       </div>

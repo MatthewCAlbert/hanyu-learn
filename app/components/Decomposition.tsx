@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import clsx from "clsx";
 import { IDC_LABEL, parseIds, type IdsNode } from "~/lib/ids";
 import type { Etymology } from "~/lib/types";
@@ -93,9 +93,9 @@ function Node({
     );
     if (href) {
       return (
-        <Link to={href} className={className}>
+        <DetailLink to={href} className={className}>
           {inner}
-        </Link>
+        </DetailLink>
       );
     }
     return <div className={className}>{inner}</div>;

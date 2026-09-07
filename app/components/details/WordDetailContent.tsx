@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import clsx from "clsx";
 import { Chip, Section, StatusDot } from "~/components/ui";
 import { Prose } from "~/components/DetailShell";
@@ -41,13 +41,13 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
           {topics.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
               {topics.map((t) => (
-                <Link
+                <DetailLink
                   key={t.id}
                   to={`/topics/${t.id}`}
                   className="ui-touch inline-flex items-center rounded-full bg-accent-soft px-3 text-xs text-accent transition-opacity hover:opacity-75 sm:min-h-8"
                 >
                   {t.label}
-                </Link>
+                </DetailLink>
               ))}
             </div>
           )}
@@ -127,7 +127,7 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         <Section title="Character by character">
           <div className="grid gap-2 sm:grid-cols-2">
             {chars.map((c, i) => (
-              <Link
+              <DetailLink
                 key={`${c.char}-${i}`}
                 to={`/hanzi/${encodeURIComponent(c.char)}`}
                 className="ui-card ui-card-interactive flex min-h-16 items-center gap-3 px-3 py-2"
@@ -138,7 +138,7 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
                   <span className="block truncate text-xs text-ink-3">{c.meaning}</span>
                 </span>
                 {c.level && <Chip tone="quiet">HSK {c.level}</Chip>}
-              </Link>
+              </DetailLink>
             ))}
           </div>
         </Section>

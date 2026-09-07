@@ -1,29 +1,64 @@
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { CreditsFooter } from "./CreditsFooter";
+import { canHistoryBack, resolveBrowseOrigin } from "~/lib/navigation";
 
 /** Shared frame for the detail pages. */
 export function DetailShell({
-  back,
+  current,
+  fallback,
   action,
   children,
 }: {
-  back: { to: string; label: string };
+  current: React.ReactNode;
+  fallback: { to: string; label: string };
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const parent = resolveBrowseOrigin(location.state, fallback);
+  const historyBack = canHistoryBack(location.key);
+  const backClass =
+    "ui-touch inline-flex shrink-0 items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent";
+
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <header className="safe-top sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-3 lg:px-6">
-          <Link
-            to={back.to}
-            className="ui-touch inline-flex items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent"
-          >
-            <span aria-hidden className="mr-2 text-lg">
-              ←
-            </span>
-            {back.label}
-          </Link>
+        <div className="mx-auto flex max-w-5xl items-center gap-1 px-3 lg:px-6">
+          {historyBack ? (
+            <button type="button" aria-label="Back" onClick={() => navigate(-1)} className={backClass}>
+              <span aria-hidden className="mr-2 text-lg">
+                ←
+              </span>
+              Back
+            </button>
+          ) : (
+            <Link to={parent.to} aria-label="Back" className={backClass}>
+              <span aria-hidden className="mr-2 text-lg">
+                ←
+              </span>
+              Back
+            </Link>
+          )}
+          <nav aria-label="Breadcrumb" className="min-w-0 flex-1">
+            <ol className="flex min-w-0 items-center gap-1.5 text-sm">
+              <li className="min-w-0">
+                <Link
+                  to={parent.to}
+                  title={parent.label}
+                  className="ui-touch inline-flex min-w-0 max-w-full items-center truncate rounded-lg text-ink-2 transition-colors hover:text-accent"
+                >
+                  {parent.label}
+                </Link>
+              </li>
+              <li aria-hidden className="shrink-0 text-ink-3">
+                /
+              </li>
+              <li className="min-w-0 truncate font-medium text-ink" aria-current="page">
+                {current}
+              </li>
+            </ol>
+          </nav>
           {action}
         </div>
       </header>

@@ -75,7 +75,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
               : "Unknown error."}
         </p>
         <a href="/" className="mt-8 inline-block text-sm text-accent underline underline-offset-4">
-          Back to level 1
+          Back to browse
         </a>
       </main>
       <CreditsFooter />

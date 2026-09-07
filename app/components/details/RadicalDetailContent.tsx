@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import { Chip, Section, StatusDot } from "~/components/ui";
 import type { RadicalDetailData } from "~/lib/detail-data";
 
@@ -46,7 +46,7 @@ export function RadicalDetailContent({ data }: { data: RadicalDetailData }) {
                   key={m.char}
                   className="ui-card ui-card-interactive flex min-h-16 flex-wrap items-center gap-2 px-3 py-2"
                 >
-                  <Link
+                  <DetailLink
                     to={`/hanzi/${encodeURIComponent(m.char)}`}
                     className="flex min-w-[12rem] flex-1 items-center gap-3"
                   >
@@ -60,15 +60,15 @@ export function RadicalDetailContent({ data }: { data: RadicalDetailData }) {
                         义 <span className="han">{m.semantic}</span>
                       </span>
                     )}
-                  </Link>
+                  </DetailLink>
                   {m.phonetic && (
-                    <Link
+                    <DetailLink
                       to={`/phonetic/${encodeURIComponent(m.phonetic)}`}
                       className="ui-touch inline-flex shrink-0 items-center rounded-lg px-2 text-xs text-ink-3 hover:text-accent sm:min-h-8"
                       title="phonetic component"
                     >
                       声 <span className="han">{m.phonetic}</span>
-                    </Link>
+                    </DetailLink>
                   )}
                   <StatusDot status={m.status} />
                 </div>

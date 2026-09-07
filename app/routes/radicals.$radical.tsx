@@ -1,6 +1,6 @@
 import type { Route } from "./+types/radicals.$radical";
 import { loadRadicalDetail } from "~/lib/detail-data";
-import { LEVELS, formatLevels } from "~/lib/levels";
+import { defaultBrowseFallback } from "~/lib/navigation";
 import { DetailShell } from "~/components/DetailShell";
 import { RadicalDetailContent } from "~/components/details/RadicalDetailContent";
 import { CompareVsButton } from "~/components/CompareVsButton";
@@ -22,7 +22,8 @@ export default function RadicalDetail({ loaderData }: Route.ComponentProps) {
   const { radical: r } = loaderData;
   return (
     <DetailShell
-      back={{ to: `/hsk/${formatLevels(LEVELS)}/radicals`, label: "All radicals" }}
+      current={<span className="han">{r.char}</span>}
+      fallback={defaultBrowseFallback("radicals")}
       action={<CompareVsButton entry={{ kind: "radical", id: r.char }} />}
     >
       <RadicalDetailContent data={loaderData} />

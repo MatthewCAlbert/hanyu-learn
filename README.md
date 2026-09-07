@@ -5,7 +5,8 @@ and 9,443 words** across levels 1–9 — organised by radical, by topic or by
 frequency, with authored explanations of _why_ each character is built the way it
 is and _why_ each word means what it means.
 
-Most HSK apps give you 汉字 → pinyin → gloss and stop. This one adds two layers:
+Most HSK apps give you 汉字 → pinyin → gloss and stop. This one adds the
+relationships and explanations needed to study beyond a flat wordlist:
 
 - **Radical-first organisation.** 妈, 她, 好 and 姐 are learned as one family
   under 女 rather than four unrelated shapes. Every character links to its
@@ -27,8 +28,9 @@ pnpm install
 pnpm dev            # http://localhost:5173
 ```
 
-Requires Node 22+ and pnpm. No database, no API keys, no network at build time —
-all source data is committed.
+Requires Node 22+ and pnpm. The core library needs no database or API key, and
+the build needs no network — all source data is committed. The optional study
+chat uses an OpenRouter key supplied in the browser.
 
 `pnpm install` derives `app/data/generated/` (~8s) from the committed sources;
 `dev` and `build` refresh it automatically if `content/` has changed since. It is
@@ -53,7 +55,7 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 |              |                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------- |
 | Hanzi        | 2,970 across 7 level bands (300 per level through 6; 1,171 in the 7–9 band)         |
-| Words        | 9,443 HSK multi-character entries, plus Extra country/language names        |
+| Words        | 9,443 HSK multi-character entries, plus Extra country/language names                |
 | Radicals     | 205, grouped by canonical Kangxi number                                             |
 | Topics       | 42 themes; an entry carries zero, one or many                                       |
 | Sentences    | 50,416 Tatoeba pairs, filtered so an example never uses a character above its level |
@@ -62,18 +64,40 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 ### Features
 
 - **Search across three systems at once** — type `好`, `hao`, `hǎo`, `hao3` or
-  `good`. Searching a component (`女`) finds every character containing it.
+  `good`. Results are ranked by match quality and show the reading or gloss that
+  matched. Searching a component (`女`) finds every character containing it.
 - **Multi-select levels** in the path (`/hsk/1`, `/hsk/1,2`), so any selection is
-  bookmarkable. **Extra** (`/hsk/extra`, `/hsk/1,2,extra`) adds 200+ popular
-  country and language names that HSK 3.0 left out (法国, 日本, 美国, 乌克兰).
+  bookmarkable. Home opens the full corpus (all HSK bands plus **Extra**).
+  **Extra** (`/hsk/extra`, `/hsk/1,2,extra`) adds 200+ popular country and
+  language names that HSK 3.0 left out (法国, 日本, 美国, 乌克兰).
   Names the 2,970-hanzi set cannot spell (韩国, 澳大利亚, 埃及, 匈牙利) are omitted.
 - **Group by radical, topic or frequency**; filter by radical, topic, status and
   the older HSK standards. A Phonetics tab lists sound families in the selected
   levels.
+- **Compare any two entries** — hanzi, words, radicals, phonetic series or
+  topics — side by side from `/compare` or the VS action on a detail page.
+- **Page-aware study chat** streams answers about the current hanzi, word or
+  comparison. It supports `@` entry mentions, searches the local corpus before
+  guessing, can use web search, and exposes tool activity, citations, token
+  usage and cost.
 - **i+1 example sentences** — every example at a level uses _only_ characters
   learned at or below it. Enforced by a test, not by hope.
-- Stroke-order animation, dark mode, and windowed lists (1,000 rows, +100 on
-  scroll) so 9,443 words stay responsive.
+- Stroke-order animation, dark mode, touch-sized mobile controls, keyboard
+  navigation, and windowed lists (1,000 rows, +100 on scroll) so 9,443 words
+  stay responsive.
+
+## Optional study chat
+
+The reference library works without AI. To enable the floating study chat, open
+`/settings` and add an OpenRouter API key plus a model slug that supports tool
+calling. Reasoning, reasoning effort and response verbosity are configurable.
+
+The model and key are stored in `localStorage`; conversations are written to
+IndexedDB only when explicitly saved. Inference and optional web-search requests
+go directly from the browser to OpenRouter — there is no app server — so anything
+that can run script on the app origin can read the key. Each response shows its
+reported usage and cost, with per-run limits of six agent steps, US$0.75 and
+48,000 tokens.
 
 ## Layout
 
@@ -89,7 +113,8 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 
 Detail routes: `/hanzi/:char`, `/words/:word`, `/radicals/:radical`,
 `/phonetic/:component`, `/topics/:topic`. Compare two of them side by side at
-`/compare` (or press VS on a detail page). Level indexes:
+`/compare` (or press VS on a detail page). Details and comparisons retain the
+originating browse selection and filters for navigation back. Level indexes:
 `/hsk/:level/hanzi` (also `words`, `topics`, `radicals`, `phonetics`).
 `:level` may end with `extra` for supplement vocabulary.
 Phonetic pages are generated from visible sound components; they are not
@@ -165,7 +190,8 @@ under half a second.
 ## Stack
 
 React Router v8 (framework mode, `ssr: false`) · React 19 · Vite 8 · Tailwind v4 ·
-react-virtuoso · Vitest · pnpm.
+Radix UI · OpenRouter Agent · Zustand · IndexedDB · react-virtuoso · Vitest ·
+pnpm.
 
 Static SPA: one HTML shell, data loaded in the browser from versioned JSON shards.
 No runtime server. Deep links rewrite to `index.html`.

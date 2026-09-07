@@ -1,6 +1,6 @@
 import type { Route } from "./+types/phonetic.$component";
 import { loadPhoneticDetail } from "~/lib/detail-data";
-import { LEVELS, formatLevels } from "~/lib/levels";
+import { defaultBrowseFallback } from "~/lib/navigation";
 import { DetailShell } from "~/components/DetailShell";
 import { PhoneticDetailContent } from "~/components/details/PhoneticDetailContent";
 import { CompareVsButton } from "~/components/CompareVsButton";
@@ -24,7 +24,8 @@ clientLoader.hydrate = true as const;
 export default function PhoneticDetail({ loaderData }: Route.ComponentProps) {
   return (
     <DetailShell
-      back={{ to: `/hsk/${formatLevels(LEVELS)}/phonetics`, label: "All phonetics" }}
+      current={<span className="han">{loaderData.meta.component}</span>}
+      fallback={defaultBrowseFallback("phonetics")}
       action={<CompareVsButton entry={{ kind: "phonetic", id: loaderData.meta.component }} />}
     >
       <PhoneticDetailContent data={loaderData} />

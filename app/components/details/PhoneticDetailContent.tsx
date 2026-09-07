@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import { levelLabel } from "~/lib/levels";
 import { toneless } from "~/lib/pinyin";
 import { Chip, Section, StatusDot } from "~/components/ui";
@@ -39,9 +39,9 @@ export function PhoneticDetailContent({ data }: { data: PhoneticDetailData }) {
             <p className="mt-1 text-sm text-ink-2">
               Component form of{" "}
               {meta.hanzi && meta.hanzi === meta.anchor ? (
-                <Link to={`/hanzi/${encodeURIComponent(meta.anchor)}`} className="text-accent">
+                <DetailLink to={`/hanzi/${encodeURIComponent(meta.anchor)}`} className="text-accent">
                   <span className="han">{meta.anchor}</span>
-                </Link>
+                </DetailLink>
               ) : (
                 <span className="han">{meta.anchor}</span>
               )}
@@ -52,9 +52,9 @@ export function PhoneticDetailContent({ data }: { data: PhoneticDetailData }) {
           {meta.anchor === meta.component && (meta.meaning || meta.hanzi) && (
             <p className="mt-1 text-sm text-ink-2">
               {meta.hanzi ? (
-                <Link to={`/hanzi/${encodeURIComponent(meta.hanzi)}`} className="text-accent">
+                <DetailLink to={`/hanzi/${encodeURIComponent(meta.hanzi)}`} className="text-accent">
                   <span className="han">{meta.hanzi}</span>
-                </Link>
+                </DetailLink>
               ) : (
                 <span className="han">{meta.component}</span>
               )}
@@ -67,13 +67,13 @@ export function PhoneticDetailContent({ data }: { data: PhoneticDetailData }) {
               {total} character{total === 1 ? "" : "s"} in HSK 1–9
             </Chip>
             {meta.radical && (
-              <Link
+              <DetailLink
                 to={`/radicals/${encodeURIComponent(meta.radical.char)}`}
                 className="text-accent"
               >
                 as radical {meta.radical.display} {meta.radical.gloss} · Kangxi #
                 {meta.radical.number}
-              </Link>
+              </DetailLink>
             )}
           </p>
         </div>
@@ -96,7 +96,7 @@ export function PhoneticDetailContent({ data }: { data: PhoneticDetailData }) {
               {members.map((m) => {
                 const fit = meta.pinyin.length ? pinyinFit(meta.pinyin, m.pinyin[0] ?? "") : null;
                 return (
-                  <Link
+                  <DetailLink
                     key={m.char}
                     to={`/hanzi/${encodeURIComponent(m.char)}`}
                     className="ui-card ui-card-interactive flex min-h-16 flex-wrap items-center gap-2 px-3 py-2"
@@ -113,7 +113,7 @@ export function PhoneticDetailContent({ data }: { data: PhoneticDetailData }) {
                     )}
                     {fit && <span className="shrink-0 text-xs text-ink-3">{FIT_LABEL[fit]}</span>}
                     <StatusDot status={m.status} />
-                  </Link>
+                  </DetailLink>
                 );
               })}
             </div>

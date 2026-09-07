@@ -1,4 +1,4 @@
-import { Link, useNavigation, useSearchParams } from "react-router";
+import { useNavigation, useSearchParams } from "react-router";
 import clsx from "clsx";
 import type { Route } from "./+types/level.hanzi";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
@@ -15,6 +15,7 @@ import {
   statusOf,
 } from "~/lib/filters";
 import { CreditsFooter } from "~/components/CreditsFooter";
+import { DetailLink } from "~/components/DetailLink";
 import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 
@@ -265,22 +266,22 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
               {s.header && (
                 <div className="sticky top-(--app-header-height) z-10 -mx-1 mb-2 flex flex-wrap items-baseline gap-2 border-b border-line/70 bg-paper/95 px-1 py-2 backdrop-blur">
                   {s.header.route.startsWith("topic:") ? (
-                    <Link
+                    <DetailLink
                       to={`/topics/${s.header.route.slice(6)}`}
                       className="text-sm font-medium text-ink hover:text-accent"
                     >
                       {s.header.gloss}
-                    </Link>
+                    </DetailLink>
                   ) : s.header.route === "" ? (
                     <span className="text-sm text-ink-3 italic">{s.header.gloss}</span>
                   ) : (
                     <>
-                      <Link
+                      <DetailLink
                         to={`/radicals/${encodeURIComponent(s.header.route)}`}
                         className="han text-2xl hover:text-accent"
                       >
                         {s.header.label}
-                      </Link>
+                      </DetailLink>
                       <span className="text-sm text-ink-2">{s.header.gloss}</span>
                     </>
                   )}
@@ -295,7 +296,7 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
               {view === "grid" ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2">
                   {s.rows.map((r) => (
-                    <Link
+                    <DetailLink
                       key={r.char}
                       to={`/hanzi/${encodeURIComponent(r.char)}`}
                       className="ui-card ui-card-interactive group flex min-h-28 flex-col items-center justify-center px-2 py-3"
@@ -311,7 +312,7 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                         {showLevel && <span className="text-xs text-ink-3">HSK {r.level}</span>}
                         <StatusDot status={r.status} />
                       </span>
-                    </Link>
+                    </DetailLink>
                   ))}
                 </div>
               ) : (
@@ -321,12 +322,12 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                       {s.rows.map((r) => (
                         <tr key={r.char} className="border-b border-line/60 hover:bg-sunk">
                           <td className="w-12 py-1.5">
-                            <Link
+                            <DetailLink
                               to={`/hanzi/${encodeURIComponent(r.char)}`}
                               className="han text-2xl hover:text-accent"
                             >
                               {r.char}
-                            </Link>
+                            </DetailLink>
                           </td>
                           <td className="w-28 text-ink-2">{r.pinyin}</td>
                           <td className="truncate text-ink-2" title={r.meaning}>

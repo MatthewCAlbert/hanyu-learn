@@ -23,6 +23,7 @@ import {
 } from "~/lib/detail-data";
 import { PageContextBridge } from "~/components/ai/PageContextBridge";
 import { serializeCompareContext } from "~/lib/ai/context";
+import { canHistoryBack, defaultBrowseFallback, resolveBrowseOrigin } from "~/lib/navigation";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [{ title: "Compare — Mandarin" }];
@@ -125,6 +126,10 @@ export default function ComparePage({ loaderData }: Route.ComponentProps) {
     () => serializeCompareContext(left, right, `${location.pathname}${location.search}`),
     [left, right, location.pathname, location.search],
   );
+  const browse = resolveBrowseOrigin(location.state, defaultBrowseFallback());
+  const historyBack = canHistoryBack(location.key);
+  const backClass =
+    "ui-touch inline-flex shrink-0 items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent";
 
   return (
     <div className="flex min-h-screen flex-col bg-paper lg:h-dvh lg:overflow-hidden">
@@ -133,17 +138,41 @@ export default function ComparePage({ loaderData }: Route.ComponentProps) {
         ref={headerRef}
         className="safe-top sticky top-0 z-20 shrink-0 border-b border-line bg-paper/90 backdrop-blur-xl"
       >
-        <div className="flex items-center gap-2 px-3 py-1 lg:px-6">
-          <Link
-            to="/hsk/1/hanzi"
-            className="ui-touch inline-flex items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent"
-          >
-            <span aria-hidden className="mr-2 text-lg">
-              ←
-            </span>
-            Browse
-          </Link>
-          <h1 className="flex-1 text-center text-sm font-medium text-ink">Compare</h1>
+        <div className="flex items-center gap-1 px-3 py-1 lg:px-6">
+          {historyBack ? (
+            <button type="button" aria-label="Back" onClick={() => navigate(-1)} className={backClass}>
+              <span aria-hidden className="mr-2 text-lg">
+                ←
+              </span>
+              Back
+            </button>
+          ) : (
+            <Link to={browse.to} aria-label="Back" className={backClass}>
+              <span aria-hidden className="mr-2 text-lg">
+                ←
+              </span>
+              Back
+            </Link>
+          )}
+          <nav aria-label="Breadcrumb" className="min-w-0 flex-1">
+            <ol className="flex min-w-0 items-center gap-1.5 text-sm">
+              <li className="min-w-0">
+                <Link
+                  to={browse.to}
+                  title={browse.label}
+                  className="ui-touch inline-flex min-w-0 max-w-full items-center truncate rounded-lg text-ink-2 transition-colors hover:text-accent"
+                >
+                  {browse.label}
+                </Link>
+              </li>
+              <li aria-hidden className="shrink-0 text-ink-3">
+                /
+              </li>
+              <li className="truncate font-medium text-ink" aria-current="page">
+                Compare
+              </li>
+            </ol>
+          </nav>
           <button
             type="button"
             onClick={() => go(swapCompareSearch(searchParams))}

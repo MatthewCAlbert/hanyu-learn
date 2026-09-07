@@ -1,4 +1,4 @@
-import { Link, useNavigation, useSearchParams } from "react-router";
+import { useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/level.words";
 import { getMeta, getWordIndexesForBands } from "~/lib/data.client";
 import { parseBands } from "~/lib/levels";
@@ -14,6 +14,7 @@ import {
   statusOf,
 } from "~/lib/filters";
 import { CreditsFooter } from "~/components/CreditsFooter";
+import { DetailLink } from "~/components/DetailLink";
 import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 import { Toggle, Toolbar } from "./level.hanzi";
@@ -213,12 +214,12 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
               {s.header && (
                 <div className="sticky top-(--app-header-height) z-10 -mx-1 mb-2 flex items-baseline gap-2 border-b border-line/70 bg-paper/95 px-1 py-2 backdrop-blur">
                   {s.header.route ? (
-                    <Link
+                    <DetailLink
                       to={`/topics/${s.header.route.slice(6)}`}
                       className="text-sm font-medium text-ink hover:text-accent"
                     >
                       {s.header.gloss}
-                    </Link>
+                    </DetailLink>
                   ) : (
                     <span className="text-sm text-ink-3 italic">{s.header.gloss}</span>
                   )}
@@ -227,7 +228,7 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
               )}
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {s.rows.map((r) => (
-                  <Link
+                  <DetailLink
                     key={r.word}
                     to={`/words/${encodeURIComponent(r.word)}`}
                     className="ui-card ui-card-interactive group flex min-h-24 min-w-0 flex-col px-3.5 py-3"
@@ -255,7 +256,7 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
                         {r.transparency === "opaque" && <Chip tone="accent">opaque</Chip>}
                       </span>
                     )}
-                  </Link>
+                  </DetailLink>
                 ))}
               </div>
             </div>

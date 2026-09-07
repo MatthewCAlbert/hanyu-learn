@@ -27,9 +27,10 @@ export default function WordDetail({ loaderData }: Route.ComponentProps) {
     <>
       <PageContextBridge context={context} />
       <DetailShell
-        back={{
+        current={<span className="han">{w.word}</span>}
+        fallback={{
           to: w.extra ? "/hsk/extra/words" : `/hsk/${w.level}/words`,
-          label: w.extra ? "Extra words" : `HSK ${w.level} words`,
+          label: w.extra ? "Extra Words" : `HSK ${w.level} Words`,
         }}
         action={<CompareVsButton entry={{ kind: "word", id: w.word }} />}
       >

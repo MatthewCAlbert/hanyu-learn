@@ -1,5 +1,5 @@
 import { Children, Fragment, cloneElement, isValidElement, type ReactNode } from "react";
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import clsx from "clsx";
 import { entryPath } from "~/lib/compare";
 import { segmentMentions } from "~/lib/ai/mentions";
@@ -17,13 +17,13 @@ export function MentionedText({
     <>
       {segments.map((seg, i) =>
         seg.kind === "mention" && seg.mention ? (
-          <Link
+          <DetailLink
             key={i}
             to={entryPath(seg.mention)}
             className={clsx("chat-mention", tone === "user" && "chat-mention-on-accent")}
           >
             {seg.text}
-          </Link>
+          </DetailLink>
         ) : (
           <Fragment key={i}>{seg.text}</Fragment>
         ),

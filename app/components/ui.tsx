@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import clsx from "clsx";
 import type { Status } from "~/lib/types";
 
@@ -78,7 +78,7 @@ export function HanziLink({
   className?: string;
 }) {
   return (
-    <Link
+    <DetailLink
       to={`/hanzi/${encodeURIComponent(char)}`}
       className={clsx(
         "han inline-flex items-center justify-center rounded-lg border border-line bg-surface text-ink transition-colors hover:border-accent hover:text-accent",
@@ -89,7 +89,7 @@ export function HanziLink({
       )}
     >
       {char}
-    </Link>
+    </DetailLink>
   );
 }
 

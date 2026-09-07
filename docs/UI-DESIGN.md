@@ -32,8 +32,8 @@ The interface should feel calm, scholarly, and useful rather than decorative.
 - Section labels use `ui-eyebrow`.
 - Touch controls use `ui-touch` on mobile and may become denser at `sm` or `lg`.
 - Selected controls use ink or accent fills plus text/shape, never colour alone.
-- Bottom sheets use a labelled native dialog, restore trigger focus on close,
-  close on Escape or backdrop, and prevent background scrolling.
+- Bottom sheets use the shared Radix Dialog primitive, restore trigger focus on
+  close, close on Escape or backdrop, and prevent background scrolling.
 - Truncation is only a layout aid: preserve the full value with wrapping,
   a title, or a detail destination.
 

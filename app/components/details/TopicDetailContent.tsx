@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import { levelLabel } from "~/lib/levels";
 import { Chip, Empty, Section, StatusDot } from "~/components/ui";
 import { Prose } from "~/components/DetailShell";
@@ -61,7 +61,7 @@ function MemberGrid({ members }: { members: TopicMember[] }) {
   return (
     <div className="grid gap-1.5 sm:grid-cols-2">
       {members.map((m) => (
-        <Link
+        <DetailLink
           key={`${m.kind}-${m.text}`}
           to={`/${m.kind === "hanzi" ? "hanzi" : "words"}/${encodeURIComponent(m.text)}`}
           className="ui-card ui-card-interactive flex min-h-16 flex-wrap items-center gap-3 px-3 py-2"
@@ -77,7 +77,7 @@ function MemberGrid({ members }: { members: TopicMember[] }) {
             </Chip>
           )}
           <StatusDot status={m.status} />
-        </Link>
+        </DetailLink>
       ))}
     </div>
   );

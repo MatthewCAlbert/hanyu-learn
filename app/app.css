@@ -144,6 +144,26 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .ui-sheet-overlay[data-state="open"] {
+    animation: ui-sheet-overlay-in 180ms ease-out;
+  }
+
+  .ui-sheet-overlay[data-state="closed"] {
+    animation: ui-sheet-overlay-out 140ms ease-in;
+  }
+
+  .ui-sheet-content {
+    will-change: transform;
+  }
+
+  .ui-sheet-content[data-state="open"] {
+    animation: ui-sheet-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ui-sheet-content[data-state="closed"] {
+    animation: ui-sheet-out 180ms cubic-bezier(0.4, 0, 1, 1);
+  }
+
   .chat-md {
     font-size: 0.9375rem;
     line-height: 1.55;
@@ -256,6 +276,42 @@
 @keyframes chat-caret-blink {
   50% {
     opacity: 0;
+  }
+}
+
+@keyframes ui-sheet-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-sheet-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
   }
 }
 

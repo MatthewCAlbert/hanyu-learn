@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import type { Route } from "./+types/level.topics";
 import { matchesTopic, topicsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getMeta, getWordIndexesForBands } from "~/lib/data.client";
@@ -77,7 +78,7 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((t) => (
-            <Link
+            <DetailLink
               key={t.id}
               to={`/topics/${t.id}`}
               className="ui-card ui-card-interactive group flex min-h-24 flex-col px-3.5 py-3"
@@ -96,7 +97,7 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
                   {t.hanzi} hanzi · {t.words} words
                 </span>
               )}
-            </Link>
+            </DetailLink>
           ))}
         </div>
       )}

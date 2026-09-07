@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
 import { AlertDialog, Dialog } from "radix-ui";
 
 /** Present while a design-system dialog is open (nested Escape/Tab handling). */
@@ -17,6 +24,73 @@ const confirmClass =
 
 const dangerClass =
   "ui-touch inline-flex items-center justify-center rounded-xl bg-accent px-4 text-sm font-medium text-paper hover:bg-accent-strong";
+
+export function BottomSheet({
+  open,
+  onOpenChange,
+  title,
+  description,
+  returnFocusRef,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  returnFocusRef?: RefObject<HTMLElement | null>;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) onOpenChange(false);
+    };
+    closeOnDesktop();
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, [open, onOpenChange]);
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          className="ui-sheet-overlay fixed inset-0 z-60 bg-ink/45 backdrop-blur-[2px] lg:hidden"
+          data-app-dialog=""
+        />
+        <Dialog.Content
+          className="ui-sheet-content safe-bottom fixed inset-x-0 bottom-0 z-61 max-h-[min(86dvh,48rem)] overflow-hidden rounded-t-3xl border border-b-0 border-line bg-paper text-ink shadow-2xl outline-none lg:hidden"
+          data-app-dialog=""
+          onCloseAutoFocus={(event) => {
+            if (!returnFocusRef?.current) return;
+            event.preventDefault();
+            returnFocusRef.current.focus();
+          }}
+        >
+          <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-line" aria-hidden />
+          <div className="flex items-start gap-3 border-b border-line px-5 pt-4 pb-3">
+            <div className="min-w-0 flex-1">
+              <Dialog.Title className="text-lg font-medium text-ink">{title}</Dialog.Title>
+              <Dialog.Description className="mt-0.5 text-sm text-ink-3">
+                {description}
+              </Dialog.Description>
+            </div>
+            <Dialog.Close
+              type="button"
+              aria-label="Close"
+              className="ui-touch -mt-1 inline-flex shrink-0 items-center justify-center rounded-full text-2xl leading-none text-ink-3 transition-colors hover:bg-sunk hover:text-ink"
+            >
+              <span aria-hidden>×</span>
+            </Dialog.Close>
+          </div>
+          <div className="max-h-[calc(86dvh-6.5rem)] overflow-y-auto overscroll-contain px-5 py-5">
+            {children}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
 
 export function ConfirmDialog({
   open,

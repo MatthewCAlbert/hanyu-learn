@@ -14,11 +14,13 @@ import {
 import { getHanziIndexes, getMeta, getPhonetics, getWordIndexesForBands } from "~/lib/data.client";
 import {
   LEVELS,
+  bandsSummary,
   formatBands,
   levelLabel,
   parseBands,
   toggleExtra,
   toggleLevelInBands,
+  type Bands,
 } from "~/lib/levels";
 import {
   UNTAGGED,
@@ -29,11 +31,16 @@ import {
   type Filters,
 } from "~/lib/filters";
 import type { Status } from "~/lib/types";
+import { BottomSheet } from "~/components/Dialog";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { CreditsFooter } from "~/components/CreditsFooter";
 
 export function meta({ params }: Route.MetaArgs) {
-  return [{ title: `HSK ${params.level?.replaceAll(",", " + ")} — Mandarin` }];
+  try {
+    return [{ title: `${bandsSummary(parseBands(params.level))} — Mandarin` }];
+  } catch {
+    return [{ title: "Mandarin" }];
+  }
 }
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
@@ -114,10 +121,11 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const headerRef = useRef<HTMLElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const levelButtonRef = useRef<HTMLButtonElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [levelsOpen, setLevelsOpen] = useState(false);
   const tab = pathname.split("/").pop() ?? "hanzi";
   const bands = { levels, extra };
   const selected = formatBands(bands);
@@ -228,86 +236,20 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
 
           {/* Levels are multi-select: study one, or both at once. The
               selection lives in the path so it stays bookmarkable. */}
-          {/* Seven levels, so the boxes are compact: "HSK" labels the group
-              once and each toggle carries only its number. */}
-          <fieldset className="hide-scrollbar order-3 col-span-3 flex w-full min-w-0 shrink-0 items-center gap-0.5 overflow-x-auto rounded-xl border border-line bg-surface p-0.5 lg:order-0 lg:col-span-1 lg:w-auto">
+          <button
+            ref={levelButtonRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={levelsOpen}
+            title={bandsSummary(bands)}
+            onClick={() => setLevelsOpen(true)}
+            className="ui-touch min-w-0 truncate rounded-xl border border-line bg-surface px-3 text-left text-sm font-medium text-ink lg:hidden"
+          >
+            {bandsSummary(bands)}
+          </button>
+          <fieldset className="hidden items-center gap-0.5 rounded-xl border border-line bg-surface p-0.5 lg:flex">
             <legend className="sr-only">HSK levels and Extra</legend>
-            <span aria-hidden className="px-1 text-[11px] text-ink-3">
-              HSK
-            </span>
-            {LEVELS.map((l) => {
-              const on = levels.includes(l);
-              const only = on && levels.length === 1 && !extra;
-              return (
-                <label
-                  key={l}
-                  title={
-                    only
-                      ? "At least one level must stay selected"
-                      : `HSK ${levelLabel(l)}${l === 7 ? " (the wordlist merges 7-9)" : ""}`
-                  }
-                  className={clsx(
-                    "ui-touch inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg px-2 text-xs font-medium transition-colors lg:min-h-8 lg:min-w-8",
-                    on ? "bg-ink text-paper" : "text-ink-2 hover:bg-sunk hover:text-ink",
-                    only && "cursor-default",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    disabled={only}
-                    onChange={() =>
-                      navigate(
-                        `/hsk/${formatBands(toggleLevelInBands(bands, l))}/${tab}${search}`,
-                        { preventScrollReset: true },
-                      )
-                    }
-                    className="sr-only"
-                  />
-                  {levelLabel(l)}
-                </label>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/hsk/${formatBands({
-                    levels: levels.length === LEVELS.length ? [1] : LEVELS,
-                    extra,
-                  })}/${tab}${search}`,
-                  { preventScrollReset: true },
-                )
-              }
-              className="ui-touch ml-0.5 shrink-0 rounded-lg px-2 text-xs text-accent transition-colors hover:bg-sunk lg:min-h-8"
-            >
-              {levels.length === LEVELS.length ? "only 1" : "all"}
-            </button>
-            <label
-              title={
-                extra && levels.length === 0
-                  ? "At least one band must stay selected"
-                  : "Country and language names not on the HSK 3.0 wordlist"
-              }
-              className={clsx(
-                "ui-touch ml-0.5 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border-l border-line px-2 text-xs font-medium transition-colors lg:min-h-8",
-                extra ? "bg-ink text-paper" : "text-ink-2 hover:bg-sunk hover:text-ink",
-                extra && levels.length === 0 && "cursor-default",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={extra}
-                disabled={extra && levels.length === 0}
-                onChange={() =>
-                  navigate(`/hsk/${formatBands(toggleExtra(bands))}/${tab}${search}`, {
-                    preventScrollReset: true,
-                  })
-                }
-                className="sr-only"
-              />
-              Extra
-            </label>
+            <LevelControls bands={bands} tab={tab} search={search} compact />
           </fieldset>
 
           <form
@@ -405,12 +347,24 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           <Outlet />
         </main>
       </div>
-      <MobileFilters
+      <BottomSheet
+        open={levelsOpen}
+        onOpenChange={setLevelsOpen}
+        title="Study range"
+        description={bandsSummary(bands)}
+        returnFocusRef={levelButtonRef}
+      >
+        <fieldset>
+          <legend className="sr-only">HSK levels and Extra</legend>
+          <LevelControls bands={bands} tab={tab} search={search} />
+        </fieldset>
+      </BottomSheet>
+      <BottomSheet
         open={filtersOpen}
-        onClose={() => {
-          setFiltersOpen(false);
-          requestAnimationFrame(() => filterButtonRef.current?.focus());
-        }}
+        onOpenChange={setFiltersOpen}
+        title="Refine results"
+        description="Changes apply immediately"
+        returnFocusRef={filterButtonRef}
       >
         <FilterControls
           filters={filters}
@@ -420,75 +374,190 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           toggle={toggle}
           clearGroup={clearGroup}
         />
-      </MobileFilters>
+      </BottomSheet>
       {!listOwnsFooter && <CreditsFooter />}
     </div>
   );
 }
 
-function MobileFilters({
-  open,
-  onClose,
-  children,
+function LevelControls({
+  bands,
+  tab,
+  search,
+  compact = false,
 }: {
-  open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
+  bands: Bands;
+  tab: string;
+  search: string;
+  compact?: boolean;
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const navigate = useNavigate();
+  const { levels, extra } = bands;
+  const go = (next: Bands) =>
+    navigate(`/hsk/${formatBands(next)}/${tab}${search}`, { preventScrollReset: true });
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) {
-      dialog.showModal();
-      const previous = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = previous;
-        if (dialog.open) dialog.close();
-      };
-    }
-  }, [open]);
-
-  return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby="mobile-filter-title"
-      onClose={onClose}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          onClose();
-        }
-      }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      className="safe-bottom fixed inset-x-0 top-auto bottom-0 m-0 max-h-[82dvh] w-full max-w-none overflow-hidden rounded-t-2xl border border-line bg-paper p-0 text-ink backdrop:bg-ink/45 lg:hidden"
-    >
-      <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line" aria-hidden />
-      <div className="flex items-center justify-between border-b border-line px-4 py-2">
-        <div>
-          <h2 id="mobile-filter-title" className="text-base font-medium">
-            Refine results
-          </h2>
-          <p className="text-xs text-ink-3">Changes apply immediately</p>
-        </div>
+  if (compact) {
+    return (
+      <>
+        <span aria-hidden className="px-1 text-[11px] text-ink-3">
+          HSK
+        </span>
+        {LEVELS.map((l) => {
+          const on = levels.includes(l);
+          const only = on && levels.length === 1 && !extra;
+          return (
+            <label
+              key={l}
+              title={
+                only
+                  ? "At least one level must stay selected"
+                  : `HSK ${levelLabel(l)}${l === 7 ? " (the wordlist merges 7-9)" : ""}`
+              }
+              className={clsx(
+                "ui-touch inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg px-2 text-xs font-medium transition-colors lg:min-h-8 lg:min-w-8",
+                on ? "bg-ink text-paper" : "text-ink-2 hover:bg-sunk hover:text-ink",
+                only && "cursor-default",
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={on}
+                disabled={only}
+                onChange={() => go(toggleLevelInBands(bands, l))}
+                className="sr-only"
+              />
+              {levelLabel(l)}
+            </label>
+          );
+        })}
         <button
           type="button"
-          onClick={onClose}
-          className="ui-touch rounded-lg px-3 text-sm font-medium text-accent"
+          onClick={() =>
+            go({ levels: levels.length === LEVELS.length ? [1] : LEVELS, extra })
+          }
+          className="ui-touch ml-0.5 shrink-0 rounded-lg px-2 text-xs text-accent transition-colors hover:bg-sunk lg:min-h-8"
         >
-          Done
+          {levels.length === LEVELS.length ? "only 1" : "all"}
         </button>
+        <label
+          title={
+            extra && levels.length === 0
+              ? "At least one band must stay selected"
+              : "Country and language names not on the HSK 3.0 wordlist"
+          }
+          className={clsx(
+            "ui-touch ml-0.5 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border-l border-line px-2 text-xs font-medium transition-colors lg:min-h-8",
+            extra ? "bg-ink text-paper" : "text-ink-2 hover:bg-sunk hover:text-ink",
+            extra && levels.length === 0 && "cursor-default",
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={extra}
+            disabled={extra && levels.length === 0}
+            onChange={() => go(toggleExtra(bands))}
+            className="sr-only"
+          />
+          Extra
+        </label>
+      </>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="ui-eyebrow">HSK bands</span>
+        <span className="text-xs text-ink-3">{levels.length} of 7 selected</span>
       </div>
-      <div className="max-h-[calc(82dvh-72px)] overflow-y-auto px-4 py-4">{children}</div>
-    </dialog>
+      <div className="mt-2 grid grid-cols-4 gap-2">
+        {LEVELS.map((l) => {
+          const on = levels.includes(l);
+          const only = on && levels.length === 1 && !extra;
+          return (
+            <label
+              key={l}
+              title={only ? "At least one band must stay selected" : `HSK ${levelLabel(l)}`}
+              className={clsx(
+                "ui-touch relative flex min-h-14 cursor-pointer items-center justify-center rounded-xl border text-base font-medium transition-colors",
+                l === 7 && "col-span-2",
+                on
+                  ? "border-accent/40 bg-accent-soft text-accent"
+                  : "border-line bg-surface text-ink-2 hover:border-accent/50 hover:text-ink",
+                only && "cursor-default",
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={on}
+                disabled={only}
+                onChange={() => go(toggleLevelInBands(bands, l))}
+                className="sr-only"
+              />
+              <span>HSK {levelLabel(l)}</span>
+              {on && (
+                <span
+                  aria-hidden
+                  className="absolute top-1.5 right-2 text-xs font-medium text-accent"
+                >
+                  ✓
+                </span>
+              )}
+            </label>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        onClick={() => go({ levels: levels.length === LEVELS.length ? [1] : LEVELS, extra })}
+        className="ui-touch mt-3 inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink-2 transition-colors hover:border-accent/50 hover:text-accent"
+      >
+        {levels.length === LEVELS.length ? "Use HSK 1" : "Select all HSK bands"}
+      </button>
+
+      <div className="mt-5 border-t border-line pt-5">
+        <span className="ui-eyebrow">Supplement</span>
+        <label
+          title={
+            extra && levels.length === 0
+              ? "At least one band must stay selected"
+              : "Country and language names not on the HSK 3.0 wordlist"
+          }
+          className={clsx(
+            "ui-touch mt-2 flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border px-4 transition-colors",
+            extra
+              ? "border-accent/40 bg-accent-soft"
+              : "border-line bg-surface hover:border-accent/50",
+            extra && levels.length === 0 && "cursor-default",
+          )}
+        >
+          <span className="min-w-0 flex-1">
+            <span className={clsx("block text-sm font-medium", extra ? "text-accent" : "text-ink")}>
+              Extra vocabulary
+            </span>
+            <span className="mt-0.5 block text-xs text-ink-3">
+              Common country and language names
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={extra}
+            disabled={extra && levels.length === 0}
+            onChange={() => go(toggleExtra(bands))}
+            className="sr-only"
+          />
+          <span
+            aria-hidden
+            className={clsx(
+              "flex size-6 shrink-0 items-center justify-center rounded-full border text-sm",
+              extra ? "border-accent bg-accent text-white" : "border-line bg-paper text-transparent",
+            )}
+          >
+            ✓
+          </span>
+        </label>
+      </div>
+    </div>
   );
 }
 

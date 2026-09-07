@@ -1,6 +1,6 @@
 import type { Route } from "./+types/topics.$topic";
 import { loadTopicDetail } from "~/lib/detail-data";
-import { LEVELS, formatLevels } from "~/lib/levels";
+import { defaultBrowseFallback } from "~/lib/navigation";
 import { DetailShell } from "~/components/DetailShell";
 import { TopicDetailContent } from "~/components/details/TopicDetailContent";
 import { CompareVsButton } from "~/components/CompareVsButton";
@@ -20,7 +20,8 @@ clientLoader.hydrate = true as const;
 export default function TopicDetail({ loaderData }: Route.ComponentProps) {
   return (
     <DetailShell
-      back={{ to: `/hsk/${formatLevels(LEVELS)}/topics`, label: "All topics" }}
+      current={loaderData.topic.label}
+      fallback={defaultBrowseFallback("topics")}
       action={<CompareVsButton entry={{ kind: "topic", id: loaderData.topic.id }} />}
     >
       <TopicDetailContent data={loaderData} />

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import { Chip, Section, StatusDot } from "~/components/ui";
 import { Prose } from "~/components/DetailShell";
 import { Decomposition } from "~/components/Decomposition";
@@ -57,13 +57,13 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
           {topics.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
               {topics.map((t) => (
-                <Link
+                <DetailLink
                   key={t.id}
                   to={`/topics/${t.id}`}
                   className="ui-touch inline-flex items-center rounded-full bg-accent-soft px-3 text-xs text-accent transition-opacity hover:opacity-75 sm:min-h-8"
                 >
                   {t.label}
-                </Link>
+                </DetailLink>
               ))}
             </div>
           )}
@@ -90,7 +90,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
               {phoneticRole && (
                 <p>
                   <span className="text-ink-3">Sound</span>{" "}
-                  <Link to={phoneticRole.href} className="text-accent">
+                  <DetailLink to={phoneticRole.href} className="text-accent">
                     <span className="han text-base">{phoneticRole.form}</span>
                     {phoneticRole.anchor !== phoneticRole.form && (
                       <>
@@ -100,18 +100,18 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
                     )}
                     {phoneticRole.pinyin[0] && <> {phoneticRole.pinyin[0]}</>}
                     {phoneticRole.gloss && <> · {phoneticRole.gloss}</>}
-                  </Link>
+                  </DetailLink>
                 </p>
               )}
               {radical && radicalForm && (
                 <p>
                   <span className="text-ink-3">Dictionary radical</span>{" "}
-                  <Link
+                  <DetailLink
                     to={`/radicals/${encodeURIComponent(radical.char)}`}
                     className="text-accent"
                   >
                     <span className="han text-base">{radicalForm}</span> {radical.gloss}
-                  </Link>{" "}
+                  </DetailLink>{" "}
                   <span className="text-ink-3">
                     · Kangxi #{radical.number}
                     {radicalForm !== radical.canonical && (
@@ -192,9 +192,9 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
         {phoneticSeries.length > 0 && phoneticRole && (
           <Section
             title={
-              <Link to={phoneticRole.href} className="hover:text-accent">
+              <DetailLink to={phoneticRole.href} className="hover:text-accent">
                 Phonetic series <span className="han">{e?.phonetic ?? phoneticRole.form}</span>
-              </Link>
+              </DetailLink>
             }
             aside={<span className="text-xs text-ink-3">same sound component</span>}
           >
@@ -204,7 +204,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
             </p>
             <div className="flex flex-wrap gap-2">
               {phoneticSeries.map((p) => (
-                <Link
+                <DetailLink
                   key={p.char}
                   to={`/hanzi/${encodeURIComponent(p.char)}`}
                   className="ui-card ui-card-interactive ui-touch flex items-center gap-1.5 px-3"
@@ -212,7 +212,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
                   <span className="han text-xl">{p.char}</span>
                   <span className="text-xs text-ink-2">{p.pinyin}</span>
                   <span className="max-w-28 truncate text-xs text-ink-3">{p.meaning}</span>
-                </Link>
+                </DetailLink>
               ))}
             </div>
           </Section>
@@ -231,7 +231,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
           >
             <div className="grid gap-1.5 sm:grid-cols-2">
               {words.map((w) => (
-                <Link
+                <DetailLink
                   key={w.word}
                   to={`/words/${encodeURIComponent(w.word)}`}
                   className="ui-card ui-card-interactive flex min-h-14 min-w-0 flex-wrap items-center gap-x-2 px-3 py-2"
@@ -240,7 +240,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
                   <span className="text-xs text-ink-2">{w.pinyin}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-ink-3">{w.meaning}</span>
                   <Chip tone="quiet">{w.extra ? "Extra" : w.level}</Chip>
-                </Link>
+                </DetailLink>
               ))}
             </div>
           </Section>
@@ -264,13 +264,13 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
                   "han inline-flex size-11 items-center justify-center rounded-lg border border-line bg-surface text-xl text-ink";
                 if (href) {
                   return (
-                    <Link
+                    <DetailLink
                       key={c}
                       to={href}
                       className={`${className} transition-colors hover:border-accent hover:text-accent`}
                     >
                       {c}
-                    </Link>
+                    </DetailLink>
                   );
                 }
                 return (
@@ -290,9 +290,9 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
 function RoleLink({ href, children }: { href: string | null; children: React.ReactNode }) {
   if (href) {
     return (
-      <Link to={href} className="text-accent">
+      <DetailLink to={href} className="text-accent">
         {children}
-      </Link>
+      </DetailLink>
     );
   }
   return <>{children}</>;

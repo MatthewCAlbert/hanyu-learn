@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { DetailShell } from "~/components/DetailShell";
+import { defaultBrowseFallback } from "~/lib/navigation";
 import {
   clearConfig,
   configInputSchema,
@@ -92,7 +93,7 @@ export default function Settings() {
   };
 
   return (
-    <DetailShell back={{ to: "/hsk/1/hanzi", label: "Hanzi index" }}>
+    <DetailShell current="Settings" fallback={defaultBrowseFallback()}>
       <h1 className="text-xl font-medium">Settings</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-2">
         Study chat uses OpenRouter from this browser. Enter one model slug and API key. They are

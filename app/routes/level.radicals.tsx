@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { DetailLink } from "~/components/DetailLink";
 import type { Route } from "./+types/level.radicals";
 import { matchesRadical, radicalsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
@@ -41,7 +41,7 @@ export default function LevelRadicals({ loaderData }: Route.ComponentProps) {
           </h2>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {radicals.map((r) => (
-              <Link
+              <DetailLink
                 key={r.char}
                 to={`/radicals/${encodeURIComponent(r.char)}`}
                 className="ui-card ui-card-interactive group flex min-h-16 items-center gap-3 px-3.5 py-2.5"
@@ -65,7 +65,7 @@ export default function LevelRadicals({ loaderData }: Route.ComponentProps) {
                   </span>
                 </span>
                 <span className="shrink-0 text-xs tabular-nums text-ink-3">{r.hanzi.length}</span>
-              </Link>
+              </DetailLink>
             ))}
           </div>
         </section>

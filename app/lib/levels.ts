@@ -70,6 +70,30 @@ export function formatBands(bands: Bands): string {
   return levels;
 }
 
+/** Landing selection: every HSK band plus Extra. */
+export const DEFAULT_BANDS: Bands = { levels: LEVELS, extra: true };
+
+export const DEFAULT_BANDS_PATH = formatBands(DEFAULT_BANDS);
+
+export type BrowseTab = "hanzi" | "words" | "topics" | "radicals" | "phonetics";
+
+export function defaultBrowsePath(tab: BrowseTab = "hanzi"): string {
+  return `/hsk/${DEFAULT_BANDS_PATH}/${tab}`;
+}
+
+export function isDefaultBands(bands: Bands): boolean {
+  return bands.extra && bands.levels.length === LEVELS.length;
+}
+
+/** Compact label for the current selection, used on mobile and in titles. */
+export function bandsSummary(bands: Bands): string {
+  if (isDefaultBands(bands)) return "All levels + Extra";
+  if (bands.levels.length === LEVELS.length) return "All levels";
+  if (bands.levels.length === 0) return "Extra";
+  const hsk = bands.levels.map(levelLabel).join(", ");
+  return bands.extra ? `HSK ${hsk} + Extra` : `HSK ${hsk}`;
+}
+
 /**
  * Toggle one level on or off, never returning an empty selection — unchecking
  * the last remaining level would leave nothing to show, so it is ignored.

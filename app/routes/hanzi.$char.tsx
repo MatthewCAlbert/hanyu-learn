@@ -27,7 +27,8 @@ export default function HanziDetail({ loaderData }: Route.ComponentProps) {
     <>
       <PageContextBridge context={context} />
       <DetailShell
-        back={{ to: `/hsk/${h.level}/hanzi`, label: `HSK ${h.level} hanzi` }}
+        current={<span className="han">{h.char}</span>}
+        fallback={{ to: `/hsk/${h.level}/hanzi`, label: `HSK ${h.level} Hanzi` }}
         action={<CompareVsButton entry={{ kind: "hanzi", id: h.char }} />}
       >
         <HanziDetailContent data={loaderData} />
