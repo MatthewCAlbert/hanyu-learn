@@ -1,8 +1,8 @@
 ---
 topic: perception
 label: Perception
-hanzi: []
-words: [感觉, 感到, 声音, 味道]
+hanzi: [香]
+words: [感觉, 感到, 声音, 味道, 感受]
 ---
 
 Seeing, hearing, touch, taste and smell.

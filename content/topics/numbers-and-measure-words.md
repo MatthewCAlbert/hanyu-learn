@@ -1,7 +1,7 @@
 ---
 topic: numbers-and-measure-words
 label: Numbers & measure words
-hanzi: []
+hanzi: [双]
 words: [第二, 一半, 数字, 公里, 公斤, 千克]
 ---
 
