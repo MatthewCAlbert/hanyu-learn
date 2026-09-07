@@ -1,7 +1,7 @@
 ---
 topic: nature
 label: Nature
-hanzi: [土, 浪, 景]
+hanzi: [土, 浪, 景, 沙, 石]
 words: [地球, 太阳, 月亮, 星星, 大海, 大自然, 草地]
 ---
 
