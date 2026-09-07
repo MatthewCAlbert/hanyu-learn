@@ -1,7 +1,7 @@
 ---
 topic: arts-and-music
 label: Arts & music
-hanzi: []
+hanzi: [舞]
 words: [唱歌, 音乐, 音乐会, 画家, 画儿]
 ---
 

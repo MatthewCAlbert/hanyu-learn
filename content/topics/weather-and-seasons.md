@@ -1,7 +1,7 @@
 ---
 topic: weather-and-seasons
 label: Weather & seasons
-hanzi: []
+hanzi: [落]
 words: [天气, 下雨, 夏天, 冬天, 春天, 多云, 秋天, 下雪, 气温, 晴天, 阴天]
 ---
 

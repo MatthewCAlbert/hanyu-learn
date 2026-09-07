@@ -1,7 +1,7 @@
 ---
 topic: safety-and-emergency
 label: Safety & emergency
-hanzi: [救]
+hanzi: [救, 保]
 words: [安全, 小心, 平安]
 ---
 
