@@ -2,7 +2,7 @@
 topic: travel
 label: Travel
 hanzi: [车, 站, 票, 船, 桥, 箱]
-words: [飞机, 火车, 地铁, 出租车, 自行车, 机场, 旅游, 宾馆, 护照, 行李, 汽车, 车站, 机票, 车票, 酒店, 交通, 旅行, 公路, 车辆, 游客, 起飞, 旅客, 地铁站, 公共汽车, 公交车, 路线, 飞行]
+words: [飞机, 火车, 地铁, 出租车, 自行车, 机场, 旅游, 宾馆, 护照, 行李, 汽车, 车站, 机票, 车票, 酒店, 交通, 旅行, 公路, 车辆, 游客, 起飞, 旅客, 地铁站, 公共汽车, 公交车, 路线, 飞行, 高速]
 ---
 
 Getting from place to place: vehicles, tickets, stations and the paperwork.
