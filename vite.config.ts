@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
+import { contentSecurityPolicy } from "./app/lib/csp.ts";
 
 const ssl = process.env.DEV_SSL === "1";
 
@@ -18,6 +20,27 @@ function datasetVersion(): string {
   } catch {
     return "";
   }
+}
+
+/** Same policy as the HTML meta tag, plus frame-ancestors (meta cannot set that). */
+function contentSecurityPolicyHeader(): Plugin {
+  function apply(mode: string) {
+    const env = loadEnv(mode, process.cwd(), ["VITE_", "CDN_"]);
+    const value = contentSecurityPolicy(env.CDN_AUDIO_URL);
+    return (_req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      res.setHeader("Content-Security-Policy", value);
+      next();
+    };
+  }
+  return {
+    name: "content-security-policy",
+    configureServer(server) {
+      server.middlewares.use(apply(server.config.mode));
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(apply("production"));
+    },
+  };
 }
 
 /**
@@ -49,7 +72,13 @@ function ignoreDevtoolsProbe(): Plugin {
 
 export default defineConfig({
   appType: "spa",
-  plugins: [ignoreDevtoolsProbe(), tailwindcss(), reactRouter(), ssl && basicSsl()],
+  plugins: [
+    ignoreDevtoolsProbe(),
+    contentSecurityPolicyHeader(),
+    tailwindcss(),
+    reactRouter(),
+    ssl && basicSsl(),
+  ],
   resolve: { tsconfigPaths: true },
   envPrefix: ["VITE_", "CDN_"],
   define: {

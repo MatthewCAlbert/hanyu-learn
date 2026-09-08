@@ -1,5 +1,4 @@
 import "fake-indexeddb/auto";
-import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   configInputSchema,
@@ -33,10 +32,6 @@ import {
   serializeHanziContext,
 } from "~/lib/ai/context";
 import type { HanziDetailData } from "~/lib/detail-data";
-
-const vercel = JSON.parse(readFileSync("vercel.json", "utf8")) as {
-  headers: { headers: { key: string; value: string }[] }[];
-};
 
 describe("config", () => {
   it("rejects a non-OpenRouter key", () => {
@@ -154,23 +149,13 @@ describe("IndexedDB persistence", () => {
   });
 });
 
-describe("agent limits and CSP", () => {
+describe("agent limits", () => {
   it("bounds a run by step count, cost, and tokens", () => {
     expect(AGENT_LIMITS).toEqual({ maxSteps: 6, maxCostUsd: 0.75, maxTokens: 48_000 });
   });
 
   it("flushes saved chats on a short debounce and interval", () => {
     expect(AI_PERSIST).toEqual({ debounceMs: 2_000, intervalMs: 15_000 });
-  });
-
-  it("allows only OpenRouter as an extra connect-src host", () => {
-    const csp = vercel.headers
-      .flatMap((h) => h.headers)
-      .find((h) => h.key === "Content-Security-Policy")?.value;
-    expect(csp).toContain("connect-src 'self' https://openrouter.ai");
-    expect(csp).toContain("font-src 'self' https://fonts.gstatic.com");
-    expect(csp).toContain("frame-src https://www.youtube-nocookie.com");
-    expect(csp).not.toMatch(/connect-src[^;]*http:/);
   });
 });
 

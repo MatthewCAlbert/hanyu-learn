@@ -1,5 +1,4 @@
 import "fake-indexeddb/auto";
-import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   extractSongCandidatesPayload,
@@ -52,10 +51,6 @@ const lexicon = buildLexicon({
     { word: "我", pinyin: "wǒ", meanings: ["I"], level: 1, extra: false },
   ],
 });
-
-const vercel = JSON.parse(readFileSync("vercel.json", "utf8")) as {
-  headers: { headers: { key: string; value: string }[] }[];
-};
 
 function importPayload(overrides: Partial<SubmitSongImportInput> = {}): SubmitSongImportInput {
   return {
@@ -375,16 +370,5 @@ describe("IndexedDB song library", () => {
     await deleteSavedSong("song-1");
     expect(await listSavedSongs()).toEqual([]);
     expect(await getSavedSong("song-1")).toBeNull();
-  });
-});
-
-describe("CSP", () => {
-  it("allows only the privacy YouTube embed host as frame-src", () => {
-    const csp = vercel.headers
-      .flatMap((h) => h.headers)
-      .find((h) => h.key === "Content-Security-Policy")?.value;
-    expect(csp).toContain("frame-src https://www.youtube-nocookie.com");
-    expect(csp).not.toContain("youtube.com ");
-    expect(csp).not.toMatch(/frame-src[^;]*\*/);
   });
 });

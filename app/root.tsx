@@ -10,7 +10,10 @@ import type { Route } from "./+types/root";
 import { CreditsFooter } from "~/components/CreditsFooter";
 import { FloatingChat } from "~/components/ai/FloatingChat";
 import { PageLoading } from "~/components/PageLoading";
+import { contentSecurityPolicy } from "~/lib/csp";
 import "./app.css";
+
+const CSP = contentSecurityPolicy(import.meta.env.CDN_AUDIO_URL, { frameAncestors: false });
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "32x32" },
@@ -33,6 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
+        <meta httpEquiv="Content-Security-Policy" content={CSP} />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
