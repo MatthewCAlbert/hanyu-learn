@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes } from "react";
 import { Link } from "react-router";
 import clsx from "clsx";
 import {
   LuArrowLeft,
   LuBookmark,
   LuBookmarkCheck,
+  LuMaximize2,
   LuMenu,
+  LuMinimize2,
   LuPlus,
+  LuScaling,
   LuSettings,
   LuSquare,
   LuX,
@@ -23,7 +26,20 @@ const headerBtn =
   "ui-touch inline-flex shrink-0 items-center justify-center rounded-lg text-ink-2 hover:bg-sunk hover:text-accent";
 const headerIcon = `${headerBtn} size-9`;
 
-export function ChatPanel({ onClose }: { onClose: () => void }) {
+export function ChatPanel({
+  onClose,
+  fullscreen,
+  onToggleFullscreen,
+  resizeHandleProps,
+}: {
+  onClose: () => void;
+  fullscreen: boolean;
+  onToggleFullscreen: () => void;
+  resizeHandleProps: Pick<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    "onPointerDown" | "onPointerMove" | "onPointerUp" | "onPointerCancel" | "onKeyDown"
+  >;
+}) {
   const config = useAiStore((s) => s.config);
   const active = useAiStore((s) => s.active);
   const composer = useAiStore((s) => s.composer);
@@ -62,9 +78,21 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex h-full min-h-0 flex-col bg-paper">
       <header className="flex shrink-0 items-center gap-0.5 border-b border-line px-2 pt-[max(0.375rem,env(safe-area-inset-top))] pb-1.5 sm:pt-1.5">
+        {!fullscreen && (
+          <button
+            type="button"
+            aria-label="Resize chat panel"
+            title="Drag to resize; use arrow keys for precise sizing"
+            className={`${headerIcon} chat-desktop-control cursor-nwse-resize touch-none select-none`}
+            {...resizeHandleProps}
+          >
+            <LuScaling className="size-4" />
+          </button>
+        )}
         <button
           type="button"
           aria-label={listOpen ? "Back to chat" : "Saved chats"}
+          title={listOpen ? "Back to chat" : "Saved chats"}
           onClick={() => setListOpen(!listOpen)}
           className={headerIcon}
         >
@@ -89,7 +117,13 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
         </div>
         {!listOpen && (
           <div className="flex shrink-0 items-center gap-0.5">
-            <button type="button" aria-label="New chat" onClick={newChat} className={headerIcon}>
+            <button
+              type="button"
+              aria-label="New chat"
+              title="New chat"
+              onClick={newChat}
+              className={headerIcon}
+            >
               <LuPlus className="size-4" />
             </button>
             {saved ? (
@@ -100,6 +134,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 aria-label="Save chat"
+                title="Save chat"
                 onClick={() => void saveActive()}
                 className={headerIcon}
               >
@@ -110,6 +145,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 aria-label="Stop generating"
+                title="Stop generating"
                 onClick={stop}
                 className={headerIcon}
               >
@@ -118,12 +154,29 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
             )}
           </div>
         )}
-        <Link to="/settings" aria-label="Settings" onClick={onClose} className={headerIcon}>
+        <Link
+          to="/settings"
+          aria-label="Settings"
+          title="Settings"
+          onClick={onClose}
+          className={headerIcon}
+        >
           <LuSettings className="size-4" />
         </Link>
         <button
           type="button"
+          aria-label={fullscreen ? "Exit fullscreen chat" : "Open fullscreen chat"}
+          title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          aria-pressed={fullscreen}
+          onClick={onToggleFullscreen}
+          className={`${headerIcon} chat-desktop-control`}
+        >
+          {fullscreen ? <LuMinimize2 className="size-4" /> : <LuMaximize2 className="size-4" />}
+        </button>
+        <button
+          type="button"
           aria-label="Close chat"
+          title="Close chat"
           onClick={onClose}
           className={`${headerIcon} text-ink-3`}
         >
@@ -173,10 +226,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
 export function chatPanelClass(open: boolean): string {
   return clsx(
-    "fixed z-40 flex flex-col overflow-hidden overscroll-contain border-line bg-paper",
-    "inset-0 h-dvh w-screen",
-    "sm:inset-auto sm:right-4 sm:bottom-20 sm:h-[min(640px,calc(100dvh-6rem))] sm:w-[min(100vw-2rem,380px)] sm:rounded-2xl sm:border",
-    "sm:shadow-2xl",
+    "study-chat-panel fixed z-40 flex flex-col overflow-hidden overscroll-contain border-line bg-paper",
     open ? "pointer-events-auto" : "pointer-events-none",
   );
 }

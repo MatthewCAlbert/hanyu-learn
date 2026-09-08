@@ -41,7 +41,10 @@ describe("mention parsing", () => {
 
   it("finds the mention at the caret, not an earlier email-like token", () => {
     const text = "see 好 then @我";
-    expect(mentionAtCaret(text, text.length)).toMatchObject({ q: "我", start: text.lastIndexOf("@") });
+    expect(mentionAtCaret(text, text.length)).toMatchObject({
+      q: "我",
+      start: text.lastIndexOf("@"),
+    });
     expect(mentionAtCaret("a@b", 3)).toBeNull();
   });
 
@@ -57,6 +60,7 @@ describe("mention parsing", () => {
       { kind: "word", id: "爱好" },
     ]);
     expect(extractMentions("for @/hanzi/好?")).toEqual([{ kind: "hanzi", id: "好" }]);
+    expect(extractMentions("really great (@/word/非常)")).toEqual([{ kind: "word", id: "非常" }]);
   });
 });
 
@@ -196,6 +200,18 @@ describe("segmentMentions", () => {
     ]);
     expect(segmentMentions("a@b and hello@example.com")).toEqual([
       { text: "a@b and hello@example.com", kind: "plain" },
+    ]);
+  });
+
+  it("recognizes a mention wrapped in punctuation", () => {
+    expect(segmentMentions('非常好 — "really great" (@/word/非常)')).toEqual([
+      { text: '非常好 — "really great" (', kind: "plain" },
+      {
+        text: "@/word/非常",
+        kind: "mention",
+        mention: { kind: "word", id: "非常" },
+      },
+      { text: ")", kind: "plain" },
     ]);
   });
 

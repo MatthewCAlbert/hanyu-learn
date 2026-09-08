@@ -18,21 +18,27 @@ export interface MentionQuery {
 
 const KIND_SET = new Set<string>(MENTION_KINDS);
 
+const MENTION_START = /[\s([{"'“‘（【《「『]/;
+
 /**
  * Mentions are `@我`, `@/hanzi/我`, or `@/word/爱好`. They start at `@` that is
- * at the beginning of the string or after whitespace, and run until whitespace.
+ * at the beginning of the string or after whitespace/opening punctuation.
  */
 export function mentionAtCaret(text: string, caret: number): MentionQuery | null {
   const slice = text.slice(0, Math.max(0, caret));
   const at = slice.lastIndexOf("@");
   if (at < 0) return null;
-  if (at > 0 && !/\s/.test(slice[at - 1] ?? "")) return null;
+  if (at > 0 && !MENTION_START.test(slice[at - 1] ?? "")) return null;
   const raw = slice.slice(at);
   if (/\s/.test(raw)) return null;
   return parseMentionRaw(raw, at, caret);
 }
 
-export function parseMentionRaw(raw: string, start = 0, end = start + raw.length): MentionQuery | null {
+export function parseMentionRaw(
+  raw: string,
+  start = 0,
+  end = start + raw.length,
+): MentionQuery | null {
   if (!raw.startsWith("@")) return null;
   const body = raw.slice(1);
 
@@ -102,8 +108,9 @@ export function matchingKinds(prefix: string): MentionKind[] {
   return MENTION_KINDS.filter((k) => k.startsWith(p));
 }
 
-/** Complete @/hanzi/… and @/word/… tokens; trailing ?!,.;: stays plain. */
-const COMPLETE_MENTION = /(^|\s)(@\/(hanzi|word)\/([^\s?!,.;:]+))/g;
+/** Complete scoped mentions; surrounding prose punctuation stays plain. */
+const COMPLETE_MENTION =
+  /(^|[\s([{"'“‘（【《「『])(@\/(hanzi|word)\/([^\s?!,.;:)\]}"'”’？！。，、；：）】》」』]+))/g;
 
 export function extractMentions(text: string): MentionRef[] {
   const refs: MentionRef[] = [];
