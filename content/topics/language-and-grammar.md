@@ -4,6 +4,7 @@ label: Language & grammar
 hanzi: [语, 文, 汉, 言, 翻, 译, 括, 符]
 words:
   - 翻译
+  - 形容
   - 中文
   - 外语
   - 汉语
