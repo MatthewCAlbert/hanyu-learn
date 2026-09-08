@@ -8,6 +8,7 @@ function wordData(partial: Partial<WordDetailData> & { word: Word }): WordDetail
     chars: [],
     topics: [],
     relations: [],
+    grammar: [],
     usage: null,
     ...partial,
   };
@@ -33,6 +34,7 @@ describe("relation snapshots for the study chat", () => {
           standards: [],
           topics: [],
           relationIds: ["what-question"],
+          grammarLessonIds: [],
           authored: null,
         },
         chars: [

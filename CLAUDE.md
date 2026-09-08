@@ -39,6 +39,9 @@ it.** The rules most easily got wrong:
 - Topic membership goes in `content/topics/<id>.md`, which lists its members —
   not on the entry. The set of files is the controlled vocabulary. Zero topics is
   a correct answer for function words.
+- Grammar lessons live in `content/grammar/<id>.md`. The lesson lists its hanzi
+  and words; the build inverts those onto entry detail pages. Prerequisites must
+  be acyclic and at the same or a lower level. Examples follow the i+1 rule.
 - Synonyms, antonyms, real-life alternatives, and character contribution inside a
   word follow [docs/LEXICAL-RELATIONS-PLAYBOOK.md](docs/LEXICAL-RELATIONS-PLAYBOOK.md).
   Relation membership lives in `content/relations/<id>.md`; spoken/chat forms

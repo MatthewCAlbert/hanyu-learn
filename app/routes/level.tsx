@@ -11,7 +11,8 @@ import {
   radicalsAtLevels,
   topicsAtLevels,
 } from "~/lib/catalog";
-import { getHanziIndexes, getMeta, getPhonetics, getWordIndexesForBands } from "~/lib/data.client";
+import { grammarAtLevels, matchesGrammar } from "~/lib/grammar";
+import { getGrammarIndexes, getHanziIndexes, getMeta, getPhonetics, getWordIndexesForBands } from "~/lib/data.client";
 import {
   LEVELS,
   bandsSummary,
@@ -51,16 +52,18 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
   const bands = parseBands(params.level);
   const { levels, extra } = bands;
   const filters = readFilters(new URL(request.url).searchParams);
-  const [{ radicals: allRadicals, topics: allTopics, counts, extraWords, lexemes }, hanzi, words, phonetics] =
+  const [{ radicals: allRadicals, topics: allTopics, counts, extraWords, lexemes }, hanzi, words, phonetics, grammar] =
     await Promise.all([
       getMeta(),
       getHanziIndexes(levels),
       getWordIndexesForBands(bands),
       getPhonetics(),
+      getGrammarIndexes(levels),
     ]);
   const radicals = radicalsAtLevels(allRadicals, hanzi, levels);
   const { topics, untagged } = topicsAtLevels(allTopics, hanzi, words, levels);
   const phoneticSeries = phoneticsAtLevels(phonetics, hanzi, levels);
+  const grammarRows = grammarAtLevels(grammar, levels);
   const totals = countsFor(counts, levels, extra ? extraWords : 0);
 
   /**
@@ -91,6 +94,11 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     topics: topics.filter((t) => matchesTopic(filters.q, t)).length,
     radicals: radicals.filter((r) => matchesRadical(filters.q, r)).length,
     phonetics: phoneticSeries.filter((row) => matchesPhonetic(filters.q, row)).length,
+    grammar: grammarRows.filter(
+      (g) =>
+        matchesGrammar(filters.q, g) &&
+        (filters.status.length === 0 || filters.status.includes(g.status)),
+    ).length,
   };
 
   return {
@@ -103,6 +111,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
       radicals: radicals.length,
       topics: topics.length,
       phonetics: phoneticSeries.length,
+      grammar: grammarRows.length,
     },
     shown,
     untagged,
@@ -147,6 +156,18 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const tab = pathname.split("/").pop() ?? "hanzi";
   const bands = { levels, extra };
   const selected = formatBands(bands);
+  const searchPlaceholder =
+    tab === "grammar"
+      ? "Search 是, 吗, or “question”…"
+      : tab === "topics"
+        ? "Search topics…"
+        : tab === "radicals"
+          ? "Search 人 or person…"
+          : tab === "phonetics"
+            ? "Search 马 or ma…"
+            : tab === "words"
+              ? "Search 爱好, aihao or “hobby”…"
+              : "Search 好, hao, hǎo or “good”…";
 
   const toggle = (key: FilterKey, value: string) => {
     const next = new URLSearchParams(params);
@@ -282,8 +303,8 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
                 type="search"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Search 好, hao, hǎo or “good”…"
-                aria-label="Search hanzi, pinyin or English"
+                placeholder={searchPlaceholder}
+                aria-label="Search hanzi, pinyin, English or grammar"
                 className="min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface px-4 text-base outline-none placeholder:text-ink-3 focus:border-accent lg:min-h-9 lg:text-sm"
               />
             </form>
@@ -307,6 +328,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
               ["topics", "Topics", shown.topics, counts.topics],
               ["radicals", "Radicals", shown.radicals, counts.radicals],
               ["phonetics", "Phonetics", shown.phonetics, counts.phonetics],
+              ["grammar", "Grammar", shown.grammar, counts.grammar],
             ] as const
           ).map(([slug, label, count, total]) => (
             <NavLink

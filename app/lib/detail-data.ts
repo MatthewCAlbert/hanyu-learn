@@ -5,6 +5,7 @@
 import {
   getHanziIndexes,
   getHanziPage,
+  getGrammarPage,
   getMeta,
   getPhonetics,
   getPhoneticSeries,
@@ -19,6 +20,7 @@ import { LEVELS } from "./levels";
 import { parseEntryRef, type EntryRef } from "./compare";
 import { relationsForForm, toRelationCard } from "./lexical";
 import type {
+  GrammarPage,
   HanziIndex,
   HanziPage,
   Lexeme,
@@ -35,6 +37,8 @@ import type {
 export type HanziDetailData = HanziPage & { strokes: unknown };
 
 export type WordDetailData = WordPage;
+
+export type GrammarDetailData = GrammarPage;
 
 export interface LexemeDetailData {
   lexeme: Lexeme;
@@ -103,6 +107,10 @@ export async function loadHanziDetail(char: string): Promise<HanziDetailData | u
 
 export async function loadWordDetail(word: string): Promise<WordDetailData | undefined> {
   return getWordPage(word);
+}
+
+export async function loadGrammarDetail(id: string): Promise<GrammarDetailData | undefined> {
+  return getGrammarPage(id);
 }
 
 export async function loadLexemeDetail(form: string): Promise<LexemeDetailData | undefined> {

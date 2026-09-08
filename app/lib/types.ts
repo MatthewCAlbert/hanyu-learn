@@ -90,6 +90,8 @@ export interface Hanzi {
   topics: string[];
   /** Relation ids this character is a member of. */
   relationIds: string[];
+  /** Grammar lessons that list this character. Inverted from content/grammar/. */
+  grammarLessonIds: string[];
   /** Overlaid from content/hanzi/<char>.md */
   authored: AuthoredHanzi | null;
 }
@@ -124,6 +126,8 @@ export interface Word {
   topics: string[];
   /** Relation ids this word is a member of. */
   relationIds: string[];
+  /** Grammar lessons that list this word. Inverted from content/grammar/. */
+  grammarLessonIds: string[];
   authored: AuthoredWord | null;
 }
 
@@ -271,6 +275,70 @@ export interface Topic {
   words: string[];
 }
 
+export interface GrammarExample {
+  cmn: string;
+  eng: string;
+}
+
+/** Compact lesson chip used on hanzi/word detail pages and curriculum cards. */
+export interface GrammarLessonRef {
+  id: string;
+  title: string;
+  pattern: string;
+  level: Level;
+}
+
+export interface GrammarLesson {
+  id: string;
+  title: string;
+  pattern: string;
+  level: Level;
+  order: number;
+  status: Status;
+  confidence: Confidence;
+  sources: string[];
+  prerequisites: string[];
+  hanzi: string[];
+  words: string[];
+  examples: GrammarExample[];
+  patternNotes: string | null;
+  usage: string | null;
+  notes: string | null;
+}
+
+/** Compact per-level row for the grammar curriculum tab. */
+export interface GrammarIndex {
+  id: string;
+  title: string;
+  pattern: string;
+  level: Level;
+  order: number;
+  status: Status;
+  hanzi: string[];
+  words: string[];
+  /** Lowercased blob of title, pattern, prose, examples, and linked forms. */
+  haystack: string;
+}
+
+/** Precomputed grammar lesson page. One of these lives in a hash bucket. */
+export interface GrammarPage {
+  lesson: GrammarLesson;
+  hanzi: {
+    char: string;
+    pinyin: string;
+    meaning: string;
+    level: Level;
+  }[];
+  words: {
+    word: string;
+    pinyin: string;
+    meaning: string;
+    level: Level;
+    extra: boolean;
+  }[];
+  prerequisites: GrammarLessonRef[];
+}
+
 export interface RelationCandidate {
   reason: string;
   forms: string[];
@@ -379,6 +447,7 @@ export interface HanziPage {
   }[];
   topics: { id: string; label: string }[];
   relations: RelationCard[];
+  grammar: GrammarLessonRef[];
 }
 
 /** Precomputed word detail page. One of these lives in a hash bucket. */
@@ -394,5 +463,6 @@ export interface WordPage {
   }[];
   topics: { id: string; label: string }[];
   relations: RelationCard[];
+  grammar: GrammarLessonRef[];
   usage: UsageProfile | null;
 }

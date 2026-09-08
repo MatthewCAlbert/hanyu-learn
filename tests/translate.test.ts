@@ -42,7 +42,7 @@ const lexicon = buildLexicon({
   ],
 });
 
-const shownEmpty = { hanzi: 0, words: 0, topics: 0, radicals: 0, phonetics: 0 };
+const shownEmpty = { hanzi: 0, words: 0, topics: 0, radicals: 0, phonetics: 0, grammar: 0 };
 
 describe("translate URLs and caps", () => {
   it("seeds a bookmarkable ?q= and leaves blank at /translate", () => {

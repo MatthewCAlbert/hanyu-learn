@@ -2,6 +2,7 @@ import type { EntryRef } from "~/lib/compare";
 import type {
   CompareEntry,
   ComparePane,
+  GrammarDetailData,
   HanziDetailData,
   LexemeDetailData,
   WordDetailData,
@@ -72,6 +73,11 @@ export function serializeHanziContext(data: HanziDetailData, route?: string): Pa
   if (data.relations?.length) {
     lines.push(serializeRelations(data.relations, 4));
   }
+  if (data.grammar?.length) {
+    lines.push(
+      `Grammar lessons: ${data.grammar.map((g) => `${g.pattern} (${g.title})`).join("; ")}`,
+    );
+  }
   if (a) {
     lines.push(`Authored status: ${a.status}, confidence: ${a.confidence}`);
     if (a.etymology) lines.push(`Etymology (attested):\n${clip(a.etymology)}`);
@@ -133,6 +139,11 @@ export function serializeWordContext(data: WordDetailData, route?: string): Page
   if (data.topics.length) lines.push(`Topics: ${data.topics.map((t) => t.label).join(", ")}`);
   if (data.usage) lines.push(serializeUsage(data.usage));
   if (data.relations?.length) lines.push(serializeRelations(data.relations, 4));
+  if (data.grammar?.length) {
+    lines.push(
+      `Grammar lessons: ${data.grammar.map((g) => `${g.pattern} (${g.title})`).join("; ")}`,
+    );
+  }
   if (data.chars.length) {
     lines.push(
       `Characters:\n${data.chars
@@ -208,6 +219,49 @@ export function serializeLexemeContext(data: LexemeDetailData, route?: string): 
       readings: l.pinyin ? [l.pinyin] : [],
       hasRelations: data.relations.length > 0,
       hasUsage: true,
+    },
+  };
+}
+
+export function serializeGrammarContext(data: GrammarDetailData, route?: string): PageContext {
+  const g = data.lesson;
+  const lines: string[] = [
+    `Grammar lesson: ${g.title}`,
+    `Pattern: ${g.pattern}`,
+    `Level: HSK ${g.level}`,
+    `Order: ${g.order}`,
+    `Status: ${g.status}, confidence: ${g.confidence}`,
+  ];
+  if (data.prerequisites.length) {
+    lines.push(
+      `Prerequisites: ${data.prerequisites.map((p) => `${p.pattern} (${p.title})`).join("; ")}`,
+    );
+  }
+  if (g.patternNotes) lines.push(`Pattern notes:\n${clip(g.patternNotes)}`);
+  if (g.usage) lines.push(`Usage:\n${clip(g.usage)}`);
+  if (g.notes) lines.push(`Notes:\n${clip(g.notes)}`);
+  if (data.hanzi.length) {
+    lines.push(
+      `Linked hanzi: ${data.hanzi.map((h) => `${h.char} ${h.pinyin} ${h.meaning}`).join("; ")}`,
+    );
+  }
+  if (data.words.length) {
+    lines.push(
+      `Linked words: ${data.words.map((w) => `${w.word} ${w.pinyin} ${w.meaning}`).join("; ")}`,
+    );
+  }
+  const sx = sentences(g.examples);
+  if (sx) lines.push(`Examples (i+1):\n${sx}`);
+  if (g.sources.length) lines.push(`Sources:\n${g.sources.map((s) => `- ${s}`).join("\n")}`);
+  return {
+    key: `grammar:${g.id}`,
+    route: route ?? `/grammar/${g.id}`,
+    title: `${g.pattern} — ${g.title}`,
+    kind: "grammar",
+    text: lines.join("\n"),
+    hints: {
+      contentStatus: authoredStatus(g.status),
+      missingAuthored: !g.patternNotes,
     },
   };
 }

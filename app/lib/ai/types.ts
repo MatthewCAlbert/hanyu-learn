@@ -11,6 +11,7 @@ export type PageContextKind =
   | "hanzi"
   | "word"
   | "lexeme"
+  | "grammar"
   | "compare"
   | "translate"
   | "song"
@@ -142,6 +143,7 @@ export const PAGE_CONTEXT_KINDS: PageContextKind[] = [
   "hanzi",
   "word",
   "lexeme",
+  "grammar",
   "compare",
   "translate",
   "song",

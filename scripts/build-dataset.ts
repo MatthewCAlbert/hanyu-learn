@@ -9,6 +9,7 @@ import { mkdir, readFile, readdir, rm, writeFile, cp } from "node:fs/promises";
 import matter from "gray-matter";
 import { parseIds, idsLeaves, isAtomic } from "../app/lib/ids.ts";
 import {
+  grammarFrontmatter,
   hanziFrontmatter,
   lexemeFrontmatter,
   relationFrontmatter,
@@ -21,6 +22,7 @@ import { effectivePhonetic, effectiveSemantic } from "../app/lib/etymology.ts";
 import { matchRadical } from "../app/lib/radicals.ts";
 import { rankContainedWords, relationsForForm, toRelationCard } from "../app/lib/lexical.ts";
 import { buildRelationCandidates } from "../app/lib/lexical-candidates.ts";
+import { toGrammarIndex } from "../app/lib/grammar.ts";
 import type {
   AuthoredHanzi,
   AuthoredWord,
@@ -29,6 +31,9 @@ import type {
   DatasetManifest,
   DatasetMeta,
   EtymologyType,
+  GrammarLesson,
+  GrammarLessonRef,
+  GrammarPage,
   Hanzi,
   HanziIndex,
   HanziPage,
@@ -355,6 +360,41 @@ async function main() {
     lexeme.relationIds = relationsOfLexeme.get(lexeme.form) ?? [];
   }
 
+  // ----------------------------------------------------------------- grammar
+  /**
+   * Lesson files own their hanzi/word membership; invert once so detail pages
+   * can list related lessons without each entry repeating the link.
+   */
+  const grammarLessons: GrammarLesson[] = [];
+  const grammarOfHanzi = new Map<string, string[]>();
+  const grammarOfWord = new Map<string, string[]>();
+  for (const file of (await safeReaddir("content/grammar")).sort()) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const { data, content } = matter(await readFile(`content/grammar/${file}`, "utf8"));
+    const fm = grammarFrontmatter.parse(data);
+    const s = sections(content);
+    grammarLessons.push({
+      id: fm.lesson,
+      title: fm.title,
+      pattern: fm.pattern,
+      level: fm.level,
+      order: fm.order,
+      status: fm.status,
+      confidence: fm.confidence,
+      sources: fm.sources,
+      prerequisites: fm.prerequisites,
+      hanzi: fm.hanzi,
+      words: fm.words,
+      examples: fm.examples,
+      patternNotes: s["pattern"] ?? null,
+      usage: s["usage"] ?? null,
+      notes: s["notes"] ?? null,
+    });
+    for (const c of fm.hanzi) push(grammarOfHanzi, c, fm.lesson);
+    for (const w of fm.words) push(grammarOfWord, w, fm.lesson);
+  }
+  grammarLessons.sort((a, b) => a.level - b.level || a.order - b.order || a.id.localeCompare(b.id));
+
   // ------------------------------------------------------------------- words
   const words: Word[] = [];
   for (const level of LEVELS) {
@@ -380,6 +420,7 @@ async function main() {
         standards: e.level.filter((l) => !l.startsWith("new-")),
         topics: topicsOfWord.get(e.simplified) ?? [],
         relationIds: relationsOfWord.get(e.simplified) ?? [],
+        grammarLessonIds: grammarOfWord.get(e.simplified) ?? [],
         authored: authoredWords.get(e.simplified) ?? null,
       });
     }
@@ -416,6 +457,7 @@ async function main() {
       standards: [],
       topics: topicsOfWord.get(e.word) ?? [],
       relationIds: relationsOfWord.get(e.word) ?? [],
+      grammarLessonIds: grammarOfWord.get(e.word) ?? [],
       authored: authoredWords.get(e.word) ?? null,
     });
     hskWordSet.add(e.word);
@@ -479,6 +521,7 @@ async function main() {
       standards: entry ? entry.level.filter((l) => !l.startsWith("new-")) : [],
       topics: topicsOfHanzi.get(char) ?? [],
       relationIds: relationsOfHanzi.get(char) ?? [],
+      grammarLessonIds: grammarOfHanzi.get(char) ?? [],
       authored: authoredHanzi.get(char) ?? null,
     });
   }
@@ -559,6 +602,7 @@ async function main() {
   await write("topics.json", topics);
   await write("relations.json", relations);
   await write("lexemes.json", lexemes);
+  await write("grammar.json", grammarLessons);
   await write("relation-candidates.json", buildRelationCandidates({ words, relations }));
 
   const { version, strokeEntries } = await writeWebShards({
@@ -568,6 +612,7 @@ async function main() {
     topics,
     relations,
     lexemes,
+    grammarLessons,
     counts,
     extraWords: extraWordCount,
     mmah,
@@ -589,7 +634,7 @@ async function main() {
     `topics ${topics.length} · ${tagged} of ${hanziList.length + words.length} entries tagged`,
   );
   console.log(
-    `relations ${relations.length} · lexemes ${lexemes.length} · extra ${extraWordCount} supplement words`,
+    `relations ${relations.length} · lexemes ${lexemes.length} · grammar ${grammarLessons.length} · extra ${extraWordCount} supplement words`,
   );
 
   // Written last, so its mtime means "everything above finished". Using an
@@ -614,6 +659,7 @@ async function writeWebShards(args: {
   topics: Topic[];
   relations: Relation[];
   lexemes: Lexeme[];
+  grammarLessons: GrammarLesson[];
   counts: Dataset["counts"];
   extraWords: number;
   mmah: Map<string, MmahEntry>;
@@ -621,11 +667,23 @@ async function writeWebShards(args: {
   version: string;
   strokeEntries: number;
 }> {
-  const { hanziList, words, radicals, topics, relations, lexemes, counts, extraWords, mmah } = args;
+  const {
+    hanziList,
+    words,
+    radicals,
+    topics,
+    relations,
+    lexemes,
+    grammarLessons,
+    counts,
+    extraWords,
+    mmah,
+  } = args;
   const hanziByChar = new Map(hanziList.map((h) => [h.char, h]));
   const wordByText = new Map(words.map((w) => [w.word, w]));
   const topicById = new Map(topics.map((t) => [t.id, t]));
   const lexemeByForm = new Map(lexemes.map((l) => [l.form, l]));
+  const grammarById = new Map(grammarLessons.map((g) => [g.id, g]));
   const phonetics = buildPhonetics(hanziList, hanziByChar, radicals, mmah);
   const audioPin = await readFile("data/sources/audio-cmn/SOURCE.json", "utf8");
 
@@ -635,6 +693,7 @@ async function writeWebShards(args: {
     .update(JSON.stringify(topics))
     .update(JSON.stringify(relations))
     .update(JSON.stringify(lexemes))
+    .update(JSON.stringify(grammarLessons))
     .update(JSON.stringify(phonetics))
     .update(audioPin)
     .digest("hex")
@@ -645,6 +704,7 @@ async function writeWebShards(args: {
   await mkdir(`${root}/hd`, { recursive: true });
   await mkdir(`${root}/wd`, { recursive: true });
   await mkdir(`${root}/st`, { recursive: true });
+  await mkdir(`${root}/gd`, { recursive: true });
 
   const manifest: DatasetManifest = { version, buckets: SHARD_BUCKETS };
   const meta: DatasetMeta = { radicals, topics, relations, lexemes, counts, extraWords };
@@ -680,10 +740,18 @@ async function writeWebShards(args: {
     `${root}/w-extra.json`,
     JSON.stringify(words.filter((w) => w.extra).map(toWordIndex)),
   );
+  for (const level of LEVELS) {
+    const grammarIndex = grammarLessons.filter((g) => g.level === level).map(toGrammarIndex);
+    await writeFile(`${root}/g${level}.json`, JSON.stringify(grammarIndex));
+  }
 
   const hanziPages: Record<string, HanziPage>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
   const wordPages: Record<string, WordPage>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
   const strokePages: Record<string, unknown>[] = Array.from({ length: SHARD_BUCKETS }, () => ({}));
+  const grammarPages: Record<string, GrammarPage>[] = Array.from(
+    { length: SHARD_BUCKETS },
+    () => ({}),
+  );
 
   for (const hanzi of hanziList) {
     hanziPages[shardBucket(hanzi.char)]![hanzi.char] = buildHanziPage(
@@ -696,6 +764,7 @@ async function writeWebShards(args: {
       phonetics,
       relations,
       lexemeByForm,
+      grammarById,
     );
   }
   for (const word of words) {
@@ -706,6 +775,15 @@ async function writeWebShards(args: {
       relations,
       lexemeByForm,
       wordByText,
+      grammarById,
+    );
+  }
+  for (const lesson of grammarLessons) {
+    grammarPages[shardBucket(lesson.id)]![lesson.id] = buildGrammarPage(
+      lesson,
+      hanziByChar,
+      wordByText,
+      grammarById,
     );
   }
 
@@ -724,6 +802,7 @@ async function writeWebShards(args: {
     await writeFile(`${root}/hd/${i}.json`, JSON.stringify(hanziPages[i]));
     await writeFile(`${root}/wd/${i}.json`, JSON.stringify(wordPages[i]));
     await writeFile(`${root}/st/${i}.json`, JSON.stringify(strokePages[i]));
+    await writeFile(`${root}/gd/${i}.json`, JSON.stringify(grammarPages[i]));
   }
 
   await rm("public/data", { recursive: true, force: true });
@@ -854,6 +933,48 @@ function buildPhonetics(
   return out;
 }
 
+function lessonRefs(
+  ids: string[],
+  grammarById: Map<string, GrammarLesson>,
+): GrammarLessonRef[] {
+  return ids
+    .map((id) => grammarById.get(id))
+    .filter((g): g is GrammarLesson => Boolean(g))
+    .sort((a, b) => a.level - b.level || a.order - b.order || a.id.localeCompare(b.id))
+    .map((g) => ({ id: g.id, title: g.title, pattern: g.pattern, level: g.level }));
+}
+
+function buildGrammarPage(
+  lesson: GrammarLesson,
+  hanziByChar: Map<string, Hanzi>,
+  wordByText: Map<string, Word>,
+  grammarById: Map<string, GrammarLesson>,
+): GrammarPage {
+  return {
+    lesson,
+    hanzi: lesson.hanzi.map((char) => {
+      const h = hanziByChar.get(char);
+      return {
+        char,
+        pinyin: h?.pinyin[0] ?? "",
+        meaning: h?.meanings[0] ?? "",
+        level: h?.level ?? lesson.level,
+      };
+    }),
+    words: lesson.words.map((word) => {
+      const w = wordByText.get(word);
+      return {
+        word,
+        pinyin: w?.pinyin ?? "",
+        meaning: w?.meanings[0] ?? "",
+        level: w?.level ?? lesson.level,
+        extra: w?.extra ?? false,
+      };
+    }),
+    prerequisites: lessonRefs(lesson.prerequisites, grammarById),
+  };
+}
+
 function buildHanziPage(
   hanzi: Hanzi,
   all: Hanzi[],
@@ -864,6 +985,7 @@ function buildHanziPage(
   phonetics: Record<string, PhoneticAnchor>,
   relations: Relation[],
   lexemeByForm: Map<string, Lexeme>,
+  grammarById: Map<string, GrammarLesson>,
 ): HanziPage {
   const radical = radicals.find((r) => r.char === hanzi.radicalCanonical) ?? null;
   const etymology = overlayEtymology(hanzi);
@@ -932,6 +1054,7 @@ function buildHanziPage(
     words: pageWords,
     topics: pageTopics,
     relations: pageRelations,
+    grammar: lessonRefs(hanzi.grammarLessonIds, grammarById),
   };
 }
 
@@ -947,6 +1070,7 @@ function buildWordPage(
   relations: Relation[],
   lexemeByForm: Map<string, Lexeme>,
   wordByText: Map<string, Word>,
+  grammarById: Map<string, GrammarLesson>,
 ): WordPage {
   const links = word.authored?.chars ?? [];
   const chars = word.chars.map((c) => {
@@ -971,6 +1095,7 @@ function buildWordPage(
     relations: relationsForForm(relations, word.word).map((r) =>
       toRelationCard(r, wordByText, hanziByChar, lexemeByForm),
     ),
+    grammar: lessonRefs(word.grammarLessonIds, grammarById),
     usage: word.authored?.usage ?? null,
   };
 }

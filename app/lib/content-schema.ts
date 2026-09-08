@@ -219,11 +219,47 @@ export const lexemeFrontmatter = z.object({
   sources: z.array(z.string().min(1)).default([]),
 });
 
+/** HSK 3.0 bands; 7 is the merged 7–9 wordlist band. */
+export const levelSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+]);
+
+export const grammarExampleSchema = z.object({
+  cmn: z.string().min(1),
+  eng: z.string().min(1),
+});
+
+/**
+ * Grammar lesson files own their hanzi/word links. The build inverts those
+ * onto entries so a lesson is authored once and both directions stay in sync.
+ */
+export const grammarFrontmatter = z.object({
+  lesson: kebabIdSchema,
+  title: z.string().min(1),
+  pattern: z.string().min(1),
+  level: levelSchema,
+  order: z.number().int().positive(),
+  status: statusSchema.default("drafted"),
+  confidence: confidenceSchema,
+  sources: z.array(z.string().min(1)).default([]),
+  prerequisites: z.array(kebabIdSchema).default([]),
+  hanzi: z.array(z.string().length(1)).default([]),
+  words: z.array(z.string().min(2)).default([]),
+  examples: z.array(grammarExampleSchema).default([]),
+});
+
 export type TopicFrontmatter = z.infer<typeof topicFrontmatter>;
 export type HanziFrontmatter = z.infer<typeof hanziFrontmatter>;
 export type WordFrontmatter = z.infer<typeof wordFrontmatter>;
 export type RelationFrontmatter = z.infer<typeof relationFrontmatter>;
 export type LexemeFrontmatter = z.infer<typeof lexemeFrontmatter>;
+export type GrammarFrontmatter = z.infer<typeof grammarFrontmatter>;
 export type CharLinkFrontmatter = z.infer<typeof charLinkSchema>;
 export type UsageProfileFrontmatter = z.infer<typeof usageProfileSchema>;
 

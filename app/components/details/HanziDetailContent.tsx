@@ -5,6 +5,7 @@ import { Decomposition } from "~/components/Decomposition";
 import { StrokeOrder } from "~/components/StrokeOrder";
 import { Sentences } from "~/components/Sentences";
 import { RelationSections } from "~/components/details/RelationSections";
+import { GrammarLessonsSection } from "~/components/details/GrammarLessonsSection";
 import { PronunciationButton } from "~/components/PronunciationButton";
 import { CHAR_CONTRIBUTION_SECTION } from "~/lib/lexical";
 import type { HanziDetailData } from "~/lib/detail-data";
@@ -20,6 +21,7 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
     words,
     topics,
     relations,
+    grammar,
     semanticRole,
     phoneticRole,
     componentHrefs,
@@ -231,6 +233,8 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
         )}
 
         <RelationSections relations={relations} current={h.char} />
+
+        <GrammarLessonsSection lessons={grammar} />
 
         {contributions.length > 0 && (
           <Section title={CHAR_CONTRIBUTION_SECTION}>

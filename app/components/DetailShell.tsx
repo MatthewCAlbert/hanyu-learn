@@ -107,11 +107,16 @@ const HANZI_ONLY = /^[一-鿿]+$/u;
 
 /**
  * `[[target]]` resolves by shape: a single character is a hanzi, several
- * characters a word, anything else (kebab-case) a topic. Cheap, and it means
- * authors never have to write a path.
+ * characters a word, `grammar:id` a lesson, anything else (kebab-case) a topic.
+ * Cheap, and it means authors never have to write a path.
  */
 function wikiLink(target: string): string {
   const t = target.trim();
+  if (t.startsWith("grammar:")) {
+    const id = t.slice("grammar:".length);
+    const label = id.replace(/-/g, " ");
+    return `<a href="/grammar/${encodeURIComponent(id)}" class="text-accent underline decoration-dotted underline-offset-2">${label}</a>`;
+  }
   const href = HANZI_ONLY.test(t)
     ? `/${[...t].length === 1 ? "hanzi" : "words"}/${encodeURIComponent(t)}`
     : `/topics/${encodeURIComponent(t)}`;

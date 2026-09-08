@@ -16,6 +16,8 @@ relationships and explanations needed to study beyond a flat wordlist:
 - **Written explanations.** Per hanzi: what the etymology actually is, separated
   from an invented mnemonic. Per word: the literal reading, the real meaning, and
   the reason for the gap — 爱好 is "love + good" until you notice 好 is _hào_.
+  Per grammar lesson: a level-scoped pattern with i+1 examples, linked both ways
+  to the hanzi and words it teaches.
 - **Phonetic series pages.** Characters that share a visible sound component
   (`/phonetic/马`, `/phonetic/礻`) so a learner can see how 妈 mā / 吗 ma / 骂 mà
   get their reading — without mixing that family into the radical page. Browse
@@ -61,6 +63,7 @@ pnpm data:audio:upload # PUT those clips to S3-compatible storage (see .env.exam
 | Words        | 9,443 HSK multi-character entries, plus 229 Extra country/language names            |
 | Radicals     | 205, grouped by canonical Kangxi number                                             |
 | Topics       | 42 themes; an entry carries zero, one or many                                       |
+| Grammar      | Level-scoped lessons with i+1 examples, linked both ways to hanzi and words         |
 | Sentences    | 50,416 Tatoeba pairs, filtered so an example never uses a character above its level |
 | Stroke order | All 2,970 characters, animated                                                      |
 | Pronunciation | Click-to-play on headers and translate brief detail; CDN clips when `CDN_AUDIO_URL` is set, otherwise browser TTS |
@@ -77,7 +80,8 @@ pnpm data:audio:upload # PUT those clips to S3-compatible storage (see .env.exam
   Names the 2,970-hanzi set cannot spell (韩国, 澳大利亚, 埃及, 匈牙利) are omitted.
 - **Group by radical, topic or frequency**; filter by radical, topic, status and
   the older HSK standards. A Phonetics tab lists sound families in the selected
-  levels.
+  levels. A Grammar tab lists the curriculum for those levels, searchable by
+  pattern, explanation, examples, and linked entries.
 - **Compare any two entries** — hanzi, words, radicals, phonetic series or
   topics — side by side from a bookmarkable URL such as
   `/compare?left=hanzi:好&right=word:爱好`, or the VS action on a detail page.
@@ -135,7 +139,7 @@ steps, US$0.75 and 48,000 tokens.
 | Path                  |                                                                                     |
 | --------------------- | ----------------------------------------------------------------------------------- |
 | `data/sources/`       | Vendored upstream data, committed (audio-cmn MP3s gitignored). See [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) |
-| `content/`            | **Authored** explanations, topic membership, relations, and lexemes                  |
+| `content/`            | **Authored** explanations, topic membership, relations, lexemes, and grammar lessons |
 | `app/`                | React Router app                                                                    |
 | `scripts/`            | Data pipeline: build, MD lists, validation                                          |
 | `app/data/generated/` | Build artefacts — **gitignored**, rebuilt automatically                             |
@@ -143,12 +147,12 @@ steps, US$0.75 and 48,000 tokens.
 | `docs/extra/`         | Generated Extra-band word list — **never edit by hand**                             |
 
 Detail routes: `/hanzi/:char`, `/words/:word`, `/radicals/:radical`,
-`/phonetic/:component`, `/topics/:topic`. Compare two of them side by side at
+`/phonetic/:component`, `/topics/:topic`, `/grammar/:id`. Compare two of them side by side at
 `/compare` (or press VS on a detail page). Translate a passage or photo at
 `/translate`. Import and study songs at `/songs` (saved copies at
 `/songs/:songId`). Those pages keep the originating browse selection and filters
 for navigation back. Level indexes:
-`/hsk/:level/hanzi` (also `words`, `topics`, `radicals`, `phonetics`).
+`/hsk/:level/hanzi` (also `words`, `topics`, `radicals`, `phonetics`, `grammar`).
 `:level` may end with `extra` for supplement vocabulary.
 Phonetic pages are generated from visible sound components; they are not
 another Kangxi grouping.

@@ -12,7 +12,7 @@ export type BrowseOrigin = {
   from: string;
 };
 
-const BROWSE_PATH = /^\/hsk\/([^/]+)\/(hanzi|words|topics|radicals|phonetics)$/;
+const BROWSE_PATH = /^\/hsk\/([^/]+)\/(hanzi|words|topics|radicals|phonetics|grammar)$/;
 
 const TAB_LABEL: Record<BrowseTab, string> = {
   hanzi: "Hanzi",
@@ -20,6 +20,7 @@ const TAB_LABEL: Record<BrowseTab, string> = {
   topics: "Topics",
   radicals: "Radicals",
   phonetics: "Phonetics",
+  grammar: "Grammar",
 };
 
 export interface ParsedBrowseHref {

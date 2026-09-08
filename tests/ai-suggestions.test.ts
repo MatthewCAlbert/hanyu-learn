@@ -152,6 +152,18 @@ describe("suggestionsFor", () => {
     expect(chips[0]?.label).toBe("Explain the wording");
   });
 
+  it("offers a pattern chip on a grammar lesson", () => {
+    const chips = suggestionsFor(
+      ctx({
+        kind: "grammar",
+        title: "A 是 B — Equative 是",
+        route: "/grammar/shi-copula",
+      }),
+    );
+    expect(chips.map((c) => c.id)).toEqual(["explain"]);
+    expect(chips[0]?.label).toBe("Explain this pattern");
+  });
+
   it("offers a lyrics chip on a song page", () => {
     const chips = suggestionsFor(
       ctx({

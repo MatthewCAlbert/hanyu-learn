@@ -9,6 +9,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import matter from "gray-matter";
 import {
+  grammarFrontmatter,
   hanziFrontmatter,
   lexemeFrontmatter,
   relationFrontmatter,
@@ -18,7 +19,8 @@ import {
 } from "../app/lib/content-schema.ts";
 import { idsLeaves, isAtomic, parseIds } from "../app/lib/ids.ts";
 import { kRSUnicodeCitationError } from "../app/lib/unihan.ts";
-import type { Hanzi, Word } from "../app/lib/types.ts";
+import { findGrammarCycle } from "../app/lib/grammar.ts";
+import type { Hanzi, Level, Word } from "../app/lib/types.ts";
 
 const problems: string[] = [];
 const fail = (file: string, msg: string) => problems.push(`${file}: ${msg}`);
@@ -246,13 +248,125 @@ async function main() {
     }
   }
 
+  // ------------------------------------------------------------------ grammar
+  const HANZI_RE = /[一-鿿]/u;
+  const hanziOf = (s: string) => [...s].filter((c) => HANZI_RE.test(c));
+  const knownAt = (level: Level) =>
+    new Set(hanzi.filter((h) => h.level <= level).map((h) => h.char));
+  const grammarIds = new Set<string>();
+  const grammarRows: {
+    id: string;
+    level: Level;
+    order: number;
+    prerequisites: string[];
+    path: string;
+  }[] = [];
+  const orderByLevel = new Map<Level, Map<number, string>>();
+
+  for (const file of await safeList("content/grammar")) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const path = `content/grammar/${file}`;
+    const { data, content } = matter(await readFile(path, "utf8"));
+    const parsed = grammarFrontmatter.safeParse(data);
+    if (!parsed.success) {
+      fail(path, parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; "));
+      continue;
+    }
+    const fm = parsed.data;
+    checked += 1;
+    if (file !== `${fm.lesson}.md`) fail(path, `filename should be ${fm.lesson}.md`);
+    if (grammarIds.has(fm.lesson)) fail(path, `duplicate lesson id ${fm.lesson}`);
+    grammarIds.add(fm.lesson);
+
+    const orders = orderByLevel.get(fm.level) ?? new Map<number, string>();
+    if (orders.has(fm.order)) {
+      fail(path, `order ${fm.order} already used by ${orders.get(fm.order)} at HSK ${fm.level}`);
+    } else {
+      orders.set(fm.order, fm.lesson);
+      orderByLevel.set(fm.level, orders);
+    }
+
+    if (fm.hanzi.length === 0 && fm.words.length === 0) {
+      fail(path, `list at least one hanzi or word so the lesson can backlink`);
+    }
+
+    const seenHanzi = new Set<string>();
+    for (const c of fm.hanzi) {
+      if (seenHanzi.has(c)) fail(path, `hanzi: ${c} listed twice`);
+      seenHanzi.add(c);
+      if (!byChar.has(c)) fail(path, `hanzi ${c} is not in the corpus`);
+    }
+    const seenWords = new Set<string>();
+    for (const w of fm.words) {
+      if (seenWords.has(w)) fail(path, `words: ${w} listed twice`);
+      seenWords.add(w);
+      if (!byWord.has(w)) fail(path, `word ${w} is not in the corpus`);
+    }
+
+    const seenPre = new Set<string>();
+    for (const pre of fm.prerequisites) {
+      if (pre === fm.lesson) fail(path, `cannot list itself as a prerequisite`);
+      if (seenPre.has(pre)) fail(path, `prerequisite ${pre} listed twice`);
+      seenPre.add(pre);
+    }
+
+    const vocab = knownAt(fm.level);
+    for (const ex of fm.examples) {
+      const unknown = hanziOf(ex.cmn).filter((c) => !vocab.has(c));
+      if (unknown.length) {
+        fail(
+          path,
+          `example “${ex.cmn}” uses characters above HSK ${fm.level}: ${unknown.join("")}`,
+        );
+      }
+    }
+
+    const s = sections(content);
+    if (fm.status === "reviewed") {
+      if (fm.sources.length === 0) fail(path, `status "reviewed" requires at least one source`);
+      if (!s["pattern"]) fail(path, `missing "## Pattern" section`);
+      if (fm.examples.length === 0) fail(path, `status "reviewed" requires at least one example`);
+    }
+
+    grammarRows.push({
+      id: fm.lesson,
+      level: fm.level,
+      order: fm.order,
+      prerequisites: fm.prerequisites,
+      path,
+    });
+  }
+
+  for (const row of grammarRows) {
+    for (const pre of row.prerequisites) {
+      const target = grammarRows.find((g) => g.id === pre);
+      if (!target) {
+        fail(row.path, `prerequisite ${pre} has no content/grammar file`);
+        continue;
+      }
+      if (target.level > row.level) {
+        fail(
+          row.path,
+          `prerequisite ${pre} is HSK ${target.level}, later than this lesson’s HSK ${row.level}`,
+        );
+      }
+    }
+  }
+  const cycle = findGrammarCycle(grammarRows);
+  if (cycle) {
+    fail(
+      `content/grammar/${cycle[0]}.md`,
+      `prerequisite cycle: ${cycle.join(" → ")}`,
+    );
+  }
+
   if (problems.length) {
     console.error(`\n✗ ${problems.length} problem(s):\n`);
     for (const p of problems) console.error(`  ${p}`);
     process.exit(1);
   }
   console.log(
-    `✓ ${checked} content file(s) valid (${topicIds.size} topics · ${relationIds.size} relations · ${lexemeForms.size} lexemes)`,
+    `✓ ${checked} content file(s) valid (${topicIds.size} topics · ${relationIds.size} relations · ${lexemeForms.size} lexemes · ${grammarIds.size} grammar)`,
   );
 }
 

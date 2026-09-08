@@ -82,6 +82,15 @@ export function suggestionsFor(ctx: PageContext | null | undefined): PromptSugge
     });
   }
 
+  if (ctx.kind === "grammar") {
+    chips.push({
+      id: "explain",
+      label: "Explain this pattern",
+      prompt:
+        "Explain this grammar pattern using the lesson on the page. Give two extra i+1 examples at this HSK level and call out the typical mistake.",
+    });
+  }
+
   if (ctx.kind === "song") {
     chips.push({
       id: "explain",

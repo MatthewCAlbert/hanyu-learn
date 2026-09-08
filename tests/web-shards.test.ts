@@ -43,6 +43,8 @@ describe("web shards", () => {
         "hd",
         "wd",
         "st",
+        "gd",
+        "g1.json",
       ]),
     );
   });
@@ -151,13 +153,15 @@ describe("web shards", () => {
 
   it("uses a bounded number of bucket files", async () => {
     const { version } = await readJson<DatasetManifest>("manifest.json");
-    const [hd, wd, st] = await Promise.all([
+    const [hd, wd, st, gd] = await Promise.all([
       readdir(`${WEB}/${version}/hd`),
       readdir(`${WEB}/${version}/wd`),
       readdir(`${WEB}/${version}/st`),
+      readdir(`${WEB}/${version}/gd`),
     ]);
     expect(hd).toHaveLength(SHARD_BUCKETS);
     expect(wd).toHaveLength(SHARD_BUCKETS);
     expect(st).toHaveLength(SHARD_BUCKETS);
+    expect(gd).toHaveLength(SHARD_BUCKETS);
   });
 });

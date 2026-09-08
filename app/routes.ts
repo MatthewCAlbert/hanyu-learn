@@ -11,6 +11,7 @@ export default [
     route("topics", "routes/level.topics.tsx"),
     route("radicals", "routes/level.radicals.tsx"),
     route("phonetics", "routes/level.phonetics.tsx"),
+    route("grammar", "routes/level.grammar.tsx"),
   ]),
 
   route("credits", "routes/credits.tsx"),
@@ -27,4 +28,5 @@ export default [
   route("phonetic/:component", "routes/phonetic.$component.tsx"),
   route("topics/:topic", "routes/topics.$topic.tsx"),
   route("lexemes/:form", "routes/lexemes.$form.tsx"),
+  route("grammar/:id", "routes/grammar.$id.tsx"),
 ] satisfies RouteConfig;

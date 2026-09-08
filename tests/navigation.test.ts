@@ -55,6 +55,15 @@ describe("browse origin", () => {
     });
   });
 
+  it("accepts the grammar curriculum tab", () => {
+    expect(parseBrowseHref("/hsk/1/grammar")).toMatchObject({
+      pathname: "/hsk/1/grammar",
+      tab: "grammar",
+      bands: { levels: [1], extra: false },
+    });
+    expect(browseLabel("/hsk/1,2/grammar?q=吗")).toBe("HSK 1, 2 · Grammar (filtered)");
+  });
+
   it("labels the default browse destination", () => {
     expect(browseLabel(defaultBrowsePath())).toBe("All levels + Extra · Hanzi");
     expect(defaultBrowseFallback("radicals")).toEqual({

@@ -8,7 +8,8 @@ trustworthy; a confident, well-written, wrong etymology is worse than a blank.
 
 ## 1. Invocation contract
 
-> "Fill in hanzi content for HSK 1" · "Fill in word content for HSK 2"
+> "Fill in hanzi content for HSK 1" · "Fill in word content for HSK 2" ·
+> "Fill in grammar lessons for HSK 1"
 
 On that request:
 
@@ -214,11 +215,36 @@ backlog — `/hsk/1/hanzi?topic=untagged` is the working queue.
 
 ---
 
+## 8a. Grammar lessons
+
+> "Fill in grammar lessons for HSK 1"
+
+Grammar is a first-class curriculum, not a topic tag. One file per lesson in
+`content/grammar/<id>.md`. Copy `content/_TEMPLATE.grammar.md`.
+
+- **The lesson owns the links.** List related hanzi and words on the lesson.
+  Do not add grammar ids to hanzi/word files — the build inverts membership.
+- **Level and order.** `level` is the HSK band the lesson belongs to. `order`
+  is unique within that band and is the curriculum sort key. Multi-level browse
+  groups by authored level; it does not merge order across bands.
+- **Prerequisites** are other lesson ids, same or lower level, with no cycles.
+- **Examples are i+1.** Every character in `examples[].cmn` must already be
+  known at the lesson’s level. `check:content` enforces this.
+- **`## Pattern` and `## Usage` stay separate from vocabulary etymology.** A
+  lesson explains a structure; it does not invent character history.
+- Wikilinks: `[[是]]` for hanzi, `[[老师]]` for words, `[[grammar:ma-yes-no]]`
+  for another lesson.
+- Batches of **≤25 lessons, one level at a time**, then `pnpm check:content`.
+
+Reviewed lessons need sources, a `## Pattern` section, and at least one example.
+
+---
+
 ## 9. Batch protocol
 
 ```bash
 # 1. write ≤25 entries into content/hanzi/, content/words/,
-#    content/relations/, or content/lexemes/
+#    content/relations/, content/lexemes/, or content/grammar/
 pnpm check:content     # schema, component checks, topics, and relations
 pnpm data:build        # regenerate app data
 pnpm data:md           # regenerate docs/hsk/ study lists

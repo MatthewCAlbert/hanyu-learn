@@ -5,6 +5,7 @@ import { Prose } from "~/components/DetailShell";
 import { Sentences } from "~/components/Sentences";
 import { GlossaryLegend, GlossaryTerm } from "~/components/GlossaryTerm";
 import { RelationSections } from "~/components/details/RelationSections";
+import { GrammarLessonsSection } from "~/components/details/GrammarLessonsSection";
 import { PronunciationButton } from "~/components/PronunciationButton";
 import type { WordDetailData } from "~/lib/detail-data";
 import type { GlossaryKey } from "~/lib/lexical-glossary";
@@ -16,7 +17,7 @@ const TRANSPARENCY_NOTE = {
 } as const;
 
 export function WordDetailContent({ data }: { data: WordDetailData }) {
-  const { word: w, chars, topics, relations, usage } = data;
+  const { word: w, chars, topics, relations, grammar, usage } = data;
   const a = w.authored;
   const contributionTerms: GlossaryKey[] = [];
   for (const c of chars) {
@@ -173,6 +174,8 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         )}
 
         <RelationSections relations={relations} current={w.word} />
+
+        <GrammarLessonsSection lessons={grammar} />
 
         <Section title="Character by character">
           {contributionTerms.length > 0 && <GlossaryLegend terms={contributionTerms} />}

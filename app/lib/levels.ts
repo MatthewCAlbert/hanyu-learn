@@ -75,7 +75,7 @@ export const DEFAULT_BANDS: Bands = { levels: LEVELS, extra: true };
 
 export const DEFAULT_BANDS_PATH = formatBands(DEFAULT_BANDS);
 
-export type BrowseTab = "hanzi" | "words" | "topics" | "radicals" | "phonetics";
+export type BrowseTab = "hanzi" | "words" | "topics" | "radicals" | "phonetics" | "grammar";
 
 export function defaultBrowsePath(tab: BrowseTab = "hanzi"): string {
   return `/hsk/${DEFAULT_BANDS_PATH}/${tab}`;

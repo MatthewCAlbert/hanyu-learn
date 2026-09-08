@@ -22,6 +22,7 @@ export function TranslateSearchHint({
     topics: number;
     radicals: number;
     phonetics: number;
+    grammar: number;
   };
 }) {
   const location = useLocation();

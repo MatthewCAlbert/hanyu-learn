@@ -9,6 +9,8 @@ import { matchRadical } from "./radicals";
 import type {
   DatasetManifest,
   DatasetMeta,
+  GrammarIndex,
+  GrammarPage,
   HanziIndex,
   HanziPage,
   Level,
@@ -93,6 +95,20 @@ export async function getHanziPage(char: string): Promise<HanziPage | undefined>
 export async function getWordPage(word: string): Promise<WordPage | undefined> {
   const bucket = await asset<Record<string, WordPage>>(`wd/${shardBucket(word)}.json`);
   return bucket[word];
+}
+
+export async function getGrammarIndex(level: Level): Promise<GrammarIndex[]> {
+  return asset<GrammarIndex[]>(`g${level}.json`);
+}
+
+export async function getGrammarIndexes(levels: Level[]): Promise<GrammarIndex[]> {
+  const parts = await Promise.all(levels.map(getGrammarIndex));
+  return parts.flat();
+}
+
+export async function getGrammarPage(id: string): Promise<GrammarPage | undefined> {
+  const bucket = await asset<Record<string, GrammarPage>>(`gd/${shardBucket(id)}.json`);
+  return bucket[id];
 }
 
 export async function getStrokes(char: string): Promise<unknown | null> {

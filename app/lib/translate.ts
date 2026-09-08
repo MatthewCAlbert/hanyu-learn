@@ -50,13 +50,15 @@ export function browseSearchEmpty(shown: {
   topics: number;
   radicals: number;
   phonetics: number;
+  grammar: number;
 }): boolean {
   return (
     shown.hanzi === 0 &&
     shown.words === 0 &&
     shown.topics === 0 &&
     shown.radicals === 0 &&
-    shown.phonetics === 0
+    shown.phonetics === 0 &&
+    shown.grammar === 0
   );
 }
 
