@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { serializeWordContext } from "~/lib/ai/context";
+import { serializeWordContext, serializeLexemeContext } from "~/lib/ai/context";
 import type { WordDetailData } from "~/lib/detail-data";
 import type { Word } from "~/lib/types";
 
@@ -100,6 +100,34 @@ describe("relation snapshots for the study chat", () => {
     expect(ctx.text).toContain("啥 (chat) [not on HSK]");
     expect(ctx.text).toContain("phonetic/fossilized");
     expect(ctx.hints?.hasRelations).toBe(true);
+    expect(ctx.hints?.hasUsage).toBe(true);
+  });
+});
+
+describe("lexeme page snapshots", () => {
+  it("serializes a spoken/chat form without calling it slang", () => {
+    const ctx = serializeLexemeContext({
+      lexeme: {
+        form: "啥",
+        pinyin: "shá",
+        meanings: ["what"],
+        pos: ["r"],
+        register: "colloquial",
+        contexts: ["speech", "chat"],
+        regions: ["northern"],
+        currency: "current",
+        status: "reviewed",
+        confidence: "high",
+        sources: ["现代汉语词典 7th ed., 啥"],
+        notes: "Colloquial interrogative.",
+        relationIds: ["what-question"],
+      },
+      relations: [],
+    });
+    expect(ctx.kind).toBe("lexeme");
+    expect(ctx.route).toBe("/lexemes/%E5%95%A5");
+    expect(ctx.text).toContain("not on HSK");
+    expect(ctx.text).toContain("Do not call this slang");
     expect(ctx.hints?.hasUsage).toBe(true);
   });
 });

@@ -3,6 +3,8 @@ import {
   CHAR_CONTRIBUTION_SECTION,
   MEMBER_UI_LABEL,
   RELATION_UI_LABEL,
+  isHanziLexeme,
+  lexemeHref,
   rankContainedWords,
   textbookPercentiles,
   toRelationCard,
@@ -25,6 +27,12 @@ describe("learner-facing labels", () => {
   it("gives compact labels for real-life alternative chips", () => {
     expect(MEMBER_UI_LABEL.textbook).toBe("Textbook/neutral");
     expect(MEMBER_UI_LABEL.chat).toBe("Chat");
+  });
+
+  it("treats only a single character as Extra Hanzi", () => {
+    expect(isHanziLexeme("啥")).toBe(true);
+    expect(isHanziLexeme("搞定")).toBe(false);
+    expect(lexemeHref("啥")).toBe("/lexemes/%E5%95%A5");
   });
 });
 
@@ -90,7 +98,7 @@ describe("wikilink harvest", () => {
 });
 
 describe("relation cards", () => {
-  it("marks lexemes as out of corpus with no detail href", () => {
+  it("marks lexemes as out of corpus and links to the lexeme page", () => {
     const card = toRelationCard(
       {
         id: "what-question",
@@ -154,7 +162,7 @@ describe("relation cards", () => {
     expect(card.members[1]).toMatchObject({
       form: "啥",
       inCorpus: false,
-      href: null,
+      href: "/lexemes/%E5%95%A5",
       pinyin: "shá",
     });
   });

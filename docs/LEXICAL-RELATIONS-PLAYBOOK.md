@@ -14,7 +14,9 @@ actually interchangeable is worse than a blank.
 
 > "Tag synonym/register relations for HSK 1 words" ·
 > "Add character contributions for HSK 1 words" ·
-> "Fill real-life alternatives for HSK 2"
+> "Fill real-life alternatives for HSK 2" ·
+> "Add Extra spoken/chat lexemes" ·
+> "Add spoken/chat forms that are not HSK words"
 
 On that request:
 
@@ -24,6 +26,16 @@ On that request:
 3. Work in **frequency order**. Frequent words repay usage notes the most.
 4. Work in batches of **≤25 entries**, then validate and commit (same gate as
    the research playbook).
+
+For Extra spoken/chat lexemes specifically:
+
+1. Read this playbook. Do **not** add forms to `extra-vocabulary.json`.
+2. Review surface: `docs/extra/lexemes.md` (generated; do not edit).
+3. Skip any form that is already an HSK or Extra **word**. If it is already an
+   HSK **hanzi** (e.g. a slang sense of 牛), write it on the hanzi page.
+4. Prefer a `register-set` with a textbook counterpart when one exists.
+5. Do not label a form “slang” unless that is the attested register. Keep
+   register, context, region, and currency as separate fields.
 
 Never batch two levels together. Candidate generation may cover the whole corpus;
 only **reviewed** claims are learner-facing.

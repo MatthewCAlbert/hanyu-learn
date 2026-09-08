@@ -196,8 +196,9 @@ doing inside a word, follow
 [docs/LEXICAL-RELATIONS-PLAYBOOK.md](docs/LEXICAL-RELATIONS-PLAYBOOK.md). Ask
 Claude Code to _"tag synonym/register relations for HSK 1"_. Relation files
 own their members the same way topics do; spoken forms that are not on the
-wordlist live in `content/lexemes/`. The review surface is
-`docs/hsk/level-N/relations.md`.
+wordlist live in `content/lexemes/` and show on Extra browse. Ask
+Claude Code to _"Add Extra spoken/chat lexemes"_. The review surface is
+`docs/hsk/level-N/relations.md` and `docs/extra/lexemes.md`.
 
 ## Generated data
 

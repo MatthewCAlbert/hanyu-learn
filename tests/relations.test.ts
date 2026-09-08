@@ -61,6 +61,9 @@ describe("inversion round-trip", () => {
         if (m.kind === "hanzi") {
           expect(H.find((h) => h.char === m.form)?.relationIds).toContain(r.id);
         }
+        if (m.kind === "lexeme") {
+          expect(L.find((l) => l.form === m.form)?.relationIds).toContain(r.id);
+        }
       }
     }
     const byId = new Map(R.map((r) => [r.id, r]));
@@ -69,14 +72,31 @@ describe("inversion round-trip", () => {
         expect(byId.get(id)?.members.some((m) => m.form === w.word)).toBe(true);
       }
     }
+    for (const h of H) {
+      for (const id of h.relationIds) {
+        expect(byId.get(id)?.members.some((m) => m.form === h.char)).toBe(true);
+      }
+    }
+    for (const l of L) {
+      for (const id of l.relationIds) {
+        expect(byId.get(id)?.members.some((m) => m.form === l.form)).toBe(true);
+      }
+    }
   });
 
   it("includes the 什么 / 啥 real-life alternative set", () => {
     const rel = R.find((r) => r.id === "what-question");
     expect(rel?.kind).toBe("register-set");
-    expect(rel?.members.map((m) => m.form)).toEqual(["什么", "啥"]);
+    expect(rel?.members.map((m) => m.form)).toEqual(["什么", "啥", "干啥"]);
     expect(L.find((l) => l.form === "啥")?.regions).toContain("northern");
     expect(W.find((w) => w.word === "什么")?.relationIds).toContain("what-question");
+  });
+
+  it("includes the 怎么 / 咋 real-life alternative set", () => {
+    const rel = R.find((r) => r.id === "how-question");
+    expect(rel?.kind).toBe("register-set");
+    expect(rel?.members.map((m) => m.form)).toEqual(["怎么", "咋", "咋了"]);
+    expect(L.find((l) => l.form === "咋")?.relationIds).toContain("how-question");
   });
 });
 

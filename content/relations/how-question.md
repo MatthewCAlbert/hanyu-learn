@@ -25,12 +25,22 @@ members:
     currency: current
     sense: "manner / cause interrogative"
     pos: [r]
+  - form: 咋了
+    kind: lexeme
+    role: chat
+    register: colloquial
+    contexts: [speech, chat]
+    regions: [northern]
+    currency: current
+    sense: "what happened / what's wrong"
+    pos: [r]
 ---
 
 ## Distinctions
 怎么 is the taught form for "how" and often "why." 咋 occupies the same slot
-in northern speech and chat (咋办, 咋了). Keep 怎么 for writing and for learners
-who need one portable form. 咋 is not rude; it is informal and regional in origin.
+in northern speech and chat (咋办, 咋了). 咋了 is specifically "what's
+wrong / what happened?" where 怎么了 is the textbook counterpart. Keep 怎么
+for writing and for learners who need one portable form.
 
 ## Corpus evidence
 Lexicographic (L): 现汉 lists 咋 as dialectal 怎么.

@@ -42,7 +42,8 @@ it.** The rules most easily got wrong:
 - Synonyms, antonyms, real-life alternatives, and character contribution inside a
   word follow [docs/LEXICAL-RELATIONS-PLAYBOOK.md](docs/LEXICAL-RELATIONS-PLAYBOOK.md).
   Relation membership lives in `content/relations/<id>.md`; spoken/chat forms
-  that are not HSK words go in `content/lexemes/`. Containment is derived;
+  that are not HSK words go in `content/lexemes/` and show on Extra browse.
+  Ask _"Add Extra spoken/chat lexemes"_ for more. Containment is derived;
   meaning is not. HSK membership is not everyday frequency.
 - **Batches of ≤25, one level at a time**, then `pnpm check:content` and commit.
   A 25-entry diff is reviewable; a 300-entry diff is not, and this content is

@@ -188,6 +188,9 @@ async function main() {
     if (byWord.has(fm.form)) {
       fail(path, `${fm.form} is already a corpus word — do not duplicate it as a lexeme`);
     }
+    if ([...fm.form].length === 1 && byChar.has(fm.form)) {
+      fail(path, `${fm.form} is an HSK hanzi — record a slang sense on the hanzi page, not as a lexeme`);
+    }
     if (fm.status === "reviewed" && fm.sources.length === 0) {
       fail(path, `status "reviewed" requires at least one source`);
     }

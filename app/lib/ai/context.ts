@@ -3,6 +3,7 @@ import type {
   CompareEntry,
   ComparePane,
   HanziDetailData,
+  LexemeDetailData,
   WordDetailData,
 } from "~/lib/detail-data";
 import type { BoundSong } from "~/lib/song";
@@ -174,6 +175,39 @@ export function serializeWordContext(data: WordDetailData, route?: string): Page
       missingAuthored: !a || a.status === "stub" || !clip(a.why),
       hasRelations: (data.relations?.length ?? 0) > 0,
       hasUsage: Boolean(data.usage),
+    },
+  };
+}
+
+export function serializeLexemeContext(data: LexemeDetailData, route?: string): PageContext {
+  const l = data.lexeme;
+  const lines: string[] = [
+    `Spoken/chat form (not on HSK or Extra country list): ${l.form}`,
+    `Pinyin: ${l.pinyin}`,
+    `Meanings: ${l.meanings.join("; ")}`,
+    `Register: ${l.register}`,
+    l.contexts.length ? `Context: ${l.contexts.join("/")}` : "",
+    l.regions.length ? `Region: ${l.regions.join("/")}` : "",
+    `Currency: ${l.currency}`,
+    `Do not call this slang unless a source says so. Register, context, region, and currency are separate.`,
+  ].filter(Boolean);
+  if (l.pos.length) lines.push(`POS: ${l.pos.join(", ")}`);
+  if (data.relations.length) lines.push(serializeRelations(data.relations, 4));
+  if (l.notes) lines.push(`Notes:\n${clip(l.notes)}`);
+  if (l.sources.length) lines.push(`Sources:\n${l.sources.map((s) => `- ${s}`).join("\n")}`);
+  const path = route ?? `/lexemes/${encodeURIComponent(l.form)}`;
+  return {
+    key: `lexeme:${l.form}`,
+    route: path,
+    title: `${l.form} ${l.pinyin}`.trim(),
+    kind: "lexeme",
+    text: lines.join("\n"),
+    hints: {
+      left: { label: l.form },
+      contentStatus: authoredStatus(l.status),
+      readings: l.pinyin ? [l.pinyin] : [],
+      hasRelations: data.relations.length > 0,
+      hasUsage: true,
     },
   };
 }

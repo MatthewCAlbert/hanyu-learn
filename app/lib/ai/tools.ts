@@ -1,9 +1,14 @@
 import { serverTool, tool } from "@openrouter/agent/tool";
 import { z } from "zod";
 import { searchCompare } from "~/lib/compare-search";
-import { loadCompareEntry, loadHanziDetail, loadWordDetail } from "~/lib/detail-data";
+import { loadCompareEntry, loadHanziDetail, loadLexemeDetail, loadWordDetail } from "~/lib/detail-data";
 import { getMeta } from "~/lib/data.client";
-import { serializeCompareEntry, serializeHanziContext, serializeWordContext } from "./context";
+import {
+  serializeCompareEntry,
+  serializeHanziContext,
+  serializeLexemeContext,
+  serializeWordContext,
+} from "./context";
 import { RELATION_UI_LABEL } from "~/lib/lexical";
 import { loadAiCatalog } from "./catalog";
 import type { EntryKind } from "~/lib/compare";
@@ -99,12 +104,17 @@ export const lookupHanzi = tool({
 
 export const lookupWord = tool({
   name: "lookup_word",
-  description: "Load the full authored word page for one vocabulary item in this corpus.",
+  description:
+    "Load the full authored word page, or a spoken/chat lexeme that is not an HSK/Extra country word.",
   inputSchema: lookupWordInput,
   execute: async ({ word }) => {
     const data = await loadWordDetail(word);
-    if (!data) return { found: false as const, word };
-    return { found: true as const, text: preview(serializeWordContext(data).text, 4000) };
+    if (data) return { found: true as const, text: preview(serializeWordContext(data).text, 4000) };
+    const lexeme = await loadLexemeDetail(word);
+    if (lexeme) {
+      return { found: true as const, text: preview(serializeLexemeContext(lexeme).text, 4000) };
+    }
+    return { found: false as const, word };
   },
 });
 
