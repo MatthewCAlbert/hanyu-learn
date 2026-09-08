@@ -5,7 +5,7 @@ import { matchesTopic, topicsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getMeta, getWordIndexesForBands } from "~/lib/data.client";
 import { parseBands } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
-import { Empty } from "~/components/ui";
+import { CatalogEmpty } from "~/components/translate/TranslateSearchHint";
 import { Toolbar } from "./level.hanzi";
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
@@ -74,7 +74,7 @@ export default function LevelTopics({ loaderData }: Route.ComponentProps) {
       </div>
 
       {rows.length === 0 ? (
-        <Empty>No topic matches that search.</Empty>
+        <CatalogEmpty fallback="No topic matches that search." />
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((t) => (

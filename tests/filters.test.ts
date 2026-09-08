@@ -77,6 +77,16 @@ describe("scoring a query", () => {
     expect(chars("hao3")).not.toContain("号");
   });
 
+  it("ranks a doubled form below an exact character or reading", () => {
+    expect(TIER.hanziExact).toBeLessThan(TIER.hanziContains);
+    expect(TIER.hanziContains).toBeLessThan(TIER.hanziRedup);
+    expect(TIER.hanziRedup).toBeLessThan(TIER.pinyinExact);
+    expect(TIER.pinyinExact).toBeLessThan(TIER.pinyinRedup);
+    expect(TIER.pinyinRedup).toBeLessThan(TIER.meaningExact);
+    expect(matchQuery("马马虎虎", "马虎", ["mǎ hu"], ["careless"])!.redup).toBe("aabb");
+    expect(searchWords(W, filtersFor("q=马马虎虎")).map((r) => r.w.word)).toContain("马虎");
+  });
+
   it("ranks a character above the characters merely built from it", () => {
     const rs = ranked(searchHanzi(HSK1, filtersFor("q=%E5%A5%B3"))); // 女
     expect(rs[0]!.h.char).toBe("女");

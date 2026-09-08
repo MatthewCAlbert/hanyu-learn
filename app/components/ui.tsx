@@ -1,6 +1,7 @@
 import { DetailLink } from "~/components/DetailLink";
 import clsx from "clsx";
 import type { Status } from "~/lib/types";
+import { DOUBLED_LABEL, DOUBLED_TITLE } from "~/lib/reduplication";
 
 export function Chip({
   children,
@@ -23,6 +24,14 @@ export function Chip({
     >
       {children}
     </span>
+  );
+}
+
+export function DoubledChip() {
+  return (
+    <Chip tone="quiet" title={DOUBLED_TITLE}>
+      {DOUBLED_LABEL}
+    </Chip>
   );
 }
 

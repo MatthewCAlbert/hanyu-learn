@@ -4,7 +4,7 @@ import { matchesPhonetic, phoneticsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getPhonetics } from "~/lib/data.client";
 import { parseBands } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
-import { Empty } from "~/components/ui";
+import { CatalogEmpty } from "~/components/translate/TranslateSearchHint";
 import { Toolbar } from "./level.hanzi";
 
 const PREVIEW = 6;
@@ -30,7 +30,7 @@ export default function LevelPhonetics({ loaderData }: Route.ComponentProps) {
         pronunciation when the character was formed; modern Mandarin may match exactly, differ only
         by tone, or have diverged.
       </p>
-      {total === 0 && <Empty>No phonetic series matches that search.</Empty>}
+      {total === 0 && <CatalogEmpty fallback="No phonetic series matches that search." />}
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {series.map(({ meta, members }) => {
           const reading = meta.pinyin[0];

@@ -4,7 +4,7 @@ import { matchesRadical, radicalsAtLevels } from "~/lib/catalog";
 import { getHanziIndexes, getMeta } from "~/lib/data.client";
 import { parseBands } from "~/lib/levels";
 import { readFilters } from "~/lib/filters";
-import { Empty } from "~/components/ui";
+import { CatalogEmpty } from "~/components/translate/TranslateSearchHint";
 import { Toolbar } from "./level.hanzi";
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
@@ -33,7 +33,7 @@ export default function LevelRadicals({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <Toolbar total={total} noun="radical" />
-      {total === 0 && <Empty>No radical matches that search.</Empty>}
+      {total === 0 && <CatalogEmpty fallback="No radical matches that search." />}
       {byStrokes.map(({ strokes, radicals }) => (
         <section key={strokes} className="mb-6">
           <h2 className="ui-eyebrow mb-2">

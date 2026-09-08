@@ -1,5 +1,5 @@
 import { DetailLink } from "~/components/DetailLink";
-import { Highlighted, StatusDot } from "~/components/ui";
+import { DoubledChip, Highlighted, StatusDot } from "~/components/ui";
 import { lexemeHref, SPOKEN_SECTION } from "~/lib/lexical";
 import type { Lexeme } from "~/lib/types";
 import type { Match } from "~/lib/filters";
@@ -39,7 +39,12 @@ export function LexemeBrowseSection({
                     <td className="truncate text-ink-2" title={text}>
                       <Highlighted text={text} at={at} />
                     </td>
-                    <td className="w-20 text-right text-[11px] text-ink-3">not on HSK</td>
+                    <td className="w-28 text-right text-[11px] text-ink-3">
+                      <span className="inline-flex items-center justify-end gap-1">
+                        {match?.redup && <DoubledChip />}
+                        <span>not on HSK</span>
+                      </span>
+                    </td>
                     <td className="w-8 text-right">
                       <StatusDot status={lexeme.status} />
                     </td>
@@ -66,6 +71,7 @@ export function LexemeBrowseSection({
                 </span>
                 <span className="mt-0.5 flex items-center gap-1">
                   <span className="text-xs text-ink-3">not on HSK</span>
+                  {match?.redup && <DoubledChip />}
                   <StatusDot status={lexeme.status} />
                 </span>
               </DetailLink>
@@ -86,6 +92,7 @@ export function LexemeBrowseSection({
                   <span className="han shrink-0 text-2xl group-hover:text-accent">{lexeme.form}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-ink-2">{lexeme.pinyin}</span>
                   <span className="shrink-0 text-xs text-ink-3">not on HSK</span>
+                  {match?.redup && <DoubledChip />}
                   <StatusDot status={lexeme.status} />
                 </div>
                 <span title={text} className="mt-0.5 truncate text-xs text-ink-2">

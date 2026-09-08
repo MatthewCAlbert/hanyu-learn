@@ -17,7 +17,8 @@ import {
 import { CreditsFooter } from "~/components/CreditsFooter";
 import { DetailLink } from "~/components/DetailLink";
 import { LexemeBrowseSection } from "~/components/LexemeBrowseSection";
-import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
+import { CatalogEmpty } from "~/components/translate/TranslateSearchHint";
+import { Chip, DoubledChip, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 import { Toggle, Toolbar } from "./level.hanzi";
 
@@ -34,6 +35,7 @@ interface Row {
   level: number;
   literal: string | null;
   transparency: string | null;
+  doubled: boolean;
 }
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
@@ -106,6 +108,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
       level: w.level,
       literal: w.literal,
       transparency: w.transparency,
+      doubled: Boolean(match?.redup),
     };
   });
 
@@ -201,7 +204,7 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
       />
       {total === 0 ? (
         <>
-          <Empty>Nothing matches those filters.</Empty>
+          <CatalogEmpty fallback="Nothing matches those filters." />
           <CreditsFooter />
         </>
       ) : (
@@ -252,6 +255,7 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
                           <span className="shrink-0 text-xs text-ink-3">HSK {r.level}</span>
                         )
                       )}
+                      {r.doubled && <DoubledChip />}
                       <StatusDot status={r.status} />
                     </div>
                     <span title={r.meaning} className="mt-0.5 truncate text-xs text-ink-2">

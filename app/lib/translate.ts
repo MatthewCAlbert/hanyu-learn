@@ -73,17 +73,19 @@ export function isExactCorpusEntry(
 }
 
 /**
- * Offer the translate workspace for Hanzi-bearing queries that are not an
- * exact corpus entry. Empty browse results cover unknown glyphs; two or more
- * Hanzi cover full-sentence search even when individual characters still hit.
+ * Offer Translate when browse has nothing for this query, including pinyin
+ * or English. Two or more Hanzi still offer it for sentences even when some
+ * characters hit the current collection. Exact catalog entries stay on browse.
  */
 export function shouldSuggestTranslate(
   q: string,
   tabsEmpty: boolean,
   exactEntry: boolean,
 ): boolean {
-  if (!containsHanzi(q) || exactEntry) return false;
-  return tabsEmpty || hanziCount(q) >= 2;
+  const needle = q.trim();
+  if (!needle || exactEntry) return false;
+  if (tabsEmpty) return true;
+  return containsHanzi(q) && hanziCount(q) >= 2;
 }
 
 /** Pinyin, English, or other freeform — local segmentation cannot help. */

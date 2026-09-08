@@ -1,5 +1,6 @@
 import type { HanziIndex, Lexeme, Status, WordIndex } from "./types";
 import { type PinyinHit, pinyinRank } from "./pinyin";
+import { hanziRedup, pinyinRedup, type RedupKind } from "./reduplication";
 
 /** Reserved topic filter value: entries carrying no topic at all. */
 export const UNTAGGED = "untagged";
@@ -50,6 +51,8 @@ export interface Match {
   tier: Tier;
   /** For meaning hits: the `[start, end)` slice of `meanings[index]` that matched. */
   at: [number, number] | null;
+  /** Present when the query is a doubled form of this entry, not the entry itself. */
+  redup?: RedupKind;
 }
 
 /**
@@ -70,22 +73,26 @@ export const TIER = {
   hanziExact: 0,
   /** The query is one character of a longer word. */
   hanziContains: 1,
+  /** The query is a doubled form of this Hanzi (看看 → 看, 马马虎虎 → 马虎). */
+  hanziRedup: 2,
   /** The whole reading: "hao", "hao3" or "hǎo" for hǎo. */
-  pinyinExact: 2,
+  pinyinExact: 3,
+  /** The query is a doubled reading of this entry (mamahuhu → 马虎). */
+  pinyinRedup: 4,
   /** The whole gloss: "good" for "good". */
-  meaningExact: 3,
+  meaningExact: 5,
   /** A reading prefix stopping on a syllable boundary: "ai" of "ài hào". */
-  pinyinSyllable: 4,
+  pinyinSyllable: 6,
   /** The gloss starts with the query, at a word boundary. */
-  meaningPrefix: 5,
+  meaningPrefix: 7,
   /** The query is a whole word inside a longer gloss. */
-  meaningWord: 6,
+  meaningWord: 8,
   /** A reading prefix cutting a syllable: "wait" of "wài tào". */
-  pinyinPartial: 7,
+  pinyinPartial: 9,
   /** The query is a substring of a gloss but not a word: "wait" of "waitress". */
-  meaningSubstring: 8,
+  meaningSubstring: 10,
   /** Structural, not semantic: 女 written inside 好. */
-  component: 9,
+  component: 11,
 } as const;
 type Tier = (typeof TIER)[keyof typeof TIER];
 
@@ -153,6 +160,10 @@ export function matchQuery(
     if (hanzi === q) return { field: "hanzi", index: 0, tier: TIER.hanziExact, at: null };
     const at = hanzi.indexOf(q);
     if (at >= 0) return { field: "hanzi", index: at, tier: TIER.hanziContains, at: null };
+    const redup = hanziRedup(q);
+    if (redup && hanzi === redup.base) {
+      return { field: "hanzi", index: 0, tier: TIER.hanziRedup, at: null, redup: redup.kind };
+    }
     return null;
   }
 
@@ -163,15 +174,22 @@ export function matchQuery(
     partial: TIER.pinyinPartial,
   };
   for (let i = 0; i < pinyins.length; i += 1) {
-    const hit = pinyinRank(q, pinyins[i]!);
-    if (!hit) continue;
-    const tier = PINYIN_TIER[hit];
-    if (!best || tier < best.tier) best = { field: "pinyin", index: i, tier, at: null };
+    const reading = pinyins[i]!;
+    const hit = pinyinRank(q, reading);
+    if (hit) {
+      const tier = PINYIN_TIER[hit];
+      if (!best || tier < best.tier) best = { field: "pinyin", index: i, tier, at: null };
+      continue;
+    }
+    const redup = pinyinRedup(q, reading);
+    if (redup && (!best || TIER.pinyinRedup < best.tier)) {
+      best = { field: "pinyin", index: i, tier: TIER.pinyinRedup, at: null, redup };
+    }
   }
   // A whole reading cannot be beaten, so the glosses need not be walked. Any
   // weaker pinyin hit still can be — that is what keeps 等待 "to wait" above
   // 外套 wàitào for the query "wait".
-  if (best?.tier === TIER.pinyinExact) return best;
+  if (best?.tier === TIER.pinyinExact || best?.tier === TIER.pinyinRedup) return best;
 
   const lower = q.toLowerCase();
   for (let i = 0; i < meanings.length; i += 1) {

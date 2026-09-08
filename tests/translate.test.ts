@@ -71,9 +71,12 @@ describe("search suggestion eligibility", () => {
     words: [{ word: "你好" }],
   };
 
-  it("offers translate for sentences and unknown glyphs, not exact entries", () => {
+  it("offers translate for catalog misses, sentences, and unknown glyphs — not exact entries", () => {
     expect(containsHanzi("hao")).toBe(false);
-    expect(shouldSuggestTranslate("hao", true, false)).toBe(false);
+    expect(shouldSuggestTranslate("", true, false)).toBe(false);
+    expect(shouldSuggestTranslate("mamahuhu", true, false)).toBe(true);
+    expect(shouldSuggestTranslate("马马虎虎", true, false)).toBe(true);
+    expect(shouldSuggestTranslate("hao", true, false)).toBe(true);
     expect(browseSearchEmpty(shownEmpty)).toBe(true);
     expect(shouldSuggestTranslate("我喜欢学习中文", false, false)).toBe(true);
     expect(shouldSuggestTranslate("好", true, isExactCorpusEntry(catalog, "好"))).toBe(false);

@@ -17,7 +17,8 @@ import {
 } from "~/lib/filters";
 import { CreditsFooter } from "~/components/CreditsFooter";
 import { DetailLink } from "~/components/DetailLink";
-import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
+import { CatalogEmpty } from "~/components/translate/TranslateSearchHint";
+import { Chip, DoubledChip, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 import { LexemeBrowseSection } from "~/components/LexemeBrowseSection";
 import { isHanziLexeme } from "~/lib/lexical";
@@ -34,6 +35,7 @@ interface Row {
   status: ReturnType<typeof statusOf>;
   frequency: number | null;
   level: number;
+  doubled: boolean;
 }
 
 export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
@@ -134,6 +136,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
       status: statusOf(h),
       frequency: h.frequency,
       level: h.level,
+      doubled: Boolean(match?.redup),
     };
   });
 
@@ -259,7 +262,7 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
 
       {total === 0 ? (
         <>
-          <Empty>Nothing matches those filters.</Empty>
+          <CatalogEmpty fallback="Nothing matches those filters." />
           <CreditsFooter />
         </>
       ) : (
@@ -324,8 +327,13 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                       <span title={r.meaning} className="max-w-full truncate text-xs text-ink-3">
                         <Highlighted text={r.meaning} at={r.at} />
                       </span>
-                      <span className="mt-0.5 flex items-center gap-1">
-                        {showLevel && <span className="text-xs text-ink-3">HSK {r.level}</span>}
+                      <span className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-1">
+                        {showLevel && (
+                          <span className="shrink-0 text-xs whitespace-nowrap text-ink-3">
+                            HSK {r.level}
+                          </span>
+                        )}
+                        {r.doubled && <DoubledChip />}
                         <StatusDot status={r.status} />
                       </span>
                     </DetailLink>
@@ -354,8 +362,11 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
                               HSK {r.level}
                             </td>
                           )}
-                          <td className="w-8 text-right">
-                            <StatusDot status={r.status} />
+                          <td className="w-16 text-right">
+                            <span className="inline-flex items-center justify-end gap-1">
+                              {r.doubled && <DoubledChip />}
+                              <StatusDot status={r.status} />
+                            </span>
                           </td>
                         </tr>
                       ))}
