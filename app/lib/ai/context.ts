@@ -5,6 +5,7 @@ import type {
   HanziDetailData,
   WordDetailData,
 } from "~/lib/detail-data";
+import type { TextAnalysis } from "~/lib/segment";
 import type { MentionRef, PageContext, PageContextHintPane } from "./types";
 import { entryMentionKind } from "./types";
 import type { Status } from "~/lib/types";
@@ -218,6 +219,33 @@ function paneBlock(label: string, pane: ComparePane): string {
   if (pane.status === "invalid") return `${label}: invalid selection (${pane.raw})`;
   if (pane.status === "missing") return `${label}: ${pane.ref.kind}:${pane.ref.id} is not in the corpus`;
   return `${label} (${pane.entry.kind}:${pane.entry.ref.id}):\n${serializeCompareEntry(pane.entry)}`;
+}
+
+export function serializeTranslateContext(text: string, analysis: TextAnalysis, route: string): PageContext {
+  const preview = text.trim().replace(/\s+/g, " ");
+  const title = preview ? (preview.length > 24 ? `${preview.slice(0, 23)}…` : preview) : "Translate";
+  const lines: string[] = ["Translate workspace", `Source:\n${text.slice(0, 1200)}`];
+  const linked = analysis.blocks.flatMap((b) =>
+    b.spans.filter((s) => s.ref).slice(0, 40),
+  );
+  if (linked.length) {
+    lines.push(
+      "",
+      "Corpus spans:",
+      ...linked.slice(0, 24).map((s) => {
+        const gloss = s.summary ? ` ${s.summary.pinyin} / ${s.summary.meaning}` : "";
+        return `- ${s.id} ${s.ref?.kind}:${s.text}${gloss}`;
+      }),
+    );
+  }
+  return {
+    key: `translate:${text.slice(0, 80)}:${analysis.blocks.length}`,
+    route,
+    title,
+    kind: "translate",
+    text: lines.join("\n"),
+    hints: { contentStatus: "none" },
+  };
 }
 
 export function serializeCompareContext(

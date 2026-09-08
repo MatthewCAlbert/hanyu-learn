@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/level";
@@ -34,6 +34,9 @@ import type { Status } from "~/lib/types";
 import { BottomSheet } from "~/components/Dialog";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { CreditsFooter } from "~/components/CreditsFooter";
+import { TranslateSearchHint } from "~/components/translate/TranslateSearchHint";
+import { browseOriginFromLocation } from "~/lib/navigation";
+import { translateHref } from "~/lib/translate";
 
 export function meta({ params }: Route.MetaArgs) {
   try {
@@ -120,7 +123,8 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
   const { levels, extra, counts, shown, radicals, topics, untagged } = loaderData;
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const headerRef = useRef<HTMLElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const levelButtonRef = useRef<HTMLButtonElement>(null);
@@ -252,25 +256,36 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
             <LevelControls bands={bands} tab={tab} search={search} compact />
           </fieldset>
 
-          <form
-            role="search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setQ(draft);
-            }}
-            className="order-4 col-span-3 min-w-0 lg:order-0 lg:col-span-1 lg:flex-1"
-          >
-            <input
-              type="search"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Search 好, hao, hǎo or “good”…"
-              aria-label="Search hanzi, pinyin or English"
-              className="min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface px-4 text-base outline-none placeholder:text-ink-3 focus:border-accent lg:min-h-9 lg:text-sm"
-            />
-          </form>
+          <div className="relative order-4 col-span-3 min-w-0 lg:order-0 lg:col-span-1 lg:flex-1">
+            <form
+              role="search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setQ(draft);
+              }}
+            >
+              <input
+                type="search"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Search 好, hao, hǎo or “good”…"
+                aria-label="Search hanzi, pinyin or English"
+                className="min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface px-4 text-base outline-none placeholder:text-ink-3 focus:border-accent lg:min-h-9 lg:text-sm"
+              />
+            </form>
+            <TranslateSearchHint query={filters.q} shown={shown} />
+          </div>
 
-          <ThemeToggle />
+          <div className="flex shrink-0 items-center gap-1 justify-self-end">
+            <Link
+              to={translateHref("")}
+              state={browseOriginFromLocation(location)}
+              className="ui-touch inline-flex items-center justify-center rounded-xl px-2.5 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
+            >
+              Translate
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
 
         <nav

@@ -43,7 +43,7 @@ function preview(text: string, max = 1600): string {
   return text.length <= max ? text : `${text.slice(0, max)}…`;
 }
 
-const searchCorpus = tool({
+export const searchCorpus = tool({
   name: "search_corpus",
   description:
     "Search this app's HSK hanzi and word indexes by character, pinyin, or English gloss. Use before guessing an id.",
@@ -68,7 +68,7 @@ const searchCorpus = tool({
   },
 });
 
-const lookupHanzi = tool({
+export const lookupHanzi = tool({
   name: "lookup_hanzi",
   description: "Load the full authored hanzi page for one character in this corpus.",
   inputSchema: lookupHanziInput,
@@ -79,7 +79,7 @@ const lookupHanzi = tool({
   },
 });
 
-const lookupWord = tool({
+export const lookupWord = tool({
   name: "lookup_word",
   description: "Load the full authored word page for one vocabulary item in this corpus.",
   inputSchema: lookupWordInput,

@@ -73,6 +73,15 @@ export function suggestionsFor(ctx: PageContext | null | undefined): PromptSugge
     });
   }
 
+  if (ctx.kind === "translate") {
+    chips.push({
+      id: "explain",
+      label: "Explain the wording",
+      prompt:
+        "Explain this passage using the corpus breakdown on the page. Call out ambiguous word boundaries and any spans not in the HSK list.",
+    });
+  }
+
   if (ctx.kind === "hanzi" || ctx.kind === "word" || ctx.kind === "compare") {
     chips.push({
       id: "examples",

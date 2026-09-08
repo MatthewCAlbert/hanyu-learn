@@ -7,7 +7,7 @@ export interface MentionRef {
   id: string;
 }
 
-export type PageContextKind = "hanzi" | "word" | "compare" | "none";
+export type PageContextKind = "hanzi" | "word" | "compare" | "translate" | "none";
 export type ContentStatus = "stub" | "drafted" | "reviewed" | "none";
 
 /** UI-only; never copied into the model snapshot. */
@@ -129,7 +129,7 @@ export const CONFIG_SAMPLING_DEFAULTS: Pick<
 };
 
 export const MENTION_KINDS: MentionKind[] = ["hanzi", "word"];
-export const PAGE_CONTEXT_KINDS: PageContextKind[] = ["hanzi", "word", "compare", "none"];
+export const PAGE_CONTEXT_KINDS: PageContextKind[] = ["hanzi", "word", "compare", "translate", "none"];
 
 export function mentionToken(ref: MentionRef): string {
   return `@/${ref.kind}/${ref.id}`;

@@ -140,6 +140,18 @@ describe("suggestionsFor", () => {
     expect(chips.map((c) => c.id)).toEqual(["readings", "examples"]);
   });
 
+  it("offers a wording chip on the translate workspace", () => {
+    const chips = suggestionsFor(
+      ctx({
+        kind: "translate",
+        title: "我喜欢学习中文",
+        route: "/translate",
+      }),
+    );
+    expect(chips.map((c) => c.id)).toEqual(["explain"]);
+    expect(chips[0]?.label).toBe("Explain the wording");
+  });
+
   it("caps at three chips", () => {
     const chips = suggestionsFor(
       ctx({

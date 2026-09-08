@@ -127,13 +127,64 @@ export function hasValidConfig(config: OpenRouterConfig | null): config is OpenR
   return config != null && configInputSchema.safeParse(config).success;
 }
 
+const OPENROUTER = "https://openrouter.ai/api/v1";
+
+/** True when OpenRouter lists `image` among the model's input modalities. */
+export function modelAcceptsImageInput(model: unknown): boolean {
+  if (!model || typeof model !== "object") return false;
+  const rec = model as Record<string, unknown>;
+  const arch =
+    rec.architecture && typeof rec.architecture === "object"
+      ? (rec.architecture as Record<string, unknown>)
+      : null;
+  const mods = arch?.input_modalities ?? rec.input_modalities;
+  if (!Array.isArray(mods)) return false;
+  return mods.some((entry) => {
+    if (entry === "image") return true;
+    if (entry && typeof entry === "object" && "type" in entry) {
+      return (entry as { type?: unknown }).type === "image";
+    }
+    return false;
+  });
+}
+
+export async function checkModelImageInput(
+  config: OpenRouterConfig,
+  signal?: AbortSignal,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = configInputSchema.safeParse(config);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid configuration" };
+  }
+  const headers = { Authorization: `Bearer ${parsed.data.apiKey}` };
+  try {
+    const modelRes = await fetch(`${OPENROUTER}/models`, { headers, signal });
+    if (!modelRes.ok) return { ok: true };
+    const body = (await modelRes.json()) as { data?: unknown[] };
+    const model = body.data?.find(
+      (row) => row && typeof row === "object" && (row as { id?: unknown }).id === parsed.data.modelName,
+    );
+    if (!model) {
+      return { ok: false, error: `Model “${parsed.data.modelName}” is not on OpenRouter.` };
+    }
+    if (!modelAcceptsImageInput(model)) {
+      return {
+        ok: false,
+        error: "This model does not accept images. Choose a vision-capable model in Settings.",
+      };
+    }
+    return { ok: true };
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    return { ok: true };
+  }
+}
+
 export interface RemoteConfigCheck {
   ok: boolean;
   error?: string;
   supportsTools?: boolean;
 }
-
-const OPENROUTER = "https://openrouter.ai/api/v1";
 
 /** Non-inference check: key works, and the named model exists. */
 export async function validateConfigRemote(
