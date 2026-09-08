@@ -1,7 +1,7 @@
 ---
 topic: countries-and-geography
 label: Countries & geography
-hanzi: [国]
+hanzi: [国, 亚]
 words:
   - 国家
   - 中国

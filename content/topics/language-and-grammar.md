@@ -1,7 +1,7 @@
 ---
 topic: language-and-grammar
 label: Language & grammar
-hanzi: [语, 文, 汉, 言, 翻]
+hanzi: [语, 文, 汉, 言, 翻, 译]
 words:
   - 中文
   - 外语
