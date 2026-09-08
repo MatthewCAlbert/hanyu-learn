@@ -83,7 +83,15 @@ describe("web shards", () => {
     }
     for (const w of W) {
       expect(wordBuckets[shardBucket(w.word)]![w.word]?.word.word).toBe(w.word);
+      expect(Array.isArray(wordBuckets[shardBucket(w.word)]![w.word]?.relations)).toBe(true);
     }
+    const shenme = wordBuckets[shardBucket("什么")]!["什么"];
+    expect(shenme?.relations.some((r) => r.uiLabel === "Real-life alternatives")).toBe(true);
+    expect(shenme?.chars.some((c) => c.link?.role === "phonetic")).toBe(true);
+    const sha = shenme?.relations
+      .find((r) => r.id === "what-question")
+      ?.members.find((m) => m.form === "啥");
+    expect(sha).toMatchObject({ kind: "lexeme", inCorpus: false, href: null });
   });
 
   it("meta lists the same radicals and topics as the full JSON", async () => {
@@ -91,6 +99,8 @@ describe("web shards", () => {
     const meta = await readJson<DatasetMeta>(`${version}/meta.json`);
     expect(meta.radicals).toHaveLength(205);
     expect(meta.topics.length).toBeGreaterThan(0);
+    expect(meta.relations.length).toBeGreaterThan(0);
+    expect(meta.lexemes.length).toBeGreaterThan(0);
     expect(meta.counts[1].hanzi).toBe(300);
     expect(meta.extraWords).toBe(229);
   });

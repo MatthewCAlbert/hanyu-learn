@@ -15,7 +15,7 @@ export function Chip({
     <span
       title={title}
       className={clsx(
-        "inline-flex min-h-6 items-center rounded-full px-2.5 py-0.5 text-xs leading-4 whitespace-nowrap",
+        "inline-flex min-h-6 shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs leading-4 whitespace-nowrap",
         tone === "accent" && "bg-accent-soft text-accent",
         tone === "neutral" && "bg-sunk text-ink-2",
         tone === "quiet" && "text-ink-3 ring-1 ring-line ring-inset",

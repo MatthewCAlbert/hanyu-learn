@@ -10,6 +10,8 @@ import matter from "gray-matter";
 import { parseIds, idsLeaves, isAtomic } from "../app/lib/ids.ts";
 import {
   hanziFrontmatter,
+  lexemeFrontmatter,
+  relationFrontmatter,
   topicFrontmatter,
   wordFrontmatter,
   sections,
@@ -17,9 +19,12 @@ import {
 import { SHARD_BUCKETS, shardBucket } from "../app/lib/shards.ts";
 import { effectivePhonetic, effectiveSemantic } from "../app/lib/etymology.ts";
 import { matchRadical } from "../app/lib/radicals.ts";
+import { rankContainedWords, relationsForForm, toRelationCard } from "../app/lib/lexical.ts";
+import { buildRelationCandidates } from "../app/lib/lexical-candidates.ts";
 import type {
   AuthoredHanzi,
   AuthoredWord,
+  CharSalience,
   Dataset,
   DatasetManifest,
   DatasetMeta,
@@ -27,10 +32,12 @@ import type {
   Hanzi,
   HanziIndex,
   HanziPage,
+  Lexeme,
   Level,
   PhoneticAnchor,
   Radical,
   Reading,
+  Relation,
   Sentence,
   Topic,
   Word,
@@ -250,6 +257,8 @@ async function main() {
       sources: fm.sources,
       why: s["why this combination"] ?? null,
       notes: s["notes"] ?? null,
+      chars: fm.chars,
+      usage: fm.usage ?? null,
     });
   }
 
@@ -277,6 +286,55 @@ async function main() {
     for (const w of fm.words) push(topicsOfWord, w, fm.topic);
   }
 
+  // ----------------------------------------------------------------- lexemes
+  const lexemes: Lexeme[] = [];
+  for (const file of (await safeReaddir("content/lexemes")).sort()) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const { data, content } = matter(await readFile(`content/lexemes/${file}`, "utf8"));
+    const fm = lexemeFrontmatter.parse(data);
+    lexemes.push({
+      form: fm.form,
+      pinyin: fm.pinyin,
+      meanings: fm.meanings,
+      pos: fm.pos,
+      register: fm.register,
+      contexts: fm.contexts,
+      regions: fm.regions,
+      currency: fm.currency,
+      status: fm.status,
+      confidence: fm.confidence,
+      sources: fm.sources,
+      notes: content.trim() || null,
+    });
+  }
+
+  // --------------------------------------------------------------- relations
+  const relations: Relation[] = [];
+  const relationsOfHanzi = new Map<string, string[]>();
+  const relationsOfWord = new Map<string, string[]>();
+  for (const file of (await safeReaddir("content/relations")).sort()) {
+    if (!file.endsWith(".md") || file.startsWith("_")) continue;
+    const { data, content } = matter(await readFile(`content/relations/${file}`, "utf8"));
+    const fm = relationFrontmatter.parse(data);
+    const s = sections(content);
+    relations.push({
+      id: fm.relation,
+      kind: fm.kind,
+      label: fm.label,
+      axis: fm.axis ?? null,
+      status: fm.status,
+      confidence: fm.confidence,
+      sources: fm.sources,
+      members: fm.members,
+      distinctions: s["distinctions"] ?? null,
+      evidence: s["corpus evidence"] ?? null,
+    });
+    for (const m of fm.members) {
+      if (m.kind === "hanzi") push(relationsOfHanzi, m.form, fm.relation);
+      if (m.kind === "word") push(relationsOfWord, m.form, fm.relation);
+    }
+  }
+
   // ------------------------------------------------------------------- words
   const words: Word[] = [];
   for (const level of LEVELS) {
@@ -301,6 +359,7 @@ async function main() {
         sentences: pickSentences(e.simplified, level),
         standards: e.level.filter((l) => !l.startsWith("new-")),
         topics: topicsOfWord.get(e.simplified) ?? [],
+        relationIds: relationsOfWord.get(e.simplified) ?? [],
         authored: authoredWords.get(e.simplified) ?? null,
       });
     }
@@ -336,6 +395,7 @@ async function main() {
       sentences: pickSentences(e.word, level),
       standards: [],
       topics: topicsOfWord.get(e.word) ?? [],
+      relationIds: relationsOfWord.get(e.word) ?? [],
       authored: authoredWords.get(e.word) ?? null,
     });
     hskWordSet.add(e.word);
@@ -397,6 +457,7 @@ async function main() {
       sentences: pickSentences(char, level),
       standards: entry ? entry.level.filter((l) => !l.startsWith("new-")) : [],
       topics: topicsOfHanzi.get(char) ?? [],
+      relationIds: relationsOfHanzi.get(char) ?? [],
       authored: authoredHanzi.get(char) ?? null,
     });
   }
@@ -472,12 +533,17 @@ async function main() {
   await write("radicals.json", radicals);
   await write("counts.json", counts);
   await write("topics.json", topics);
+  await write("relations.json", relations);
+  await write("lexemes.json", lexemes);
+  await write("relation-candidates.json", buildRelationCandidates({ words, relations }));
 
   const { version, strokeEntries } = await writeWebShards({
     hanziList,
     words,
     radicals,
     topics,
+    relations,
+    lexemes,
     counts,
     extraWords: extraWordCount,
     mmah,
@@ -498,7 +564,9 @@ async function main() {
   console.log(
     `topics ${topics.length} · ${tagged} of ${hanziList.length + words.length} entries tagged`,
   );
-  console.log(`extra ${extraWordCount} supplement words`);
+  console.log(
+    `relations ${relations.length} · lexemes ${lexemes.length} · extra ${extraWordCount} supplement words`,
+  );
 
   // Written last, so its mtime means "everything above finished". Using an
   // output written mid-build would make anything touched during the run look
@@ -520,20 +588,26 @@ async function writeWebShards(args: {
   words: Word[];
   radicals: Radical[];
   topics: Topic[];
+  relations: Relation[];
+  lexemes: Lexeme[];
   counts: Dataset["counts"];
   extraWords: number;
   mmah: Map<string, MmahEntry>;
 }): Promise<{ version: string; strokeEntries: number }> {
-  const { hanziList, words, radicals, topics, counts, extraWords, mmah } = args;
+  const { hanziList, words, radicals, topics, relations, lexemes, counts, extraWords, mmah } =
+    args;
   const hanziByChar = new Map(hanziList.map((h) => [h.char, h]));
   const wordByText = new Map(words.map((w) => [w.word, w]));
   const topicById = new Map(topics.map((t) => [t.id, t]));
+  const lexemeByForm = new Map(lexemes.map((l) => [l.form, l]));
   const phonetics = buildPhonetics(hanziList, hanziByChar, radicals, mmah);
 
   const version = createHash("sha256")
     .update(JSON.stringify(hanziList))
     .update(JSON.stringify(words))
     .update(JSON.stringify(topics))
+    .update(JSON.stringify(relations))
+    .update(JSON.stringify(lexemes))
     .update(JSON.stringify(phonetics))
     .digest("hex")
     .slice(0, 12);
@@ -545,7 +619,7 @@ async function writeWebShards(args: {
   await mkdir(`${root}/st`, { recursive: true });
 
   const manifest: DatasetManifest = { version, buckets: SHARD_BUCKETS };
-  const meta: DatasetMeta = { radicals, topics, counts, extraWords };
+  const meta: DatasetMeta = { radicals, topics, relations, lexemes, counts, extraWords };
   await writeFile(`${web}/manifest.json`, JSON.stringify(manifest));
   await writeFile(`${root}/meta.json`, JSON.stringify(meta));
   await writeFile(`${root}/phonetics.json`, JSON.stringify(phonetics));
@@ -592,10 +666,19 @@ async function writeWebShards(args: {
       radicals,
       topicById,
       phonetics,
+      relations,
+      lexemeByForm,
     );
   }
   for (const word of words) {
-    wordPages[shardBucket(word.word)]![word.word] = buildWordPage(word, hanziByChar, topicById);
+    wordPages[shardBucket(word.word)]![word.word] = buildWordPage(
+      word,
+      hanziByChar,
+      topicById,
+      relations,
+      lexemeByForm,
+      wordByText,
+    );
   }
 
   let strokeEntries = 0;
@@ -751,6 +834,8 @@ function buildHanziPage(
   radicals: Radical[],
   topicById: Map<string, Topic>,
   phonetics: Record<string, PhoneticAnchor>,
+  relations: Relation[],
+  lexemeByForm: Map<string, Lexeme>,
 ): HanziPage {
   const radical = radicals.find((r) => r.char === hanzi.radicalCanonical) ?? null;
   const etymology = overlayEtymology(hanzi);
@@ -772,20 +857,27 @@ function buildHanziPage(
   const semanticForm = effectiveSemantic(hanzi);
   const phoneticMeta = phoneticKey ? phonetics[phoneticKey] : undefined;
 
-  const pageWords = hanzi.words
-    .map((w) => wordByText.get(w))
-    .filter((w): w is Word => Boolean(w))
-    .map((w) => ({
-      word: w.word,
-      pinyin: w.pinyin,
-      meaning: w.meanings[0] ?? "",
-      level: w.level,
-      extra: w.extra,
-    }));
+  const pageWords = rankContainedWords(
+    hanzi.words
+      .map((w) => wordByText.get(w))
+      .filter((w): w is Word => Boolean(w))
+      .map((w) => ({
+        word: w.word,
+        pinyin: w.pinyin,
+        meaning: w.meanings[0] ?? "",
+        level: w.level,
+        extra: w.extra,
+        frequency: w.frequency,
+        salience: salienceFor(w, hanzi.char),
+      })),
+  );
   const pageTopics = hanzi.topics
     .map((id) => topicById.get(id))
     .filter((t): t is Topic => Boolean(t))
     .map((t) => ({ id: t.id, label: t.label }));
+  const pageRelations = relationsForForm(relations, hanzi.char).map((r) =>
+    toRelationCard(r, wordByText, hanziByChar, lexemeByForm),
+  );
   return {
     hanzi,
     radical: radical ? radicalRef(radical) : null,
@@ -811,14 +903,24 @@ function buildHanziPage(
     phoneticSeries,
     words: pageWords,
     topics: pageTopics,
+    relations: pageRelations,
   };
+}
+
+function salienceFor(word: Word, char: string): CharSalience | null {
+  const link = word.authored?.chars.find((c) => c.char === char);
+  return link?.salience ?? null;
 }
 
 function buildWordPage(
   word: Word,
   hanziByChar: Map<string, Hanzi>,
   topicById: Map<string, Topic>,
+  relations: Relation[],
+  lexemeByForm: Map<string, Lexeme>,
+  wordByText: Map<string, Word>,
 ): WordPage {
+  const links = word.authored?.chars ?? [];
   const chars = word.chars.map((c) => {
     const h = hanziByChar.get(c);
     return {
@@ -827,13 +929,22 @@ function buildWordPage(
       meaning: h?.meanings[0] ?? "",
       level: h?.level ?? null,
       radical: h?.radical ?? null,
+      link: links.find((l) => c === l.char) ?? null,
     };
   });
   const pageTopics = word.topics
     .map((id) => topicById.get(id))
     .filter((t): t is Topic => Boolean(t))
     .map((t) => ({ id: t.id, label: t.label }));
-  return { word, chars, topics: pageTopics };
+  return {
+    word,
+    chars,
+    topics: pageTopics,
+    relations: relationsForForm(relations, word.word).map((r) =>
+      toRelationCard(r, wordByText, hanziByChar, lexemeByForm),
+    ),
+    usage: word.authored?.usage ?? null,
+  };
 }
 
 function toWordIndex(w: Word): WordIndex {

@@ -91,6 +91,24 @@ export function suggestionsFor(ctx: PageContext | null | undefined): PromptSugge
     });
   }
 
+  if (hints?.hasUsage || hints?.hasRelations) {
+    const token = hints.left ? refText(hints.left) : ctx.title;
+    chips.push({
+      id: "conversation",
+      label: "How is this used in conversation?",
+      prompt: `How is ${token} used in everyday conversation versus the textbook form? Use reviewed real-life alternatives if they exist, and say unknown if they do not.`,
+    });
+  }
+
+  if (ctx.kind === "word" && hints?.hasRelations) {
+    const token = hints.left ? refText(hints.left) : ctx.title;
+    chips.push({
+      id: "similar",
+      label: "Compare near-synonyms",
+      prompt: `Compare ${token} with its similar words or opposites from the reviewed relations. Do not treat near-synonyms as interchangeable.`,
+    });
+  }
+
   if (ctx.kind === "hanzi" || ctx.kind === "word" || ctx.kind === "compare") {
     chips.push({
       id: "examples",

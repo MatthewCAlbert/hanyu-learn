@@ -131,7 +131,7 @@ steps, US$0.75 and 48,000 tokens.
 | Path                  |                                                                                     |
 | --------------------- | ----------------------------------------------------------------------------------- |
 | `data/sources/`       | Vendored upstream data, committed. See [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) |
-| `content/`            | **Authored** explanations and topic membership. The valuable part                   |
+| `content/`            | **Authored** explanations, topic membership, relations, and lexemes                  |
 | `app/`                | React Router app                                                                    |
 | `scripts/`            | Data pipeline: build, MD lists, validation                                          |
 | `app/data/generated/` | Build artefacts — **gitignored**, rebuilt automatically                             |
@@ -162,8 +162,8 @@ The explanations are hand-written, level by level. Coverage today:
 
 |                                   | Written | Total  |
 | --------------------------------- | ------- | ------ |
-| Prose (etymology, word formation) | 2,795   | 12,642 |
-| Topic-tagged                      | 1,507   | 12,642 |
+| Prose (etymology, word formation) | 3,913   | 12,642 |
+| Topic-tagged                      | 2,199   | 12,642 |
 
 These move as batches land — `docs/hsk/level-N/` and the Topics tab carry the
 current figures.
@@ -190,6 +190,14 @@ paste:
 > One level, ≤25 files.
 
 `?topic=untagged` is the tagging backlog; the Topics tab shows coverage per level.
+
+For synonyms, antonyms, textbook-vs-everyday usage, and what a character is
+doing inside a word, follow
+[docs/LEXICAL-RELATIONS-PLAYBOOK.md](docs/LEXICAL-RELATIONS-PLAYBOOK.md). Ask
+Claude Code to _"tag synonym/register relations for HSK 1"_. Relation files
+own their members the same way topics do; spoken forms that are not on the
+wordlist live in `content/lexemes/`. The review surface is
+`docs/hsk/level-N/relations.md`.
 
 ## Generated data
 

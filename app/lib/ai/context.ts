@@ -9,7 +9,7 @@ import type { BoundSong } from "~/lib/song";
 import type { TextAnalysis } from "~/lib/segment";
 import type { MentionRef, PageContext, PageContextHintPane } from "./types";
 import { entryMentionKind } from "./types";
-import type { Status } from "~/lib/types";
+import type { RelationCard, Status, UsageProfile } from "~/lib/types";
 
 const SENTENCE_CAP = 5;
 const WORD_CAP = 24;
@@ -68,6 +68,9 @@ export function serializeHanziContext(data: HanziDetailData, route?: string): Pa
   if (data.topics.length) {
     lines.push(`Topics: ${data.topics.map((t) => t.label).join(", ")}`);
   }
+  if (data.relations?.length) {
+    lines.push(serializeRelations(data.relations, 4));
+  }
   if (a) {
     lines.push(`Authored status: ${a.status}, confidence: ${a.confidence}`);
     if (a.etymology) lines.push(`Etymology (attested):\n${clip(a.etymology)}`);
@@ -109,6 +112,7 @@ export function serializeHanziContext(data: HanziDetailData, route?: string): Pa
       contentStatus: authoredStatus(a?.status),
       readings: h.pinyin,
       missingAuthored: !a || a.status === "stub" || !clip(a.etymology),
+      hasRelations: (data.relations?.length ?? 0) > 0,
     },
   };
 }
@@ -126,10 +130,17 @@ export function serializeWordContext(data: WordDetailData, route?: string): Page
   if (w.pos.length) lines.push(`POS: ${w.pos.join(", ")}`);
   if (w.classifiers.length) lines.push(`Classifiers: ${w.classifiers.join(" ")}`);
   if (data.topics.length) lines.push(`Topics: ${data.topics.map((t) => t.label).join(", ")}`);
+  if (data.usage) lines.push(serializeUsage(data.usage));
+  if (data.relations?.length) lines.push(serializeRelations(data.relations, 4));
   if (data.chars.length) {
     lines.push(
       `Characters:\n${data.chars
-        .map((c) => `- ${c.char} ${c.pinyin} ${c.meaning}${c.level ? ` HSK ${c.level}` : ""}`)
+        .map((c) => {
+          const link = c.link
+            ? ` [${c.link.role}/${c.link.transparency}: ${c.link.contribution}]`
+            : "";
+          return `- ${c.char} ${c.pinyin} ${c.meaning}${c.level ? ` HSK ${c.level}` : ""}${link}`;
+        })
         .join("\n")}`,
     );
   }
@@ -161,6 +172,8 @@ export function serializeWordContext(data: WordDetailData, route?: string): Page
       contentStatus: authoredStatus(a?.status),
       readings: w.pinyin ? [w.pinyin] : [],
       missingAuthored: !a || a.status === "stub" || !clip(a.why),
+      hasRelations: (data.relations?.length ?? 0) > 0,
+      hasUsage: Boolean(data.usage),
     },
   };
 }
@@ -213,6 +226,29 @@ export function serializeCompareEntry(entry: CompareEntry): string {
       ].join("\n");
     }
   }
+}
+
+function serializeUsage(usage: UsageProfile): string {
+  const bits = [
+    `Usage assessment: ${usage.assessment}`,
+    usage.register ? `register ${usage.register}` : "",
+    usage.contexts.length ? `context ${usage.contexts.join("/")}` : "",
+    usage.regions.length ? `region ${usage.regions.join("/")}` : "",
+    `currency ${usage.currency}`,
+  ].filter(Boolean);
+  return bits.join(" · ");
+}
+
+function serializeRelations(relations: RelationCard[], cap: number): string {
+  return `Relations:\n${relations
+    .slice(0, cap)
+    .map((r) => {
+      const members = r.members
+        .map((m) => `${m.form}${m.role ? ` (${m.role})` : ""}${m.inCorpus ? "" : " [not on HSK]"}`)
+        .join(", ");
+      return `- ${r.uiLabel} (${r.label}): ${members}`;
+    })
+    .join("\n")}`;
 }
 
 function paneBlock(label: string, pane: ComparePane): string {

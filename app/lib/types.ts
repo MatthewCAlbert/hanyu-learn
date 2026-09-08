@@ -88,6 +88,8 @@ export interface Hanzi {
   standards: string[];
   /** Themes this character belongs to. Zero, one, or many. */
   topics: string[];
+  /** Relation ids this character is a member of. */
+  relationIds: string[];
   /** Overlaid from content/hanzi/<char>.md */
   authored: AuthoredHanzi | null;
 }
@@ -120,7 +122,130 @@ export interface Word {
   standards: string[];
   /** Themes this word belongs to. Zero, one, or many. */
   topics: string[];
+  /** Relation ids this word is a member of. */
+  relationIds: string[];
   authored: AuthoredWord | null;
+}
+
+export type CharRole = "semantic" | "grammatical" | "phonetic" | "transliteration";
+export type ContributionTransparency = "transparent" | "shifted" | "fossilized" | "unknown";
+export type CharSalience = "primary" | "secondary" | "none";
+export type EvidenceKind =
+  | "orthographic"
+  | "normative"
+  | "corpus"
+  | "lexicographic"
+  | "model"
+  | "reviewed";
+export type UsageAssessment =
+  | "everyday"
+  | "situational"
+  | "rare"
+  | "dated"
+  | "formal"
+  | "spoken"
+  | "regional"
+  | "unknown";
+export type LexicalRegister =
+  | "textbook"
+  | "spoken"
+  | "written"
+  | "formal"
+  | "literary"
+  | "colloquial";
+export type LexicalContext = "speech" | "chat" | "writing" | "classroom" | "official";
+export type LexicalRegion = "northern" | "southern" | "mainland" | "taiwan" | "widespread";
+export type LexicalCurrency = "current" | "dated" | "declining";
+export type RelationKind = "synonym-set" | "antonym-pair" | "register-set";
+export type RelationMemberKind = "word" | "hanzi" | "lexeme";
+export type MemberUiRole =
+  | "textbook"
+  | "everyday"
+  | "conversation"
+  | "chat"
+  | "formal"
+  | "regional";
+
+export interface CharLink {
+  char: string;
+  role: CharRole;
+  transparency: ContributionTransparency;
+  contribution: string;
+  salience?: CharSalience;
+}
+
+export interface UsageEvidence {
+  kind: EvidenceKind;
+  source: string;
+  note?: string;
+  accessed?: string;
+  genre?: string;
+}
+
+export interface UsageProfile {
+  assessment: UsageAssessment;
+  register?: LexicalRegister;
+  contexts: LexicalContext[];
+  regions: LexicalRegion[];
+  currency: LexicalCurrency;
+  evidence: UsageEvidence[];
+}
+
+export interface RelationMember {
+  form: string;
+  kind: RelationMemberKind;
+  role?: MemberUiRole;
+  register?: LexicalRegister;
+  contexts: LexicalContext[];
+  regions: LexicalRegion[];
+  currency?: LexicalCurrency;
+  sense?: string;
+  pos: string[];
+}
+
+export interface Relation {
+  id: string;
+  kind: RelationKind;
+  label: string;
+  axis: string | null;
+  status: Status;
+  confidence: Confidence;
+  sources: string[];
+  members: RelationMember[];
+  distinctions: string | null;
+  evidence: string | null;
+}
+
+export interface Lexeme {
+  form: string;
+  pinyin: string;
+  meanings: string[];
+  pos: string[];
+  register: LexicalRegister;
+  contexts: LexicalContext[];
+  regions: LexicalRegion[];
+  currency: LexicalCurrency;
+  status: Status;
+  confidence: Confidence;
+  sources: string[];
+  notes: string | null;
+}
+
+export interface RelationMemberCard extends RelationMember {
+  pinyin: string;
+  meaning: string;
+  inCorpus: boolean;
+  href: string | null;
+}
+
+export interface RelationCard {
+  id: string;
+  kind: RelationKind;
+  uiLabel: string;
+  label: string;
+  axis: string | null;
+  distinctions: string | null;
+  members: RelationMemberCard[];
 }
 
 export interface AuthoredWord {
@@ -133,6 +258,8 @@ export interface AuthoredWord {
   sources: string[];
   why: string | null;
   notes: string | null;
+  chars: CharLink[];
+  usage: UsageProfile | null;
 }
 
 export interface Topic {
@@ -141,6 +268,14 @@ export interface Topic {
   description: string;
   hanzi: string[];
   words: string[];
+}
+
+export interface RelationCandidate {
+  reason: string;
+  forms: string[];
+  kind: RelationKind | "char-link" | "usage";
+  sources: string[];
+  textbookPercentile: number | null;
 }
 
 export interface Dataset {
@@ -187,6 +322,8 @@ export interface WordIndex {
 export interface DatasetMeta {
   radicals: Radical[];
   topics: Topic[];
+  relations: Relation[];
+  lexemes: Lexeme[];
   counts: Dataset["counts"];
   extraWords: number;
 }
@@ -231,8 +368,16 @@ export interface HanziPage {
   semanticRole: ComponentRole | null;
   phoneticRole: PhoneticRole | null;
   phoneticSeries: { char: string; pinyin: string; meaning: string }[];
-  words: { word: string; pinyin: string; meaning: string; level: Level; extra: boolean }[];
+  words: {
+    word: string;
+    pinyin: string;
+    meaning: string;
+    level: Level;
+    extra: boolean;
+    salience: CharSalience | null;
+  }[];
   topics: { id: string; label: string }[];
+  relations: RelationCard[];
 }
 
 /** Precomputed word detail page. One of these lives in a hash bucket. */
@@ -244,6 +389,9 @@ export interface WordPage {
     meaning: string;
     level: Level | null;
     radical: string | null;
+    link: CharLink | null;
   }[];
   topics: { id: string; label: string }[];
+  relations: RelationCard[];
+  usage: UsageProfile | null;
 }

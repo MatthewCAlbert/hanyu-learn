@@ -2,12 +2,15 @@ import { serverTool, tool } from "@openrouter/agent/tool";
 import { z } from "zod";
 import { searchCompare } from "~/lib/compare-search";
 import { loadCompareEntry, loadHanziDetail, loadWordDetail } from "~/lib/detail-data";
+import { getMeta } from "~/lib/data.client";
 import { serializeCompareEntry, serializeHanziContext, serializeWordContext } from "./context";
+import { RELATION_UI_LABEL } from "~/lib/lexical";
 import { loadAiCatalog } from "./catalog";
 import type { EntryKind } from "~/lib/compare";
 import { isEntryKind } from "~/lib/compare";
 
 const SEARCH_CAP = 8;
+export const RELATION_LOOKUP_LIMIT = 8;
 
 export const searchCorpusInput = z.object({
   query: z.string().min(1).describe("Character, pinyin, or English gloss"),
@@ -25,10 +28,17 @@ export const lookupWordInput = z.object({
   word: z.string().min(1).describe("The word, e.g. 爱好"),
 });
 
-export const lookupEntryInput = z.object({
+export const lookupRelationsInput = z.object({
+  form: z.string().min(1).optional().describe("Word, hanzi, or lexeme form, e.g. 什么 or 啥"),
+  id: z.string().min(1).optional().describe("Relation id, e.g. what-question"),
   kind: z
-    .enum(["hanzi", "word", "radical", "phonetic", "topic"])
-    .describe("Entry kind"),
+    .enum(["synonym-set", "antonym-pair", "register-set"])
+    .optional()
+    .describe("Restrict by relation kind"),
+});
+
+export const lookupEntryInput = z.object({
+  kind: z.enum(["hanzi", "word", "radical", "phonetic", "topic"]).describe("Entry kind"),
   id: z.string().min(1).describe("Character, word, radical, phonetic component, or topic id"),
 });
 
@@ -98,6 +108,46 @@ export const lookupWord = tool({
   },
 });
 
+const lookupRelations = tool({
+  name: "lookup_relations",
+  description:
+    "Load reviewed synonym, antonym, or real-life-alternative sets for a form or relation id. Missing data means unknown — do not invent pairs.",
+  inputSchema: lookupRelationsInput,
+  execute: async ({ form, id, kind }) => {
+    const meta = await getMeta();
+    const lexemeByForm = new Map(meta.lexemes.map((l) => [l.form, l]));
+    let hits = meta.relations;
+    if (id) hits = hits.filter((r) => r.id === id);
+    if (form) hits = hits.filter((r) => r.members.some((m) => m.form === form));
+    if (kind) hits = hits.filter((r) => r.kind === kind);
+    if (hits.length === 0) {
+      return { found: false as const, form: form ?? null, id: id ?? null, kind: kind ?? null };
+    }
+    return {
+      found: true as const,
+      relations: hits.slice(0, RELATION_LOOKUP_LIMIT).map((r) => ({
+        id: r.id,
+        uiLabel: RELATION_UI_LABEL[r.kind],
+        kind: r.kind,
+        label: r.label,
+        axis: r.axis,
+        distinctions: r.distinctions,
+        members: r.members.map((m) => {
+          const lex = lexemeByForm.get(m.form);
+          return {
+            form: m.form,
+            memberKind: m.kind,
+            role: m.role ?? null,
+            pinyin: lex?.pinyin ?? "",
+            meaning: lex?.meanings[0] ?? m.sense ?? "",
+            inCorpus: m.kind !== "lexeme",
+          };
+        }),
+      })),
+    };
+  },
+});
+
 const lookupEntry = tool({
   name: "lookup_entry",
   description:
@@ -116,6 +166,13 @@ const webSearch = serverTool({
   parameters: WEB_SEARCH_PARAMS,
 });
 
-export const agentTools = [searchCorpus, lookupHanzi, lookupWord, lookupEntry, webSearch] as const;
+export const agentTools = [
+  searchCorpus,
+  lookupHanzi,
+  lookupWord,
+  lookupRelations,
+  lookupEntry,
+  webSearch,
+] as const;
 
 export type AgentTools = typeof agentTools;

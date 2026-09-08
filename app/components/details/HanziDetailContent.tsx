@@ -4,6 +4,8 @@ import { Prose } from "~/components/DetailShell";
 import { Decomposition } from "~/components/Decomposition";
 import { StrokeOrder } from "~/components/StrokeOrder";
 import { Sentences } from "~/components/Sentences";
+import { RelationSections } from "~/components/details/RelationSections";
+import { CHAR_CONTRIBUTION_SECTION } from "~/lib/lexical";
 import type { HanziDetailData } from "~/lib/detail-data";
 
 export function HanziDetailContent({ data }: { data: HanziDetailData }) {
@@ -16,11 +18,13 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
     phoneticSeries,
     words,
     topics,
+    relations,
     semanticRole,
     phoneticRole,
     componentHrefs,
   } = data;
   const a = h.authored;
+  const contributions = words.filter((w) => w.salience === "primary" || w.salience === "secondary");
   const radicalForm =
     radical && (h.radical === radical.display || h.radical === radical.canonical)
       ? h.radical
@@ -224,21 +228,46 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
           </Section>
         )}
 
-        {words.length > 0 && (
-          <Section
-            title={`Words using ${h.char}`}
-            aside={<span className="text-xs text-ink-3">{words.length}</span>}
-          >
-            <div className="grid gap-1.5 sm:grid-cols-2">
-              {words.map((w) => (
+        <RelationSections relations={relations} current={h.char} />
+
+        {contributions.length > 0 && (
+          <Section title={CHAR_CONTRIBUTION_SECTION}>
+            <p className="mb-3 text-xs text-ink-3">
+              Reviewed compounds where this character’s job is worth learning first.
+            </p>
+            <div className="grid min-w-0 gap-1.5 sm:grid-cols-2">
+              {contributions.map((w) => (
                 <DetailLink
                   key={w.word}
                   to={`/words/${encodeURIComponent(w.word)}`}
-                  className="ui-card ui-card-interactive flex min-h-14 min-w-0 flex-wrap items-center gap-x-2 px-3 py-2"
+                  className="ui-card ui-card-interactive flex min-h-14 min-w-0 flex-wrap items-center gap-x-2 overflow-hidden px-3 py-2"
                 >
                   <span className="han text-lg">{w.word}</span>
                   <span className="text-xs text-ink-2">{w.pinyin}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-ink-3">{w.meaning}</span>
+                  <Chip tone="accent">{w.salience}</Chip>
+                </DetailLink>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {words.length > 0 && (
+          <Section
+            title={`Words using ${h.char}`}
+            aside={<span className="text-xs text-ink-3">{words.length} · ranked</span>}
+          >
+            <div className="grid min-w-0 gap-1.5 sm:grid-cols-2">
+              {words.map((w) => (
+                <DetailLink
+                  key={w.word}
+                  to={`/words/${encodeURIComponent(w.word)}`}
+                  className="ui-card ui-card-interactive flex min-h-14 min-w-0 flex-wrap items-center gap-x-2 overflow-hidden px-3 py-2"
+                >
+                  <span className="han text-lg">{w.word}</span>
+                  <span className="text-xs text-ink-2">{w.pinyin}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-ink-3">{w.meaning}</span>
+                  {w.salience === "primary" && <Chip tone="accent">key</Chip>}
                   <Chip tone="quiet">{w.extra ? "Extra" : w.level}</Chip>
                 </DetailLink>
               ))}

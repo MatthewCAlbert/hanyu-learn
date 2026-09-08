@@ -4,10 +4,13 @@ import { isAbortError, normalizeAgentError } from "~/lib/ai/errors";
 import {
   lookupEntryInput,
   lookupHanziInput,
+  lookupRelationsInput,
   lookupWordInput,
   searchCorpusInput,
   SONG_WEB_SEARCH_PARAMS,
   WEB_SEARCH_PARAMS,
+  RELATION_LOOKUP_LIMIT,
+  agentTools,
 } from "~/lib/ai/tools";
 
 describe("streamed error normalization", () => {
@@ -43,6 +46,13 @@ describe("tool argument validation", () => {
     expect(searchCorpusInput.safeParse({ query: "好", kind: "hanzi" }).success).toBe(true);
     expect(lookupHanziInput.safeParse({ char: "" }).success).toBe(false);
     expect(lookupWordInput.safeParse({ word: "爱好" }).success).toBe(true);
+    expect(lookupRelationsInput.safeParse({ form: "什么" }).success).toBe(true);
+    expect(
+      lookupRelationsInput.safeParse({ id: "what-question", kind: "register-set" }).success,
+    ).toBe(true);
+    expect(lookupRelationsInput.safeParse({}).success).toBe(true);
+    expect(RELATION_LOOKUP_LIMIT).toBe(8);
+    expect(JSON.stringify(agentTools)).toContain("lookup_relations");
     expect(lookupEntryInput.safeParse({ kind: "glyph", id: "好" }).success).toBe(false);
     expect(lookupEntryInput.safeParse({ kind: "radical", id: "女" }).success).toBe(true);
   });

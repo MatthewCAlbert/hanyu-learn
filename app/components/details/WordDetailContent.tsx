@@ -3,7 +3,10 @@ import clsx from "clsx";
 import { Chip, Section, StatusDot } from "~/components/ui";
 import { Prose } from "~/components/DetailShell";
 import { Sentences } from "~/components/Sentences";
+import { GlossaryLegend, GlossaryTerm } from "~/components/GlossaryTerm";
+import { RelationSections } from "~/components/details/RelationSections";
 import type { WordDetailData } from "~/lib/detail-data";
+import type { GlossaryKey } from "~/lib/lexical-glossary";
 
 const TRANSPARENCY_NOTE = {
   transparent: "The characters give this one away.",
@@ -12,8 +15,19 @@ const TRANSPARENCY_NOTE = {
 } as const;
 
 export function WordDetailContent({ data }: { data: WordDetailData }) {
-  const { word: w, chars, topics } = data;
+  const { word: w, chars, topics, relations, usage } = data;
   const a = w.authored;
+  const contributionTerms: GlossaryKey[] = [];
+  for (const c of chars) {
+    if (!c.link) continue;
+    if (!contributionTerms.includes(c.link.role)) contributionTerms.push(c.link.role);
+    if (!contributionTerms.includes(c.link.transparency)) {
+      contributionTerms.push(c.link.transparency);
+    }
+  }
+  if (a?.transparency === "opaque" && !contributionTerms.includes("opaque")) {
+    contributionTerms.push("opaque");
+  }
 
   return (
     <>
@@ -94,7 +108,13 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
                 </p>
               </div>
             </div>
-            <p className="mt-2 text-xs text-ink-3">{TRANSPARENCY_NOTE[a.transparency]}</p>
+            <p className="mt-2 text-xs text-ink-3">
+              {a.transparency === "opaque" ? (
+                <GlossaryTerm term="opaque">{TRANSPARENCY_NOTE.opaque}</GlossaryTerm>
+              ) : (
+                TRANSPARENCY_NOTE[a.transparency]
+              )}
+            </p>
           </Section>
         )}
 
@@ -124,21 +144,60 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
           </Section>
         )}
 
+        {usage && (
+          <Section
+            title="Textbook vs everyday"
+            aside={<span className="text-xs text-ink-3">{usage.assessment}</span>}
+          >
+            <p className="text-sm text-ink-2">
+              {usage.register ?? "unspecified register"}
+              {usage.contexts.length > 0 && <> · {usage.contexts.join(", ")}</>}
+              {usage.regions.length > 0 && <> · {usage.regions.join(", ")}</>}
+              <> · {usage.currency}</>
+            </p>
+            {usage.evidence.length > 0 && (
+              <ul className="mt-2 space-y-0.5 text-xs text-ink-3">
+                {usage.evidence.map((e) => (
+                  <li key={`${e.kind}:${e.source}`}>
+                    · {e.kind}: {e.source}
+                    {e.note ? ` — ${e.note}` : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        )}
+
+        <RelationSections relations={relations} current={w.word} />
+
         <Section title="Character by character">
-          <div className="grid gap-2 sm:grid-cols-2">
+          {contributionTerms.length > 0 && <GlossaryLegend terms={contributionTerms} />}
+          <div className="grid min-w-0 gap-2 sm:grid-cols-2">
             {chars.map((c, i) => (
-              <DetailLink
+              <div
                 key={`${c.char}-${i}`}
-                to={`/hanzi/${encodeURIComponent(c.char)}`}
-                className="ui-card ui-card-interactive flex min-h-16 items-center gap-3 px-3 py-2"
+                className="ui-card flex min-w-0 flex-col gap-1 overflow-hidden px-3 py-2"
               >
-                <span className="han w-10 shrink-0 text-center text-3xl">{c.char}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-xs text-ink-2">{c.pinyin}</span>
-                  <span className="block truncate text-xs text-ink-3">{c.meaning}</span>
-                </span>
-                {c.level && <Chip tone="quiet">HSK {c.level}</Chip>}
-              </DetailLink>
+                <DetailLink
+                  to={`/hanzi/${encodeURIComponent(c.char)}`}
+                  className="ui-card-interactive -mx-3 -my-2 flex min-h-14 min-w-0 items-center gap-3 px-3 py-2"
+                >
+                  <span className="han w-10 shrink-0 text-center text-3xl">{c.char}</span>
+                  <span className="min-w-0 flex-1 overflow-hidden">
+                    <span className="block text-xs text-ink-2">{c.pinyin}</span>
+                    <span className="block truncate text-xs text-ink-3">
+                      {c.link?.contribution ?? c.meaning}
+                    </span>
+                  </span>
+                  {c.level && <Chip tone="quiet">HSK {c.level}</Chip>}
+                </DetailLink>
+                {c.link && (
+                  <span className="flex flex-wrap gap-1">
+                    <GlossaryTerm term={c.link.role} />
+                    <GlossaryTerm term={c.link.transparency} />
+                  </span>
+                )}
+              </div>
             ))}
           </div>
         </Section>
@@ -146,9 +205,7 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         <Section
           title="Examples"
           aside={
-            <span className="text-xs text-ink-3">
-              only characters from HSK {w.level} and below
-            </span>
+            <span className="text-xs text-ink-3">only characters from HSK {w.level} and below</span>
           }
         >
           <Sentences sentences={w.sentences} highlight={w.word} />

@@ -164,6 +164,10 @@ Worked examples to imitate: `content/hanzi/{妈,好,明,人,过}.md` and
 `content/words/{爱好,东西,电脑,明白,起床}.md`. They deliberately cover all three
 etymology types, a lost phonetic, and four formation types.
 
+For synonyms, antonyms, textbook-vs-everyday usage, and character contribution
+inside a word, **also read [LEXICAL-RELATIONS-PLAYBOOK.md](LEXICAL-RELATIONS-PLAYBOOK.md)**
+before writing a relation or a `chars:` overlay.
+
 ---
 
 ## 8. Topic tagging
@@ -213,13 +217,14 @@ backlog — `/hsk/1/hanzi?topic=untagged` is the working queue.
 ## 9. Batch protocol
 
 ```bash
-# 1. write ≤25 entries into content/hanzi/ or content/words/
-pnpm check:content     # schema, component checks, and topic membership
+# 1. write ≤25 entries into content/hanzi/, content/words/,
+#    content/relations/, or content/lexemes/
+pnpm check:content     # schema, component checks, topics, and relations
 pnpm data:build        # regenerate app data
 pnpm data:md           # regenerate docs/hsk/ study lists
 pnpm test              # dataset invariants
 
-git add content docs app/data/generated
+git add content docs
 git commit -m "content: HSK 1 hanzi batch N (25 entries)"
 ```
 

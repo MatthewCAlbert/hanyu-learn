@@ -23,6 +23,8 @@ export interface PageContextHints {
   readings?: string[];
   /** True when authored etymology (hanzi) or formation notes (word) are missing. */
   missingAuthored?: boolean;
+  hasRelations?: boolean;
+  hasUsage?: boolean;
 }
 
 /** Compact, deterministic page snapshot fed to the model. */

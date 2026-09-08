@@ -79,6 +79,7 @@ function labelFor(name: string): string {
   if (name === "search_corpus") return "Search corpus";
   if (name === "lookup_hanzi") return "Look up hanzi";
   if (name === "lookup_word") return "Look up word";
+  if (name === "lookup_relations") return "Look up relations";
   if (name === "lookup_entry") return "Look up entry";
   if (name === "submit_translation") return "Submit translation";
   if (name === "submit_image_translation") return "Submit image translation";

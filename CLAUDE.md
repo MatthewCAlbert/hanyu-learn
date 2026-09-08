@@ -39,6 +39,11 @@ it.** The rules most easily got wrong:
 - Topic membership goes in `content/topics/<id>.md`, which lists its members —
   not on the entry. The set of files is the controlled vocabulary. Zero topics is
   a correct answer for function words.
+- Synonyms, antonyms, real-life alternatives, and character contribution inside a
+  word follow [docs/LEXICAL-RELATIONS-PLAYBOOK.md](docs/LEXICAL-RELATIONS-PLAYBOOK.md).
+  Relation membership lives in `content/relations/<id>.md`; spoken/chat forms
+  that are not HSK words go in `content/lexemes/`. Containment is derived;
+  meaning is not. HSK membership is not everyday frequency.
 - **Batches of ≤25, one level at a time**, then `pnpm check:content` and commit.
   A 25-entry diff is reviewable; a 300-entry diff is not, and this content is
   only worth anything if it is actually checked.

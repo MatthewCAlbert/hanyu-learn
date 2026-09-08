@@ -33,6 +33,30 @@ HSK wordlist repo. That repo is MIT-licensed, but share-alike arguably reaches
 through to the definition text. Irrelevant locally; worth knowing before
 publishing.
 
+## Lexical relations and usage (not vendored)
+
+These sources inform [docs/LEXICAL-RELATIONS-PLAYBOOK.md](LEXICAL-RELATIONS-PLAYBOOK.md).
+They are **not** copied into `data/sources/` unless a licence row below says
+redistribution is allowed. Authored conclusions live in `content/`; generated
+candidates stay in `app/data/generated/` (gitignored). Licence decisions:
+
+| Source | Use here | Redistribute the data? |
+| --- | --- | --- |
+| Official HSK lists / GF0025-2021 | Textbook membership and level | Cite and version; public download ≠ open data |
+| Unicode Unihan | Character metadata | Yes, with Unicode License notice (already vendored) |
+| CC-CEDICT | Gloss / headword lead | CC-BY-SA: attribution + share-alike; do not scrape the website |
+| 现代汉语词典 | Sense, register, antonyms | No — quote minimally in authored prose, do not vendor |
+| Chinese Lexical Database | Orthographic / frequency variables | GPL: only if isolated as a generated dataset with provenance |
+| SUBTLEX-CH | Everyday-exposure *proxy* | **No** until licence is cleared; paper is research-use |
+| BLCU BCC / PKU CCL | Dated query / KWIC checks | No corpus text; store query + date + version only |
+| Leiden Weibo Corpus | Informal social snapshot (2012) | CC-BY-NC-SA: noncommercial; do not ship raw posts |
+| Chinese WordNet | Sense-level synonym/antonym *candidates* | Academic, noncommercial; do not copy the graph |
+| OpenHowNet | Sememe similarity *candidates* | MIT core data, but “same sememe” ≠ synonymy |
+
+`data/sources/lexical-sources.json` is the machine-readable version of this
+table. Candidate generation must preserve per-source metrics; never collapse
+them into one “real-life score.”
+
 ## Regenerating
 
 ```bash

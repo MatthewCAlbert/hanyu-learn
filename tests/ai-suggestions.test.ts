@@ -164,6 +164,27 @@ describe("suggestionsFor", () => {
     expect(chips[0]?.label).toBe("Explain these lyrics");
   });
 
+  it("offers conversation usage when reviewed relations exist", () => {
+    const chips = suggestionsFor(
+      ctx({
+        kind: "word",
+        title: "什么",
+        hints: {
+          left: { label: "什么", mention: { kind: "word", id: "什么" } },
+          contentStatus: "drafted",
+          missingAuthored: false,
+          hasRelations: true,
+          hasUsage: true,
+        },
+      }),
+    );
+    expect(chips[0]).toMatchObject({
+      id: "conversation",
+      label: "How is this used in conversation?",
+    });
+    expect(chips.map((c) => c.id)).toContain("similar");
+  });
+
   it("caps at three chips", () => {
     const chips = suggestionsFor(
       ctx({
