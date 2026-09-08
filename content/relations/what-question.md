@@ -26,14 +26,23 @@ members:
     currency: current
     sense: "interrogative 'what'"
     pos: [r]
+  - form: 干啥
+    kind: lexeme
+    role: conversation
+    register: colloquial
+    contexts: [speech, chat]
+    regions: [northern]
+    currency: current
+    sense: "do what / what for"
+    pos: [r]
 ---
 
 ## Distinctions
 什么 is the HSK-taught, nationally neutral form. 啥 is the same interrogative
-in colloquial speech and messaging. It is northern-origin / northern-associated
-and now widely understood; it is not "slang" in every region. Prefer 什么 in
-class, writing, and careful speech; 啥 is natural in northern conversation and
-nationwide chat. Do not treat them as always interchangeable in formal writing.
+in colloquial speech and messaging. 干啥 is "do what / what for" (干 + 啥),
+close to 干什么 / 干吗. Northern-origin / northern-associated and widely
+understood; not "slang" in every region. Prefer 什么 in class, writing, and
+careful speech.
 
 ## Corpus evidence
 Lexicographic (L): 现汉 labels 啥 as a dialectal equivalent of 什么.

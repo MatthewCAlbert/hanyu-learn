@@ -12,12 +12,15 @@ import {
   readFilters,
   readTake,
   searchHanzi,
+  searchLexemes,
   statusOf,
 } from "~/lib/filters";
 import { CreditsFooter } from "~/components/CreditsFooter";
 import { DetailLink } from "~/components/DetailLink";
 import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
+import { LexemeBrowseSection } from "~/components/LexemeBrowseSection";
+import { isHanziLexeme } from "~/lib/lexical";
 
 /** Rows per virtualized chunk. Bounded so each mounted item stays small. */
 const CHUNK = 48;
@@ -38,7 +41,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
   const url = new URL(request.url);
   const filters = readFilters(url.searchParams);
   const take = readTake(url.searchParams);
-  const [{ radicals: RADICALS, topics: TOPICS }, HANZI] = await Promise.all([
+  const [{ radicals: RADICALS, topics: TOPICS, lexemes }, HANZI] = await Promise.all([
     getMeta(),
     getHanziIndexes(bands.levels),
   ]);
@@ -48,6 +51,12 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     HANZI.filter((h) => bands.levels.includes(h.level)),
     filters,
   );
+  const spoken = bands.extra
+    ? searchLexemes(
+        lexemes.filter((l) => isHanziLexeme(l.form)),
+        filters,
+      )
+    : [];
 
   const byFreq = (a: { frequency: number | null }, b: { frequency: number | null }) =>
     (a.frequency ?? Infinity) - (b.frequency ?? Infinity);
@@ -181,12 +190,13 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
 
   return {
     sections,
-    total: matched.length,
+    spoken,
+    total: matched.length + spoken.length,
     // With topic grouping an entry can occupy several sections, so the number of
     // placements is not the number of characters. Reported separately rather than
     // conflated.
     placements: filters.group === "topic" ? ordered.length : null,
-    shown: page.length,
+    shown: page.length + spoken.length,
     hasMore: page.length < ordered.length,
     view: filters.view,
     group: filters.group,
@@ -196,7 +206,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
 clientLoader.hydrate = true as const;
 
 export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
-  const { sections, total, placements, shown, hasMore, view, group, showLevel } = loaderData;
+  const { sections, spoken, total, placements, shown, hasMore, view, group, showLevel } = loaderData;
   const [params, setParams] = useSearchParams();
   const navigation = useNavigation();
   // A revalidation triggered by growing `take` is the "loading more" state.
@@ -212,7 +222,7 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
 
   const loadMore = () => {
     const next = new URLSearchParams(params);
-    next.set("take", String(shown + PAGE_STEP));
+    next.set("take", String(shown - spoken.length + PAGE_STEP));
     // `replace` so growing the list does not fill the back stack.
     setParams(next, { preventScrollReset: true, replace: true });
   };
@@ -253,7 +263,13 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
           <CreditsFooter />
         </>
       ) : (
-        <VirtualSections
+        <>
+          <LexemeBrowseSection
+            items={spoken}
+            layout={view === "table" ? "hanzi-table" : "hanzi"}
+          />
+          {sections.length > 0 ? (
+            <VirtualSections
           sections={sections}
           hasMore={hasMore}
           pending={pending}
@@ -349,7 +365,11 @@ export default function LevelHanzi({ loaderData }: Route.ComponentProps) {
               )}
             </section>
           )}
-        />
+            />
+          ) : (
+            <CreditsFooter />
+          )}
+        </>
       )}
     </>
   );

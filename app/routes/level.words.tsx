@@ -10,11 +10,13 @@ import {
   rankOf,
   readFilters,
   readTake,
+  searchLexemes,
   searchWords,
   statusOf,
 } from "~/lib/filters";
 import { CreditsFooter } from "~/components/CreditsFooter";
 import { DetailLink } from "~/components/DetailLink";
+import { LexemeBrowseSection } from "~/components/LexemeBrowseSection";
 import { Chip, Empty, Highlighted, StatusDot } from "~/components/ui";
 import { VirtualSections, type Section } from "~/components/VirtualSections";
 import { Toggle, Toolbar } from "./level.hanzi";
@@ -39,7 +41,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
   const url = new URL(request.url);
   const filters = readFilters(url.searchParams);
   const take = readTake(url.searchParams);
-  const [{ topics: TOPICS }, WORDS] = await Promise.all([
+  const [{ topics: TOPICS, lexemes }, WORDS] = await Promise.all([
     getMeta(),
     getWordIndexesForBands(bands),
   ]);
@@ -48,6 +50,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     WORDS.filter((w) => w.extra || bands.levels.includes(w.level)),
     filters,
   );
+  const spoken = bands.extra ? searchLexemes(lexemes, filters) : [];
 
   const byFreq = (a: { frequency: number | null }, b: { frequency: number | null }) =>
     (a.frequency ?? Infinity) - (b.frequency ?? Infinity);
@@ -148,9 +151,10 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
 
   return {
     sections,
-    total: matched.length,
+    spoken,
+    total: matched.length + spoken.length,
     placements: filters.group === "topic" ? ordered.length : null,
-    shown: page.length,
+    shown: page.length + spoken.length,
     hasMore: page.length < ordered.length,
     group: filters.group,
     showLevel: bands.extra || bands.levels.length > 1,
@@ -159,7 +163,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
 clientLoader.hydrate = true as const;
 
 export default function LevelWords({ loaderData }: Route.ComponentProps) {
-  const { sections, total, placements, shown, hasMore, group, showLevel } = loaderData;
+  const { sections, spoken, total, placements, shown, hasMore, group, showLevel } = loaderData;
   const [params, setParams] = useSearchParams();
   const navigation = useNavigation();
   // A revalidation triggered by growing `take` is the "loading more" state.
@@ -167,7 +171,7 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
 
   const loadMore = () => {
     const next = new URLSearchParams(params);
-    next.set("take", String(shown + PAGE_STEP));
+    next.set("take", String(shown - spoken.length + PAGE_STEP));
     setParams(next, { preventScrollReset: true, replace: true });
   };
 
@@ -201,15 +205,18 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
           <CreditsFooter />
         </>
       ) : (
-        <VirtualSections
-          sections={sections}
-          hasMore={hasMore}
-          pending={pending}
-          onEndReached={loadMore}
-          loadedLabel={`All ${total.toLocaleString()} words shown`}
-          progressLabel={`${shown.toLocaleString()} of ${total.toLocaleString()}`}
-          step={PAGE_STEP}
-          renderSection={(s) => (
+        <>
+          <LexemeBrowseSection items={spoken} layout="word" />
+          {sections.length > 0 ? (
+            <VirtualSections
+              sections={sections}
+              hasMore={hasMore}
+              pending={pending}
+              onEndReached={loadMore}
+              loadedLabel={`All ${total.toLocaleString()} words shown`}
+              progressLabel={`${shown.toLocaleString()} of ${total.toLocaleString()}`}
+              step={PAGE_STEP}
+              renderSection={(s) => (
             <div className="mb-1.5">
               {s.header && (
                 <div className="sticky top-(--app-header-height) z-10 -mx-1 mb-2 flex items-baseline gap-2 border-b border-line/70 bg-paper/95 px-1 py-2 backdrop-blur">
@@ -261,7 +268,11 @@ export default function LevelWords({ loaderData }: Route.ComponentProps) {
               </div>
             </div>
           )}
-        />
+            />
+          ) : (
+            <CreditsFooter />
+          )}
+        </>
       )}
     </>
   );

@@ -185,6 +185,27 @@ describe("suggestionsFor", () => {
     expect(chips.map((c) => c.id)).toContain("similar");
   });
 
+  it("offers a textbook-form chip on a spoken/chat lexeme page", () => {
+    const chips = suggestionsFor(
+      ctx({
+        kind: "lexeme",
+        title: "啥",
+        hints: {
+          left: { label: "啥" },
+          hasRelations: true,
+          hasUsage: true,
+        },
+      }),
+    );
+    expect(chips[0]).toMatchObject({
+      id: "conversation",
+      label: "How is this used in conversation?",
+    });
+    expect(chips.map((c) => c.id)).toContain("similar");
+    expect(chips.find((c) => c.id === "similar")?.label).toBe("Compare with the textbook form");
+    expect(chips.some((c) => c.id === "examples")).toBe(false);
+  });
+
   it("caps at three chips", () => {
     const chips = suggestionsFor(
       ctx({

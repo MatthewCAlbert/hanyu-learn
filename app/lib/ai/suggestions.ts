@@ -109,6 +109,15 @@ export function suggestionsFor(ctx: PageContext | null | undefined): PromptSugge
     });
   }
 
+  if (ctx.kind === "lexeme" && hints?.hasRelations) {
+    const token = hints.left ? refText(hints.left) : ctx.title;
+    chips.push({
+      id: "similar",
+      label: "Compare with the textbook form",
+      prompt: `Compare ${token} with its reviewed textbook or real-life alternatives. Do not treat them as interchangeable, and do not call it slang unless the page says so.`,
+    });
+  }
+
   if (ctx.kind === "hanzi" || ctx.kind === "word" || ctx.kind === "compare") {
     chips.push({
       id: "examples",

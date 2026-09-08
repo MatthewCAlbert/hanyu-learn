@@ -17,12 +17,15 @@ import {
 } from "./data.client";
 import { LEVELS } from "./levels";
 import { parseEntryRef, type EntryRef } from "./compare";
+import { relationsForForm, toRelationCard } from "./lexical";
 import type {
   HanziIndex,
   HanziPage,
+  Lexeme,
   Level,
   PhoneticAnchor,
   Radical,
+  RelationCard,
   Status,
   Topic,
   WordIndex,
@@ -32,6 +35,11 @@ import type {
 export type HanziDetailData = HanziPage & { strokes: unknown };
 
 export type WordDetailData = WordPage;
+
+export interface LexemeDetailData {
+  lexeme: Lexeme;
+  relations: RelationCard[];
+}
 
 export interface RadicalMember {
   char: string;
@@ -95,6 +103,26 @@ export async function loadHanziDetail(char: string): Promise<HanziDetailData | u
 
 export async function loadWordDetail(word: string): Promise<WordDetailData | undefined> {
   return getWordPage(word);
+}
+
+export async function loadLexemeDetail(form: string): Promise<LexemeDetailData | undefined> {
+  const meta = await getMeta();
+  const lexeme = meta.lexemes.find((l) => l.form === form);
+  if (!lexeme) return undefined;
+  const [words, extraWords, hanzi] = await Promise.all([
+    getWordIndexes(LEVELS),
+    getExtraWordIndex(),
+    getHanziIndexes(LEVELS),
+  ]);
+  const wordByText = new Map([...words, ...extraWords].map((w) => [w.word, w]));
+  const hanziByChar = new Map(hanzi.map((h) => [h.char, h]));
+  const lexemeByForm = new Map(meta.lexemes.map((l) => [l.form, l]));
+  return {
+    lexeme,
+    relations: relationsForForm(meta.relations, form).map((r) =>
+      toRelationCard(r, wordByText, hanziByChar, lexemeByForm),
+    ),
+  };
 }
 
 export async function loadRadicalDetail(char: string): Promise<RadicalDetailData | undefined> {

@@ -305,6 +305,7 @@ async function main() {
       confidence: fm.confidence,
       sources: fm.sources,
       notes: content.trim() || null,
+      relationIds: [],
     });
   }
 
@@ -312,6 +313,7 @@ async function main() {
   const relations: Relation[] = [];
   const relationsOfHanzi = new Map<string, string[]>();
   const relationsOfWord = new Map<string, string[]>();
+  const relationsOfLexeme = new Map<string, string[]>();
   for (const file of (await safeReaddir("content/relations")).sort()) {
     if (!file.endsWith(".md") || file.startsWith("_")) continue;
     const { data, content } = matter(await readFile(`content/relations/${file}`, "utf8"));
@@ -332,7 +334,12 @@ async function main() {
     for (const m of fm.members) {
       if (m.kind === "hanzi") push(relationsOfHanzi, m.form, fm.relation);
       if (m.kind === "word") push(relationsOfWord, m.form, fm.relation);
+      if (m.kind === "lexeme") push(relationsOfLexeme, m.form, fm.relation);
     }
+  }
+
+  for (const lexeme of lexemes) {
+    lexeme.relationIds = relationsOfLexeme.get(lexeme.form) ?? [];
   }
 
   // ------------------------------------------------------------------- words

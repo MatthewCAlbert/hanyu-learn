@@ -7,7 +7,14 @@ export interface MentionRef {
   id: string;
 }
 
-export type PageContextKind = "hanzi" | "word" | "compare" | "translate" | "song" | "none";
+export type PageContextKind =
+  | "hanzi"
+  | "word"
+  | "lexeme"
+  | "compare"
+  | "translate"
+  | "song"
+  | "none";
 export type ContentStatus = "stub" | "drafted" | "reviewed" | "none";
 
 /** UI-only; never copied into the model snapshot. */
@@ -134,6 +141,7 @@ export const MENTION_KINDS: MentionKind[] = ["hanzi", "word"];
 export const PAGE_CONTEXT_KINDS: PageContextKind[] = [
   "hanzi",
   "word",
+  "lexeme",
   "compare",
   "translate",
   "song",

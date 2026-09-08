@@ -1,4 +1,4 @@
-import type { HanziIndex, Status, WordIndex } from "./types";
+import type { HanziIndex, Lexeme, Status, WordIndex } from "./types";
 import { type PinyinHit, pinyinRank } from "./pinyin";
 
 /** Reserved topic filter value: entries carrying no topic at all. */
@@ -321,6 +321,28 @@ export const filterHanzi = <T extends HanziRow>(list: T[], f: Filters): T[] =>
 
 export const filterWords = <T extends WordRow>(list: T[], f: Filters): T[] =>
   searchWords(list, f).map((x) => x.w);
+
+/**
+ * Extra spoken/chat lexemes. Radical, standard, and topic filters do not apply;
+ * a status filter still does.
+ */
+export function searchLexemes(
+  list: Lexeme[],
+  f: Filters,
+): { lexeme: Lexeme; match: Match | null }[] {
+  if (f.radicals.length || f.standards.length || f.topics.length) return [];
+  const out: { lexeme: Lexeme; match: Match | null }[] = [];
+  for (const lexeme of list) {
+    if (f.status.length && !f.status.includes(lexeme.status)) continue;
+    if (!f.q) {
+      out.push({ lexeme, match: null });
+      continue;
+    }
+    const match = matchQuery(f.q, lexeme.form, [lexeme.pinyin], lexeme.meanings);
+    if (match) out.push({ lexeme, match });
+  }
+  return out;
+}
 
 /** Build a search-param string, dropping empties so URLs stay clean. */
 export function toSearch(f: Partial<Filters>): string {

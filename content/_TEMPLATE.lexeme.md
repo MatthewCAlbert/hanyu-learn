@@ -13,4 +13,6 @@ sources: []
 ---
 
 Spoken, chat, slang, or regional form that is **not** an HSK/Extra word.
-Link it from a relation; do not add it to `extra-vocabulary.json`.
+It appears on Extra browse (`/hsk/extra`). Link it from a relation when there
+is a textbook counterpart. Do **not** add it to `extra-vocabulary.json`.
+One-character forms that are already HSK hanzi belong on the hanzi page.

@@ -91,7 +91,7 @@ describe("web shards", () => {
     const sha = shenme?.relations
       .find((r) => r.id === "what-question")
       ?.members.find((m) => m.form === "啥");
-    expect(sha).toMatchObject({ kind: "lexeme", inCorpus: false, href: null });
+    expect(sha).toMatchObject({ kind: "lexeme", inCorpus: false, href: "/lexemes/%E5%95%A5" });
   });
 
   it("meta lists the same radicals and topics as the full JSON", async () => {

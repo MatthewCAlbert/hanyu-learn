@@ -229,6 +229,7 @@ export interface Lexeme {
   confidence: Confidence;
   sources: string[];
   notes: string | null;
+  relationIds: string[];
 }
 
 export interface RelationMemberCard extends RelationMember {

@@ -26,4 +26,5 @@ export default [
   route("radicals/:radical", "routes/radicals.$radical.tsx"),
   route("phonetic/:component", "routes/phonetic.$component.tsx"),
   route("topics/:topic", "routes/topics.$topic.tsx"),
+  route("lexemes/:form", "routes/lexemes.$form.tsx"),
 ] satisfies RouteConfig;

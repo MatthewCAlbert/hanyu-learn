@@ -26,6 +26,16 @@ export const MEMBER_UI_LABEL: Record<MemberUiRole, string> = {
 };
 
 export const CHAR_CONTRIBUTION_SECTION = "How this character works in words";
+export const SPOKEN_SECTION = "Spoken and chat";
+
+export function lexemeHref(form: string): string {
+  return `/lexemes/${encodeURIComponent(form)}`;
+}
+
+/** One-character spoken/chat forms that are not HSK hanzi. */
+export function isHanziLexeme(form: string): boolean {
+  return [...form].length === 1;
+}
 
 const SALIENCE_ORDER: Record<CharSalience, number> = {
   primary: 0,
@@ -82,8 +92,8 @@ export function textbookPercentiles(
 
 export function toRelationCard(
   relation: Relation,
-  wordByText: Map<string, Word>,
-  hanziByChar: Map<string, Hanzi>,
+  wordByText: Map<string, Pick<Word, "word" | "pinyin" | "meanings">>,
+  hanziByChar: Map<string, Pick<Hanzi, "char" | "pinyin" | "meanings">>,
   lexemeByForm: Map<string, Lexeme>,
 ): RelationCard {
   const members = relation.members.map((m): RelationMemberCard => {
@@ -113,7 +123,7 @@ export function toRelationCard(
       pinyin: lex?.pinyin ?? "",
       meaning: lex?.meanings[0] ?? m.sense ?? "",
       inCorpus: false,
-      href: null,
+      href: lexemeHref(m.form),
     };
   });
   return {

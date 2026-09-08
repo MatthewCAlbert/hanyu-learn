@@ -27,9 +27,11 @@ import {
   filterHanzi,
   filterWords,
   readFilters,
+  searchLexemes,
   toSearch,
   type Filters,
 } from "~/lib/filters";
+import { isHanziLexeme } from "~/lib/lexical";
 import type { Status } from "~/lib/types";
 import { BottomSheet } from "~/components/Dialog";
 import { ThemeToggle } from "~/components/ThemeToggle";
@@ -49,7 +51,7 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
   const bands = parseBands(params.level);
   const { levels, extra } = bands;
   const filters = readFilters(new URL(request.url).searchParams);
-  const [{ radicals: allRadicals, topics: allTopics, counts, extraWords }, hanzi, words, phonetics] =
+  const [{ radicals: allRadicals, topics: allTopics, counts, extraWords, lexemes }, hanzi, words, phonetics] =
     await Promise.all([
       getMeta(),
       getHanziIndexes(levels),
@@ -66,15 +68,26 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
    * predicate — otherwise the bar reads "Hanzi 300" over two visible rows. The
    * indexes are already in hand, so this is a filter pass, not a fetch.
    */
+  const spokenHanziAll = extra ? lexemes.filter((l) => isHanziLexeme(l.form)).length : 0;
+  const spokenWordsAll = extra ? lexemes.length : 0;
+  const spokenHanzi = extra
+    ? searchLexemes(
+        lexemes.filter((l) => isHanziLexeme(l.form)),
+        filters,
+      ).length
+    : 0;
+  const spokenWords = extra ? searchLexemes(lexemes, filters).length : 0;
   const shown = {
-    hanzi: filterHanzi(
-      hanzi.filter((h) => levels.includes(h.level)),
-      filters,
-    ).length,
-    words: filterWords(
-      words.filter((w) => w.extra || levels.includes(w.level)),
-      filters,
-    ).length,
+    hanzi:
+      filterHanzi(
+        hanzi.filter((h) => levels.includes(h.level)),
+        filters,
+      ).length + spokenHanzi,
+    words:
+      filterWords(
+        words.filter((w) => w.extra || levels.includes(w.level)),
+        filters,
+      ).length + spokenWords,
     topics: topics.filter((t) => matchesTopic(filters.q, t)).length,
     radicals: radicals.filter((r) => matchesRadical(filters.q, r)).length,
     phonetics: phoneticSeries.filter((row) => matchesPhonetic(filters.q, row)).length,
@@ -85,6 +98,8 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
     extra,
     counts: {
       ...totals,
+      hanzi: totals.hanzi + spokenHanziAll,
+      words: totals.words + spokenWordsAll,
       radicals: radicals.length,
       topics: topics.length,
       phonetics: phoneticSeries.length,
@@ -451,7 +466,7 @@ function LevelControls({
           title={
             extra && levels.length === 0
               ? "At least one band must stay selected"
-              : "Country and language names not on the HSK 3.0 wordlist"
+              : "Country names and spoken/chat forms not on the HSK 3.0 wordlist"
           }
           className={clsx(
             "ui-touch ml-0.5 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border-l border-line px-2 text-xs font-medium transition-colors lg:min-h-8",
@@ -529,7 +544,7 @@ function LevelControls({
           title={
             extra && levels.length === 0
               ? "At least one band must stay selected"
-              : "Country and language names not on the HSK 3.0 wordlist"
+              : "Country names and spoken/chat forms not on the HSK 3.0 wordlist"
           }
           className={clsx(
             "ui-touch mt-2 flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border px-4 transition-colors",
@@ -544,7 +559,7 @@ function LevelControls({
               Extra vocabulary
             </span>
             <span className="mt-0.5 block text-xs text-ink-3">
-              Common country and language names
+              Country names and spoken/chat forms
             </span>
           </span>
           <input
