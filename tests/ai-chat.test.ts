@@ -24,7 +24,7 @@ import {
   textFromItem,
   withStreamFlag,
 } from "~/lib/ai/agent";
-import { AI_PERSIST, coalesce, createBlankChat } from "~/lib/ai/store";
+import { AI_PERSIST, aiStore, coalesce, createBlankChat } from "~/lib/ai/store";
 import { toolActivitySummary, visibleToolActivities } from "~/components/ai/UsageDetails";
 import {
   contextChanged,
@@ -107,6 +107,17 @@ describe("incognito chats", () => {
     await expect(putSavedChat(chat)).resolves.toBeUndefined();
     expect(await listSavedChats()).toEqual([]);
   });
+
+  it("appends lyric excerpts without replacing a chat draft", () => {
+    aiStore.setState({ composer: "Explain the grammar" });
+    aiStore.getState().appendComposer("“我喜欢你”");
+    expect(aiStore.getState().composer).toBe("Explain the grammar\n\n“我喜欢你”");
+
+    aiStore.setState({ composer: "" });
+    aiStore.getState().appendComposer("“你好”");
+    expect(aiStore.getState().composer).toBe("“你好”\n\n");
+    aiStore.setState({ composer: "" });
+  });
 });
 
 describe("IndexedDB persistence", () => {
@@ -158,6 +169,7 @@ describe("agent limits and CSP", () => {
       .find((h) => h.key === "Content-Security-Policy")?.value;
     expect(csp).toContain("connect-src 'self' https://openrouter.ai");
     expect(csp).toContain("font-src 'self' https://fonts.gstatic.com");
+    expect(csp).toContain("frame-src https://www.youtube-nocookie.com");
     expect(csp).not.toMatch(/connect-src[^;]*http:/);
   });
 });

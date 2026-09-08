@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
+import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/level";
@@ -35,8 +35,7 @@ import { BottomSheet } from "~/components/Dialog";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { CreditsFooter } from "~/components/CreditsFooter";
 import { TranslateSearchHint } from "~/components/translate/TranslateSearchHint";
-import { browseOriginFromLocation } from "~/lib/navigation";
-import { translateHref } from "~/lib/translate";
+import { WorkspaceNav } from "~/components/WorkspaceNav";
 
 export function meta({ params }: Route.MetaArgs) {
   try {
@@ -277,13 +276,7 @@ export default function LevelShell({ loaderData }: Route.ComponentProps) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1 justify-self-end">
-            <Link
-              to={translateHref("")}
-              state={browseOriginFromLocation(location)}
-              className="ui-touch inline-flex items-center justify-center rounded-xl px-2.5 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
-            >
-              Translate
-            </Link>
+            <WorkspaceNav />
             <ThemeToggle />
           </div>
         </div>

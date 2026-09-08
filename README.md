@@ -29,8 +29,8 @@ pnpm dev            # http://localhost:5173
 ```
 
 Requires Node 22+ and pnpm. The core library needs no database or API key, and
-the build needs no network — all source data is committed. The optional study
-chat uses an OpenRouter key supplied in the browser.
+the build needs no network — all source data is committed. Optional AI (study
+chat and translate) uses an OpenRouter key supplied in the browser.
 
 `pnpm install` derives `app/data/generated/` (~8s) from the committed sources;
 `dev` and `build` refresh it automatically if `content/` has changed since. It is
@@ -77,29 +77,52 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 - **Compare any two entries** — hanzi, words, radicals, phonetic series or
   topics — side by side from a bookmarkable URL such as
   `/compare?left=hanzi:好&right=word:爱好`, or the VS action on a detail page.
-- **Page-aware study chat** streams answers about the current hanzi, word or
-  comparison. It supports `@` entry mentions, searches the local corpus before
-  guessing, can use web search, and exposes tool activity, citations, token
-  usage and cost.
+- **Translate** at `/translate` (also linked from the browse header). Paste
+  Chinese for a local clickable breakdown; press Enter or Translate with AI for
+  pinyin and other freeform text. Image mode reads a PNG, JPEG or WebP (upload or
+  paste) and splits the extracted Chinese the same way. Seed a short passage with
+  `?q=`.
+- **Songs** at `/songs`. Search by title, artist, pinyin, Hanzi, or a lyric
+  fragment; AI returns up to three matches with tone-marked title pinyin, then
+  imports cited Chinese lyrics and English line translations for the one you
+  choose. Clickable word/hanzi study matches Translate, section navigation tracks
+  the lyrics while scrolling, and any line can be added to the study-chat draft.
+  Save is optional and local — unsaved imports vanish on reload. An AI-found or
+  pasted YouTube URL is confirmed with **Load player** before a privacy-enhanced
+  embed appears; playback never autoplays.
+- **Page-aware study chat** streams answers about the current hanzi, word,
+  comparison, translation, or song lyrics. It supports `@` entry mentions,
+  searches the local corpus before guessing, can use web search, and exposes
+  tool activity, citations, token usage and cost.
 - **i+1 example sentences** — every example at a level uses _only_ characters
   learned at or below it. Enforced by a test, not by hope.
 - Stroke-order animation, dark mode, touch-sized mobile controls, keyboard
   navigation, and windowed lists (1,000 rows, +100 on scroll) so 9,443 words
   stay responsive.
 
-## Optional study chat
+## Optional AI
 
-The reference library works without AI. To enable the floating study chat, open
-`/settings` and add an OpenRouter API key (`sk-or-…`) plus a model slug. The app
-checks that the key works and the model advertises tool calling before saving.
-Reasoning, reasoning effort and response verbosity are configurable.
+The reference library works without AI. Local Hanzi analysis on `/translate`
+needs no key. To enable study chat, pinyin/freeform translation, image
+translation, and song import, open `/settings` and add an OpenRouter API key
+(`sk-or-…`) plus a model slug. The app checks that the key works and the model
+advertises tool calling before saving. Image mode also needs a vision-capable
+model (one that lists `image` among its input modalities). Reasoning, reasoning
+effort and response verbosity are configurable.
 
-The model and key are stored in `localStorage`. Unsaved chats are in memory and
-disappear on reload; chats are written to IndexedDB only when explicitly saved,
-and saved threads can be renamed or deleted. Messages, prior history, page
-snapshots and local corpus-tool results go directly from the browser to
-OpenRouter; optional web search also runs through OpenRouter. There is no app
-server, so anything that can run script on the app origin can read the key. Each
+The model and key are stored in `localStorage`. Unsaved chats and unsaved song
+imports are in memory and disappear on reload; chats and songs are written to
+IndexedDB only when explicitly saved (separate databases). Saved threads can be
+renamed or deleted; saved songs can be deleted. Translate photos stay in page
+memory and are not written to the URL or IndexedDB. Song lyrics are user-local AI
+imports with cited sources — verify them against the linked page; they are not
+part of the licensed HSK corpus and never enter `content/` or `data/sources/`.
+Messages, images, prior history, page snapshots, lyric-import requests and local
+corpus-tool results go directly from the browser to OpenRouter; optional web
+search also runs through OpenRouter (song import uses a deeper search budget
+than study chat). YouTube playback uses `youtube-nocookie.com` after you confirm
+the URL; the model’s link is never used as `iframe.src`. There is no app server,
+so anything that can run script on the app origin can read the key. Each
 response shows its reported usage and cost, with per-run limits of six agent
 steps, US$0.75 and 48,000 tokens.
 
@@ -117,8 +140,10 @@ steps, US$0.75 and 48,000 tokens.
 
 Detail routes: `/hanzi/:char`, `/words/:word`, `/radicals/:radical`,
 `/phonetic/:component`, `/topics/:topic`. Compare two of them side by side at
-`/compare` (or press VS on a detail page). Details and comparisons retain the
-originating browse selection and filters for navigation back. Level indexes:
+`/compare` (or press VS on a detail page). Translate a passage or photo at
+`/translate`. Import and study songs at `/songs` (saved copies at
+`/songs/:songId`). Those pages keep the originating browse selection and filters
+for navigation back. Level indexes:
 `/hsk/:level/hanzi` (also `words`, `topics`, `radicals`, `phonetics`).
 `:level` may end with `extra` for supplement vocabulary.
 Phonetic pages are generated from visible sound components; they are not

@@ -82,6 +82,15 @@ export function suggestionsFor(ctx: PageContext | null | undefined): PromptSugge
     });
   }
 
+  if (ctx.kind === "song") {
+    chips.push({
+      id: "explain",
+      label: "Explain these lyrics",
+      prompt:
+        "Explain these lyrics using the corpus breakdown on the page. Call out HSK words, repeated lines, and any spans not in the list.",
+    });
+  }
+
   if (ctx.kind === "hanzi" || ctx.kind === "word" || ctx.kind === "compare") {
     chips.push({
       id: "examples",

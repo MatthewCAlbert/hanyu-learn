@@ -39,6 +39,14 @@ export const WEB_SEARCH_PARAMS = {
   searchContextSize: "low" as const,
 };
 
+/** Deeper budget for song identity and lyric-source retrieval. Study chat stays on WEB_SEARCH_PARAMS. */
+export const SONG_WEB_SEARCH_PARAMS = {
+  engine: "auto" as const,
+  maxResults: 8,
+  maxTotalResults: 12,
+  searchContextSize: "medium" as const,
+};
+
 function preview(text: string, max = 1600): string {
   return text.length <= max ? text : `${text.slice(0, max)}…`;
 }

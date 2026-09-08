@@ -82,5 +82,8 @@ function labelFor(name: string): string {
   if (name === "lookup_entry") return "Look up entry";
   if (name === "submit_translation") return "Submit translation";
   if (name === "submit_image_translation") return "Submit image translation";
+  if (name === "submit_song_candidates") return "Submit song matches";
+  if (name === "submit_song_import") return "Submit song import";
+  if (name === "provider_retry") return "Retry provider";
   return name;
 }

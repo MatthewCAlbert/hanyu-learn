@@ -28,7 +28,9 @@ export function FloatingChat() {
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const root = panelRef.current;
     const focusFirst = () => {
-      root?.querySelector<HTMLElement>("textarea, button, a, input")?.focus();
+      const composer = root?.querySelector<HTMLElement>("textarea");
+      const fallback = root?.querySelector<HTMLElement>("button, a, input");
+      (composer ?? fallback)?.focus();
     };
     const raf = requestAnimationFrame(focusFirst);
 

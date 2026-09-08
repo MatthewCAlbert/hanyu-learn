@@ -17,6 +17,8 @@ export default [
   route("settings", "routes/settings.tsx"),
   route("compare", "routes/compare.tsx"),
   route("translate", "routes/translate.tsx"),
+  route("songs", "routes/songs.tsx"),
+  route("songs/:songId", "routes/songs.$songId.tsx"),
 
   // Detail pages are level-independent: 好 is one character with one page.
   route("hanzi/:char", "routes/hanzi.$char.tsx"),

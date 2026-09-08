@@ -6,6 +6,7 @@ import {
   lookupHanziInput,
   lookupWordInput,
   searchCorpusInput,
+  SONG_WEB_SEARCH_PARAMS,
   WEB_SEARCH_PARAMS,
 } from "~/lib/ai/tools";
 
@@ -53,6 +54,8 @@ describe("tool argument validation", () => {
       maxTotalResults: 8,
       searchContextSize: "low",
     });
+    expect(SONG_WEB_SEARCH_PARAMS.searchContextSize).toBe("medium");
+    expect(SONG_WEB_SEARCH_PARAMS.maxResults).toBeGreaterThan(WEB_SEARCH_PARAMS.maxResults);
   });
 });
 

@@ -5,6 +5,7 @@ import type {
   HanziDetailData,
   WordDetailData,
 } from "~/lib/detail-data";
+import type { BoundSong } from "~/lib/song";
 import type { TextAnalysis } from "~/lib/segment";
 import type { MentionRef, PageContext, PageContextHintPane } from "./types";
 import { entryMentionKind } from "./types";
@@ -243,6 +244,44 @@ export function serializeTranslateContext(text: string, analysis: TextAnalysis, 
     route,
     title,
     kind: "translate",
+    text: lines.join("\n"),
+    hints: { contentStatus: "none" },
+  };
+}
+
+export function serializeSongContext(song: BoundSong, route: string): PageContext {
+  const title = song.title && song.artist ? `${song.title} — ${song.artist}` : song.title || "Song";
+  const lines: string[] = [
+    "Song workspace",
+    `Title: ${song.title}`,
+    `Artist: ${song.artist}`,
+  ];
+  if (song.album) lines.push(`Album: ${song.album}`);
+  if (song.year) lines.push(`Year: ${song.year}`);
+  lines.push(`Lyrics source: ${song.lyricsSourceUrl}`);
+  if (!song.complete) lines.push("Completeness: incomplete — verify with the cited source.");
+  if (song.warning) lines.push(`Warning: ${song.warning}`);
+  if (song.unavailable) {
+    lines.push("Lyrics were not available from the cited source.");
+  } else {
+    lines.push("", `Lyrics:\n${song.sourceText.slice(0, 1200)}`);
+    const linked = song.analysis.blocks.flatMap((b) => b.spans.filter((s) => s.ref).slice(0, 40));
+    if (linked.length) {
+      lines.push(
+        "",
+        "Corpus spans:",
+        ...linked.slice(0, 24).map((s) => {
+          const gloss = s.summary ? ` ${s.summary.pinyin} / ${s.summary.meaning}` : "";
+          return `- ${s.id} ${s.ref?.kind}:${s.text}${gloss}`;
+        }),
+      );
+    }
+  }
+  return {
+    key: `song:${song.title}:${song.artist}:${song.sourceText.slice(0, 80)}`,
+    route,
+    title,
+    kind: "song",
     text: lines.join("\n"),
     hints: { contentStatus: "none" },
   };

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { LuSparkles } from "react-icons/lu";
 import { Chip } from "~/components/ui";
 import { entryPath } from "~/lib/compare";
 import type { BoundParagraph } from "~/lib/ai/translate";
@@ -18,14 +19,20 @@ export function TranslateDocument({
   selected,
   onSelect,
   translations,
+  headings,
+  onAddToChat,
 }: {
   analysis: TextAnalysis;
   mode: DetailMode;
   selected: TokenSelection | null;
   onSelect: (next: TokenSelection | null) => void;
   translations?: BoundParagraph[] | null;
+  headings?: { blockId: string; label: string; targetId?: string }[];
+  onAddToChat?: (text: string) => void;
 }) {
   const byBlock = new Map((translations ?? []).map((p) => [p.id, p]));
+  const headingByBlock = new Map((headings ?? []).map((h) => [h.blockId, h]));
+  const lyricLayout = (headings?.length ?? 0) > 0;
   return (
     <div className="space-y-6">
       {analysis.blocks.map((block) => {
@@ -35,11 +42,24 @@ export function TranslateDocument({
         const translation = byBlock.get(block.id);
         const selectedInBlock =
           selected && block.spans.some((s) => s.id === selected.spanId) ? selected : null;
+        const heading = headingByBlock.get(block.id);
         return (
           <section key={block.id} className="grid gap-3 lg:grid-cols-2">
+            {heading ? (
+              <h3
+                id={heading.targetId}
+                className={clsx(
+                  "ui-eyebrow lg:col-span-2",
+                  heading.targetId &&
+                    "scroll-mt-[calc(var(--app-header-height,0px)+3.75rem)]",
+                )}
+              >
+                {heading.label}
+              </h3>
+            ) : null}
             <div>
-              <p className="ui-eyebrow">Source</p>
-              <div className="mt-2 flex flex-wrap items-start gap-1.5">
+              {lyricLayout ? null : <p className="ui-eyebrow">Source</p>}
+              <div className={lyricLayout ? "flex flex-wrap items-start gap-1.5" : "mt-2 flex flex-wrap items-start gap-1.5"}>
                 {block.spans.map((span) => (
                   <SpanCluster
                     key={span.id}
@@ -58,39 +78,55 @@ export function TranslateDocument({
                 />
               )}
             </div>
-            {translation && (
-              <div>
-                <p className="ui-eyebrow">Translation</p>
-                <p className="mt-2 text-[15px] leading-7 text-ink">{translation.translation}</p>
-                {translation.notes.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {translation.notes.map((note) => (
-                      <li key={`${note.spanId ?? "p"}:${note.text}`} className="text-xs leading-5 text-ink-2">
-                        {note.span ? (
-                          <button
-                            type="button"
-                            className="han mr-1.5 text-accent hover:opacity-80"
-                            onClick={() => {
-                              if (!note.span?.ref || !note.spanId) return;
-                              if (mode === "direct") {
-                                window.open(
-                                  entryPath({ kind: note.span.ref.kind, id: note.span.ref.id }),
-                                  "_blank",
-                                  "noopener,noreferrer",
-                                );
-                                return;
-                              }
-                              onSelect({ spanId: note.spanId, ref: note.span.ref });
-                            }}
-                          >
-                            {note.span.text}
-                          </button>
-                        ) : null}
-                        {note.text}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            {(translation || onAddToChat) && (
+              <div className={onAddToChat ? "flex min-w-0 items-start gap-2" : undefined}>
+                {onAddToChat ? (
+                  <button
+                    type="button"
+                    aria-label={`Add lyric line to chat: ${block.text}`}
+                    onClick={() => onAddToChat(block.text)}
+                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-ink-2 hover:bg-sunk hover:text-accent"
+                  >
+                    <LuSparkles className="size-3.5" aria-hidden />
+                  </button>
+                ) : null}
+                {translation ? (
+                  <div className="min-w-0 flex-1">
+                    {lyricLayout ? null : <p className="ui-eyebrow">Translation</p>}
+                    <p className={lyricLayout ? "text-[15px] leading-7 text-ink" : "mt-2 text-[15px] leading-7 text-ink"}>
+                      {translation.translation}
+                    </p>
+                    {translation.notes.length > 0 && (
+                      <ul className="mt-2 space-y-1">
+                        {translation.notes.map((note) => (
+                          <li key={`${note.spanId ?? "p"}:${note.text}`} className="text-xs leading-5 text-ink-2">
+                            {note.span ? (
+                              <button
+                                type="button"
+                                className="han mr-1.5 text-accent hover:opacity-80"
+                                onClick={() => {
+                                  if (!note.span?.ref || !note.spanId) return;
+                                  if (mode === "direct") {
+                                    window.open(
+                                      entryPath({ kind: note.span.ref.kind, id: note.span.ref.id }),
+                                      "_blank",
+                                      "noopener,noreferrer",
+                                    );
+                                    return;
+                                  }
+                                  onSelect({ spanId: note.spanId, ref: note.span.ref });
+                                }}
+                              >
+                                {note.span.text}
+                              </button>
+                            ) : null}
+                            {note.text}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : null}
               </div>
             )}
           </section>

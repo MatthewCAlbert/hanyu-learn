@@ -107,6 +107,7 @@ export interface AiActions {
   togglePanel: () => void;
   setListOpen: (open: boolean) => void;
   setComposer: (value: string) => void;
+  appendComposer: (value: string) => void;
   setPageContext: (ctx: PageContext | null) => void;
   setConfig: (config: OpenRouterConfig) => Promise<void>;
   clearConfig: () => void;
@@ -186,6 +187,12 @@ export const aiStore = createStore<AiStore>()(
     togglePanel: () => set({ panelOpen: !get().panelOpen, listOpen: false, error: null }),
     setListOpen: (listOpen) => set({ listOpen }),
     setComposer: (composer) => set({ composer }),
+    appendComposer: (value) => {
+      const excerpt = value.trim();
+      if (!excerpt) return;
+      const composer = get().composer.trimEnd();
+      set({ composer: composer ? `${composer}\n\n${excerpt}` : `${excerpt}\n\n` });
+    },
     setPageContext: (pageContext) => set({ pageContext }),
 
     setConfig: async (config) => {

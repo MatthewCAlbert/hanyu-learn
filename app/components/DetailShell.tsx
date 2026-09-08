@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
+import { useEffect, useRef } from "react";
 import { CreditsFooter } from "./CreditsFooter";
 import { canHistoryBack, resolveBrowseOrigin } from "~/lib/navigation";
 
@@ -16,14 +17,32 @@ export function DetailShell({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const headerRef = useRef<HTMLElement>(null);
   const parent = resolveBrowseOrigin(location.state, fallback);
   const historyBack = canHistoryBack(location.key);
   const backClass =
     "ui-touch inline-flex shrink-0 items-center rounded-lg px-2 text-sm font-medium text-ink-2 transition-colors hover:text-accent";
 
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const update = () =>
+      document.documentElement.style.setProperty("--app-header-height", `${header.offsetHeight}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--app-header-height");
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-paper">
-      <header className="safe-top sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur-xl">
+      <header
+        ref={headerRef}
+        className="safe-top sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur-xl"
+      >
         <div className="mx-auto flex max-w-5xl items-center gap-1 px-3 lg:px-6">
           {historyBack ? (
             <button type="button" aria-label="Back" onClick={() => navigate(-1)} className={backClass}>

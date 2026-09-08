@@ -152,6 +152,18 @@ describe("suggestionsFor", () => {
     expect(chips[0]?.label).toBe("Explain the wording");
   });
 
+  it("offers a lyrics chip on a song page", () => {
+    const chips = suggestionsFor(
+      ctx({
+        kind: "song",
+        title: "小幸运 — 田馥甄",
+        route: "/songs",
+      }),
+    );
+    expect(chips.map((c) => c.id)).toEqual(["explain"]);
+    expect(chips[0]?.label).toBe("Explain these lyrics");
+  });
+
   it("caps at three chips", () => {
     const chips = suggestionsFor(
       ctx({
