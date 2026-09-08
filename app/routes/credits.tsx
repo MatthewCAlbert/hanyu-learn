@@ -10,8 +10,8 @@ export default function Credits() {
     <DetailShell current="Credits" fallback={defaultBrowseFallback()}>
       <h1 className="text-xl font-medium">Credits</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-2">
-        This app is built from open data. Three sources require attribution on distribution; they
-        are named below in the form each licence asks for.
+        This app is built from open data. Four sources require attribution on distribution; they are
+        named below in the form each licence asks for.
       </p>
 
       <section className="mt-8 border-t border-line pt-5">
@@ -45,6 +45,20 @@ export default function Credits() {
           extracted from the Arphic PL KaitiM GB font. Redistributed under the{" "}
           <Ext href="/licenses/ARPHICPL.TXT">Arphic Public License</Ext>. The stroke files are used
           as published; no glyphs have been modified.
+        </p>
+      </section>
+
+      <section className="mt-8 border-t border-line pt-5">
+        <h2 className="ui-eyebrow">audio-cmn</h2>
+        <p className="mt-3 text-sm leading-relaxed text-ink-2">
+          Pronunciation recordings come from{" "}
+          <Ext href="https://github.com/hugolpz/audio-cmn">hugolpz/audio-cmn</Ext>, a 24 kbps subset
+          pinned at commit <code className="rounded bg-sunk px-1 text-[0.9em]">ff9ed3d0c631</code>.
+          Syllables were recorded by Chen Wang; word clips by Yue Tan; packaging by Hugo Lopez.
+          Licensed under CC BY-SA (version unspecified upstream). Clips are fetched from{" "}
+          <code className="rounded bg-sunk px-1 text-[0.9em]">CDN_AUDIO_URL</code> when set; otherwise
+          the browser’s speech synthesis is used. This app does not restore the tone-5 files
+          upstream deleted as copies of tone 1.
         </p>
       </section>
 

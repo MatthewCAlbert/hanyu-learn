@@ -28,9 +28,10 @@ pnpm install
 pnpm dev            # http://localhost:5173
 ```
 
-Requires Node 22+ and pnpm. The core library needs no database or API key, and
-the build needs no network — all source data is committed. Optional AI (study
-chat and translate) uses an OpenRouter key supplied in the browser.
+Requires Node 22+ and pnpm. The core library needs no database or API key.
+Optional recorded pronunciation uses a public `CDN_AUDIO_URL`; without it the
+app uses the browser’s `speechSynthesis`. Optional AI (study chat and translate)
+uses an OpenRouter key supplied in the browser.
 
 `pnpm install` derives `app/data/generated/` (~8s) from the committed sources;
 `dev` and `build` refresh it automatically if `content/` has changed since. It is
@@ -48,6 +49,8 @@ pnpm check:content    # validate content/ against the dataset
 pnpm data:build       # regenerate app/data/generated/ from sources + content
 pnpm data:md          # regenerate the docs/hsk/ study lists
 pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
+pnpm data:audio       # optional: prune audio-cmn clips to upload to a CDN
+pnpm data:audio:upload # PUT those clips to S3-compatible storage (see .env.example)
 ```
 
 ## What's in it
@@ -60,6 +63,7 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
 | Topics       | 42 themes; an entry carries zero, one or many                                       |
 | Sentences    | 50,416 Tatoeba pairs, filtered so an example never uses a character above its level |
 | Stroke order | All 2,970 characters, animated                                                      |
+| Pronunciation | Click-to-play on headers and translate brief detail; CDN clips when `CDN_AUDIO_URL` is set, otherwise browser TTS |
 
 ### Features
 
@@ -96,9 +100,9 @@ pnpm data:tatoeba     # re-fetch and rejoin Tatoeba sentences (rare)
   tool activity, citations, token usage and cost.
 - **i+1 example sentences** — every example at a level uses _only_ characters
   learned at or below it. Enforced by a test, not by hope.
-- Stroke-order animation, dark mode, touch-sized mobile controls, keyboard
-  navigation, and windowed lists (1,000 rows, +100 on scroll) so 9,443 words
-  stay responsive.
+- Stroke-order animation, click-to-play pronunciation on entry headers, dark
+  mode, touch-sized mobile controls, keyboard navigation, and windowed lists
+  (1,000 rows, +100 on scroll) so 9,443 words stay responsive.
 
 ## Optional AI
 
@@ -130,7 +134,7 @@ steps, US$0.75 and 48,000 tokens.
 
 | Path                  |                                                                                     |
 | --------------------- | ----------------------------------------------------------------------------------- |
-| `data/sources/`       | Vendored upstream data, committed. See [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) |
+| `data/sources/`       | Vendored upstream data, committed (audio-cmn MP3s gitignored). See [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) |
 | `content/`            | **Authored** explanations, topic membership, relations, and lexemes                  |
 | `app/`                | React Router app                                                                    |
 | `scripts/`            | Data pipeline: build, MD lists, validation                                          |
@@ -151,10 +155,39 @@ another Kangxi grouping.
 
 ## Where the data comes from
 
-Content is derived from four open sources — HSK wordlists, makemeahanzi
-decompositions, Unicode Unihan radicals, and Tatoeba sentences. Licences and
-required attribution are recorded in [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md);
-the three that require it are named in the UI footer and on `/credits`.
+Content is derived from open sources — HSK wordlists, makemeahanzi
+decompositions, Unicode Unihan radicals, Tatoeba sentences, and audio-cmn
+pronunciation clips (optional CDN). Licences and required attribution are
+recorded in [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md); those that require it
+are named in the UI footer and on `/credits`.
+
+## Pronunciation audio
+
+Click-to-play loads nothing until you press the speaker. Recorded MP3s are **not**
+in git. Copy [`.env.example`](.env.example) to `.env` (or set the variable in the
+host) if you want human recordings:
+
+```bash
+# Directory that contains hsk/ and syllabs/ (audio-cmn 24k-abr layout).
+CDN_AUDIO_URL=https://cdn.jsdelivr.net/gh/hugolpz/audio-cmn@ff9ed3d0c631195bd2c06f39450f3264c7124040/24k-abr
+```
+
+`CDN_AUDIO_URL` is public: Vite inlines it into the client bundle. Paths:
+
+- `{CDN_AUDIO_URL}/hsk/cmn-{form}.mp3` (Hanzi form, URL-encoded)
+- `{CDN_AUDIO_URL}/syllabs/cmn-{hao3}.mp3`
+
+The host must send `Access-Control-Allow-Origin` (jsDelivr does). A 404 or
+decode error falls through to the browser’s `zh-CN` `speechSynthesis`. Leave the
+variable unset to skip clip fetches entirely.
+
+To host a pruned tree yourself, run `pnpm data:audio` then
+`pnpm data:audio:upload`. That script talks to any S3-compatible API (MinIO, R2,
+Garage, AWS, …) with SigV4 and no SDK. Set `AUDIO_S3_ENDPOINT` to the API origin;
+uploads are path-style `{endpoint}/{bucket}/hsk/…` unless
+`AUDIO_S3_ADDRESSING=virtual`. Dry-run with `pnpm data:audio:upload -- --dry-run`.
+Point `CDN_AUDIO_URL` at the **public** origin that serves those keys, not the
+API endpoint, and enable CORS GET. Do not commit the MP3s.
 
 ## Writing content
 

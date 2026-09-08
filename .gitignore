@@ -6,6 +6,9 @@ node_modules
 *.local
 /data/sources/.raw
 
+# Recorded clips — not committed. Serve from CDN_AUDIO_URL, or leave unset for TTS.
+/data/sources/audio-cmn/**/*.mp3
+
 # Derived from data/sources/ + content/ by `pnpm data:build` (~8s, no network).
 # Not committed: large, and it is single-line JSON that git cannot diff — one
 # tagged word rewrites a 4.5MB blob. The reviewable projection of this data is

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PronunciationButton } from "~/components/PronunciationButton";
 import { Chip } from "~/components/ui";
 import { getHanziPage, getWordPage } from "~/lib/data.client";
 import { entryPath } from "~/lib/compare";
@@ -88,9 +89,12 @@ function WordSummary({ data }: { data: WordPage }) {
   const a = w.authored;
   return (
     <div>
-      <div className="flex flex-wrap items-baseline gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="han text-3xl leading-none">{w.word}</span>
-        <span className="text-sm text-ink">{w.pinyin}</span>
+        <span className="flex items-center gap-1">
+          <span className="text-sm text-ink">{w.pinyin}</span>
+          <PronunciationButton form={w.word} pinyin={w.pinyin} preferWordClip />
+        </span>
         <Chip tone="accent">{w.extra ? "Extra" : `HSK ${w.level}`}</Chip>
       </div>
       <p className="mt-1.5 text-sm text-ink-2">{w.meanings.join("; ")}</p>
@@ -108,9 +112,14 @@ function HanziSummary({ data }: { data: HanziPage }) {
   const h = data.hanzi;
   return (
     <div>
-      <div className="flex flex-wrap items-baseline gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="han text-3xl leading-none">{h.char}</span>
-        <span className="text-sm text-ink">{h.pinyin.join(" · ")}</span>
+        {h.readings.map((r) => (
+          <span key={r.pinyin} className="flex items-center gap-1">
+            <span className="text-sm text-ink">{r.pinyin}</span>
+            <PronunciationButton form={h.char} pinyin={r.pinyin} preferWordClip={false} />
+          </span>
+        ))}
         <Chip tone="accent">HSK {h.level}</Chip>
       </div>
       <p className="mt-1.5 text-sm text-ink-2">{h.meanings.join("; ")}</p>

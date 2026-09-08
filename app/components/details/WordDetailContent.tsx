@@ -5,6 +5,7 @@ import { Prose } from "~/components/DetailShell";
 import { Sentences } from "~/components/Sentences";
 import { GlossaryLegend, GlossaryTerm } from "~/components/GlossaryTerm";
 import { RelationSections } from "~/components/details/RelationSections";
+import { PronunciationButton } from "~/components/PronunciationButton";
 import type { WordDetailData } from "~/lib/detail-data";
 import type { GlossaryKey } from "~/lib/lexical-glossary";
 
@@ -35,7 +36,10 @@ export function WordDetailContent({ data }: { data: WordDetailData }) {
         <span className="han text-5xl leading-none sm:text-6xl">{w.word}</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-lg text-ink">{w.pinyin}</span>
+            <span className="flex items-center gap-1">
+              <span className="text-lg text-ink">{w.pinyin}</span>
+              <PronunciationButton form={w.word} pinyin={w.pinyin} preferWordClip />
+            </span>
             <Chip tone="accent">{w.extra ? "Extra" : `HSK ${w.level}`}</Chip>
             {w.pos.map((p) => (
               <Chip key={p} tone="quiet">

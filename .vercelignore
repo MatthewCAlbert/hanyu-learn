@@ -10,6 +10,9 @@ node_modules
 /public/data
 .vercel
 
+# Recorded clips — not committed. Serve from CDN_AUDIO_URL, or leave unset for TTS.
+/data/sources/audio-cmn/**/*.mp3
+
 # Not needed to build or run the app on Vercel.
 .claude
 /docs

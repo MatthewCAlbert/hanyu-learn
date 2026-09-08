@@ -48,8 +48,13 @@ import type {
 const OUT = "app/data/generated";
 const HANZI_RE = /[一-鿿]/u;
 const LEVEL_TAG = {
-  1: "new-1", 2: "new-2", 3: "new-3", 4: "new-4",
-  5: "new-5", 6: "new-6", 7: "new-7",
+  1: "new-1",
+  2: "new-2",
+  3: "new-3",
+  4: "new-4",
+  5: "new-5",
+  6: "new-6",
+  7: "new-7",
 } as const;
 const LEVELS: Level[] = [1, 2, 3, 4, 5, 6, 7];
 
@@ -158,7 +163,9 @@ async function main() {
   );
 
   const mmah = new Map<string, MmahEntry>();
-  for (const line of (await readFile("data/sources/makemeahanzi-dictionary.txt", "utf8")).split("\n")) {
+  for (const line of (await readFile("data/sources/makemeahanzi-dictionary.txt", "utf8")).split(
+    "\n",
+  )) {
     if (!line.trim()) continue;
     const o: MmahEntry = JSON.parse(line);
     mmah.set(o.character, o);
@@ -181,7 +188,10 @@ async function main() {
   // ------------------------------------------------- level partition (exclusive)
   const entriesByLevel = new Map<Level, HskEntry[]>();
   for (const level of LEVELS) {
-    entriesByLevel.set(level, hsk.filter((e) => e.level.includes(LEVEL_TAG[level])));
+    entriesByLevel.set(
+      level,
+      hsk.filter((e) => e.level.includes(LEVEL_TAG[level])),
+    );
   }
 
   /**
@@ -219,7 +229,10 @@ async function main() {
 
   /** Pick example sentences containing `needle`, drawn from that level's pool. */
   const pickSentences = (needle: string, level: Level): Sentence[] =>
-    sentencesFor.get(level)!.filter((s) => s.cmn.includes(needle)).slice(0, MAX_SENTENCES);
+    sentencesFor
+      .get(level)!
+      .filter((s) => s.cmn.includes(needle))
+      .slice(0, MAX_SENTENCES);
 
   // ------------------------------------------------------------- authored content
   const authoredHanzi = new Map<string, AuthoredHanzi>();
@@ -420,9 +433,10 @@ async function main() {
 
   // standalone single-character HSK entries, for pinyin/meanings/frequency
   const standalone = new Map<string, HskEntry>();
-  for (const e of hsk) if (hanziOf(e.simplified).length === 1 && e.simplified.length === 1) {
-    if (!standalone.has(e.simplified)) standalone.set(e.simplified, e);
-  }
+  for (const e of hsk)
+    if (hanziOf(e.simplified).length === 1 && e.simplified.length === 1) {
+      if (!standalone.has(e.simplified)) standalone.set(e.simplified, e);
+    }
 
   // ------------------------------------------------------------------- hanzi
   const hanziList: Hanzi[] = [];
@@ -519,7 +533,9 @@ async function main() {
     r.variants = [...written.keys()].sort();
     r.display = [...written.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? r.canonical;
   }
-  const radicals = [...radMap.values()].sort((a, b) => a.strokes - b.strokes || a.number - b.number);
+  const radicals = [...radMap.values()].sort(
+    (a, b) => a.strokes - b.strokes || a.number - b.number,
+  );
 
   // ------------------------------------------------------------------ output
   const extraWordCount = words.filter((w) => w.extra).length;
@@ -529,7 +545,8 @@ async function main() {
       entries: entriesByLevel.get(level)!.length,
       hanzi: hanziList.filter((h) => h.level === level).length,
       words: words.filter((w) => !w.extra && w.level === level).length,
-      radicals: new Set(hanziList.filter((h) => h.level === level).map((h) => h.radicalNumber)).size,
+      radicals: new Set(hanziList.filter((h) => h.level === level).map((h) => h.radicalNumber))
+        .size,
     };
   }
 
@@ -600,14 +617,17 @@ async function writeWebShards(args: {
   counts: Dataset["counts"];
   extraWords: number;
   mmah: Map<string, MmahEntry>;
-}): Promise<{ version: string; strokeEntries: number }> {
-  const { hanziList, words, radicals, topics, relations, lexemes, counts, extraWords, mmah } =
-    args;
+}): Promise<{
+  version: string;
+  strokeEntries: number;
+}> {
+  const { hanziList, words, radicals, topics, relations, lexemes, counts, extraWords, mmah } = args;
   const hanziByChar = new Map(hanziList.map((h) => [h.char, h]));
   const wordByText = new Map(words.map((w) => [w.word, w]));
   const topicById = new Map(topics.map((t) => [t.id, t]));
   const lexemeByForm = new Map(lexemes.map((l) => [l.form, l]));
   const phonetics = buildPhonetics(hanziList, hanziByChar, radicals, mmah);
+  const audioPin = await readFile("data/sources/audio-cmn/SOURCE.json", "utf8");
 
   const version = createHash("sha256")
     .update(JSON.stringify(hanziList))
@@ -616,6 +636,7 @@ async function writeWebShards(args: {
     .update(JSON.stringify(relations))
     .update(JSON.stringify(lexemes))
     .update(JSON.stringify(phonetics))
+    .update(audioPin)
     .digest("hex")
     .slice(0, 12);
 
@@ -787,9 +808,13 @@ function pickAnchor(
   hanziByChar: Map<string, Hanzi>,
   mmah: Map<string, MmahEntry>,
 ): string {
-  const opts = [...new Set([component, rad?.canonical, rad?.display, ...(rad?.variants ?? [])].filter(
-    (c): c is string => Boolean(c),
-  ))];
+  const opts = [
+    ...new Set(
+      [component, rad?.canonical, rad?.display, ...(rad?.variants ?? [])].filter((c): c is string =>
+        Boolean(c),
+      ),
+    ),
+  ];
   return (
     opts.find((c) => hanziByChar.has(c)) ??
     opts.find((c) => (mmah.get(c)?.pinyin.length ?? 0) > 0) ??
@@ -821,11 +846,7 @@ function buildPhonetics(
       component,
       anchor,
       pinyin: asHanzi?.pinyin ?? mm?.pinyin ?? [],
-      meaning:
-        firstGloss(asHanzi?.meanings[0]) ||
-        firstGloss(mm?.definition) ||
-        rad?.gloss ||
-        null,
+      meaning: firstGloss(asHanzi?.meanings[0]) || firstGloss(mm?.definition) || rad?.gloss || null,
       radical: rad ? radicalRef(rad) : null,
       hanzi: hanziChar,
     };

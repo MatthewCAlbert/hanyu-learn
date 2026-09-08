@@ -34,7 +34,7 @@ function loadJson<T>(path: string): Promise<T> {
 
 let manifestPromise: Promise<string> | undefined;
 
-async function datasetVersion(): Promise<string> {
+export async function datasetVersion(): Promise<string> {
   if (typeof __DATASET_VERSION__ === "string" && __DATASET_VERSION__) {
     return __DATASET_VERSION__;
   }
@@ -45,6 +45,10 @@ async function datasetVersion(): Promise<string> {
 async function asset<T>(rel: string): Promise<T> {
   const version = await datasetVersion();
   return loadJson<T>(`/data/${version}/${rel}`);
+}
+
+export async function loadDatasetJson<T>(rel: string): Promise<T> {
+  return asset<T>(rel);
 }
 
 export async function getMeta(): Promise<DatasetMeta> {

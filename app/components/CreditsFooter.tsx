@@ -30,7 +30,16 @@ export function CreditsFooter() {
         >
           hanzi-writer-data
         </a>{" "}
-        (Arphic Public License).{" "}
+        (Arphic Public License). Pronunciation from{" "}
+        <a
+          href="https://github.com/hugolpz/audio-cmn"
+          target="_blank"
+          rel="noreferrer"
+          className={link}
+        >
+          audio-cmn
+        </a>{" "}
+        (CC BY-SA; Chen Wang, Yue Tan).{" "}
         <a href="/credits" className={link}>
           Credits
         </a>

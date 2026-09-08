@@ -5,6 +5,7 @@ import { Decomposition } from "~/components/Decomposition";
 import { StrokeOrder } from "~/components/StrokeOrder";
 import { Sentences } from "~/components/Sentences";
 import { RelationSections } from "~/components/details/RelationSections";
+import { PronunciationButton } from "~/components/PronunciationButton";
 import { CHAR_CONTRIBUTION_SECTION } from "~/lib/lexical";
 import type { HanziDetailData } from "~/lib/detail-data";
 
@@ -37,8 +38,9 @@ export function HanziDetailContent({ data }: { data: HanziDetailData }) {
         <div className="min-w-0 flex-1 pt-1">
           <div className="flex flex-wrap items-center gap-2">
             {h.readings.map((r) => (
-              <span key={r.pinyin} className="text-lg text-ink">
-                {r.pinyin}
+              <span key={r.pinyin} className="flex items-center gap-1">
+                <span className="text-lg text-ink">{r.pinyin}</span>
+                <PronunciationButton form={h.char} pinyin={r.pinyin} preferWordClip={false} />
               </span>
             ))}
             <Chip tone="accent">HSK {h.level}</Chip>

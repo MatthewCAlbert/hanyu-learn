@@ -1,0 +1,14 @@
+{
+  "repo": "https://github.com/hugolpz/audio-cmn",
+  "commit": "ff9ed3d0c631195bd2c06f39450f3264c7124040",
+  "quality": "24k-abr",
+  "license": "CC-BY-SA",
+  "speakers": {
+    "syllabs": "Chen Wang",
+    "hsk": "Yue Tan"
+  },
+  "curator": "Hugo Lopez",
+  "words": 5487,
+  "syllables": 1707,
+  "notes": "Pruned to corpus word/lexeme forms plus the full 24k-abr syllable bank. Upstream removed tone-5 files (they were copies of tone 1); this app never substitutes tone 1 for neutral tone."
+}

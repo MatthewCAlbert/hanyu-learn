@@ -2,7 +2,8 @@
 
 Most of `data/sources/` is vendored — committed verbatim so builds need no
 network and upstream changes show up as reviewable diffs. `extra-vocabulary.json`
-is the exception: it is authored here.
+is authored here. `audio-cmn/` keeps a pin (`SOURCE.json`); the MP3s are
+gitignored and fetched at play time from `CDN_AUDIO_URL` when set.
 
 | File                           | Source                                                                                            | License                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------- |
@@ -12,10 +13,11 @@ is the exception: it is authored here.
 | `tatoeba-cmn-eng.tsv`          | [Tatoeba](https://tatoeba.org) cmn/eng exports, joined and pruned                                 | **CC-BY 2.0 FR**          |
 | `radical-index.json`           | [Unicode Unihan](https://www.unicode.org/charts/unihan.html) `kRSUnicode` + Kangxi Radicals block | Unicode License           |
 | stroke data (npm)              | [`hanzi-writer-data`](https://github.com/chanind/hanzi-writer)                                    | **Arphic Public License** |
+| `audio-cmn/`                   | [hugolpz/audio-cmn](https://github.com/hugolpz/audio-cmn) `24k-abr`, commit `ff9ed3d0c631`       | **CC BY-SA** (unspecified version). Pin in `SOURCE.json`; MP3s gitignored. |
 
 ## Attribution required on distribution
 
-The UI footer and `/credits` page cover the three that require attribution
+The UI footer and `/credits` page cover the sources that require attribution
 on distribution:
 
 - **makemeahanzi** (LGPL-3.0) — character decompositions, radicals, etymology.
@@ -27,6 +29,11 @@ on distribution:
   derived from the Arphic PL KaitiM GB font. The APL is the strictest licence
   here: it requires the licence text to travel with the data and any changes to
   be documented. An unaltered copy is at `/licenses/ARPHICPL.TXT`.
+- **audio-cmn** (CC BY-SA, version unspecified upstream) — pronunciation.
+  Syllables by Chen Wang; HSK word clips by Yue Tan; packaging by Hugo Lopez.
+  Optional CDN of the 24 kbps tree (`CDN_AUDIO_URL`; see the README). Neutral-tone
+  files were removed upstream because they duplicated tone 1; this app does not
+  put them back. Without the env var, playback uses the browser’s `speechSynthesis`.
 
 The `meanings` fields trace back to **CC-CEDICT** (CC-BY-SA 3.0) through the
 HSK wordlist repo. That repo is MIT-licensed, but share-alike arguably reaches
@@ -61,6 +68,7 @@ them into one “real-life score.”
 
 ```bash
 pnpm data:tatoeba   # re-downloads ~130MB, rejoins, rewrites the pruned TSV. Rare.
+pnpm data:audio     # optional: sparse-clones audio-cmn and writes a pruned 24k tree to upload.
 pnpm data:build     # sources + content/ -> app/data/generated/
 pnpm data:md        # -> docs/hsk/ and docs/extra/
 ```

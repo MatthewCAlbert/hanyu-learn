@@ -51,7 +51,18 @@ export default defineConfig({
   appType: "spa",
   plugins: [ignoreDevtoolsProbe(), tailwindcss(), reactRouter(), ssl && basicSsl()],
   resolve: { tsconfigPaths: true },
+  envPrefix: ["VITE_", "CDN_"],
   define: {
     __DATASET_VERSION__: JSON.stringify(datasetVersion()),
+  },
+  server: {
+    watch: {
+      ignored: [
+        "**/public/data/**",
+        "**/app/data/generated/**",
+        "**/data/sources/audio-cmn/**",
+        "**/data/sources/.raw/**",
+      ],
+    },
   },
 });
