@@ -1,8 +1,18 @@
 ---
 topic: language-and-grammar
 label: Language & grammar
-hanzi: [语, 文, 汉, 言]
+hanzi: [语, 文, 汉, 言, 翻, 译, 括, 符]
 words:
+  - 翻译
+  - 形容
+  - 含义
+  - 语音
+  - 字母
+  - 符号
+  - 词汇
+  - 语法
+  - 口语
+  - 括号
   - 中文
   - 外语
   - 汉语

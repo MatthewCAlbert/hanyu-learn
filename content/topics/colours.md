@@ -1,7 +1,7 @@
 ---
 topic: colours
 label: Colours
-hanzi: []
+hanzi: [浅]
 words: [颜色, 红色, 黑色, 绿色, 白色, 蓝色, 黄色]
 ---
 
