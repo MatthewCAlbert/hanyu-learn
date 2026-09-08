@@ -236,3 +236,57 @@ Do not edit `docs/hsk/**` or `app/data/generated/**` by hand.
 After the first 25-entry HSK 1 batch, stop and check: false synonym candidates,
 corpus disagreement, minutes per item, prompt size, whether learners understand
 **Real-life alternatives**. Freeze the taxonomy only after that review.
+
+---
+
+## 8. Deferred: medium-confidence HSK 5–7 pairs
+
+A 2026 pass manually vetted 93 candidate near-synonym/register pairs for
+HSK 5–7 (this band has almost no authored cross-reference wikilinks yet, so
+candidate-mining per §1 barely surfaces anything there — these came from a
+curated list of classic 近义词辨析 pairs checked against the corpus instead).
+32 were dropped outright as false positives or too-subtle-to-source. Of the
+remaining 61, only the **36 high-confidence** ones were authored (as 35
+relations — two pairs sharing 互相 were merged into one three-way
+`mutually-synonyms` instead of two overlapping relations). The other **25
+medium-confidence pairs** were deliberately left unauthored: each has a real,
+statable distinction, but the distinction is subtler, harder to cite
+cleanly, or more likely to draw disagreement than the high-confidence tier.
+
+Deferred pairs (kind, tentative axis):
+
+| Pair | Kind | Note |
+|---|---|---|
+| 承诺 / 保证 | synonym | promise vs guarantee — overlap, strength differs |
+| 呈现 / 展现 | synonym | passive presenting vs active showing |
+| 执行 / 履行 | synonym | carry out orders vs fulfil an obligation |
+| 改良 / 改进 | synonym | reform a system vs improve a method |
+| 扩大 / 扩张 | synonym | neutral vs connotation of aggression/overreach |
+| 扩展 / 拓展 | synonym | expand vs develop (business/market) |
+| 削弱 / 减弱 | synonym | deliberate/transitive vs gradual/general weakening |
+| 稳定 / 安定 | synonym | general stability vs social/political stability |
+| 宽容 / 包容 | synonym | tolerant vs inclusive/embracing |
+| 从容 / 镇定 | synonym | unhurried composure vs composure under pressure |
+| 忧虑 / 焦虑 | synonym | worry vs clinical/intense anxiety |
+| 烦恼 / 苦恼 | synonym | annoyance vs deeper distress |
+| 悲痛 / 悲哀 | synonym | grief (e.g. death) vs general sorrow |
+| 快乐 / 欢乐 | synonym | personal happiness vs collective/festive joy |
+| 冷淡 / 冷漠 | synonym | cold toward someone vs general apathy |
+| 冷漠 / 漠然 | synonym | indifferent vs literary "nonchalant" |
+| 诚恳 / 诚挚 | synonym | both fairly formal, sincerity register overlap |
+| 真诚 / 真挚 | synonym | sincere/genuine vs heartfelt (feelings, friendship) |
+| 狡猾 / 奸诈 | synonym | cunning vs treacherous — degree/moral loading |
+| 刻苦 / 努力 | synonym | enduring-hardship register vs basic "try hard" |
+| 奋斗 / 拼搏 | synonym | strive vs all-out fight (sports/competition flavour) |
+| 持续 / 延续 | synonym | continue vs extend/carry forward (e.g. a tradition) |
+| 间断 / 中断 | synonym | discontinuous/intermittent vs a single interruption |
+| 长久 / 长远 | synonym | long-lasting (duration) vs long-term (perspective) |
+| 局部 / 部分 | synonym | technical/anatomical "local" vs general "part" |
+
+**Revisit prompt:** *"Review the deferred medium-confidence pairs in
+LEXICAL-RELATIONS-PLAYBOOK.md §8 — for each, decide keep (author it, citing
+a real source per §3/§4) or drop (the distinction doesn't hold up / isn't
+learner-useful), then update this table to remove resolved rows."* Work in
+the usual ≤25 batch, and remove a row here the moment its relation is
+authored or it is formally rejected — this table is a backlog, not a
+permanent record.
