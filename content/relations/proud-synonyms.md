@@ -32,9 +32,7 @@ In the "proud of an achievement" sense (为...而自豪/骄傲), the two overlap
 are commonly interchangeable: 我为我儿子骄傲/自豪 both work. They diverge
 outside that sense: 骄傲 is ambivalent and, used alone without an object, very
 often means the negative "arrogant, conceited" (骄傲使人落后 "pride goes
-before a fall") — a sense 自豪 never carries. 自豪 is unambiguously positive
-and always needs an object (proud *of* something); it cannot mean
-"arrogant."
+before a fall") — a sense 自豪 never carries. 自豪 is unambiguously positive, with or without an object (为...自豪 / 感到自豪); it cannot mean "arrogant."
 
 ## Corpus evidence
 Lexicographic (L): CC-CEDICT and 现汉 both list 骄傲 with the double sense

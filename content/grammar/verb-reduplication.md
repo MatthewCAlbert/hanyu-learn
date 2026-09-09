@@ -26,4 +26,4 @@ Repeating a verb ([[看]]看), inserting 一 ([[想]]一想), or repeating aroun
 Common in suggestions and requests: 你尝尝 "give it a try", 我们讨论讨论 "let's talk it over a little." It is not used with negation — there is no *不看看.
 
 ## Notes
-This changes tone and register, not tense or aspect — the action itself is no shorter than usual.
+Reduplication marks delimitative aspect — a brief or tentative doing of the action — rather than tense. It does not combine with 了/过/着 except in the fixed V了V form (看了看).

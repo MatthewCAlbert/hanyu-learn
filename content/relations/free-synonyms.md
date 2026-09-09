@@ -29,7 +29,7 @@ members:
 
 ## Distinctions
 In the "available" sense only, 没事儿 ("have nothing on") and 有空儿 ("have free
-time") can both answer "are you free?" (你有空儿吗? / 你没事儿吧，一起吃饭？). They
+time") can both answer "are you free?" (你有空儿吗? / 明天你没事儿吧，一起吃饭？ "you're free tomorrow, right — let's eat together?"). They
 are not general synonyms: 没事儿's much more common use is the reassurance
 "it's nothing, no big deal, don't worry about it" — a reply to 对不起 or 谢谢,
 close to 没关系 — a sense 有空儿 does not have at all. Only the "not busy" sense

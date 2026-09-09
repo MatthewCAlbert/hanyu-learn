@@ -13,7 +13,7 @@ members:
     role: everyday
     register: colloquial
     contexts: [speech]
-    regions: [widespread]
+    regions: [northern]
     currency: current
     sense: "boy"
     pos: [n]
@@ -22,7 +22,7 @@ members:
     role: everyday
     register: colloquial
     contexts: [speech]
-    regions: [widespread]
+    regions: [northern]
     currency: current
     sense: "girl"
     pos: [n]
@@ -30,7 +30,7 @@ members:
 
 ## Distinctions
 男孩儿 and 女孩儿 oppose only on the sex of the child; both cover the same age
-range (infancy through young adulthood) and the same colloquial erhua
+range (infancy through childhood) and the same colloquial erhua
 register. Do not confuse this pair with 男生 / 女生 (the student/youth-register
 counterpart, see [[boy-register]] and [[girl-register]]) or with 男人 / 女人
 (adult men and women).

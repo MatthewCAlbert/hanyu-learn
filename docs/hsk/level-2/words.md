@@ -67,13 +67,13 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 零下 | líng xià | below zero | zero + below | semantic-compound | transparent | ✅ reviewed |
 | 过年 | guò nián | to celebrate the Chinese New Year | pass / spend + year | verb-object | semi | ✅ reviewed |
 | 干杯 | gān bēi | to drink a toast; Cheers! (proposing a … | dry + cup | verb-object | semi | ✅ reviewed |
-| 排球 | pái qiú | volleyball | push / volley + ball | semantic-compound | semi | ✅ reviewed |
+| 排球 | pái qiú | volleyball | row + ball | semantic-compound | semi | ✅ reviewed |
 | 字典 | zì diǎn | Chinese character dictionary (containin… | character + canon / authority | semantic-compound | semi | ✅ reviewed |
-| 碰见 | pèng jiàn | to run into; to meet (unexpectedly); to… | bump + perceive | verb-object | transparent | ✅ reviewed |
+| 碰见 | pèng jiàn | to run into; to meet (unexpectedly); to… | bump + perceive | semantic-compound | transparent | ✅ reviewed |
 | 公共汽车 | gōng gòng qì chē | bus | public + car | semantic-compound | transparent | ✅ reviewed |
 | 开机 | kāi jī | to start an engine; to boot up (a compu… | start + machine | verb-object | semi | ✅ reviewed |
 | 饺子 | jiǎo zi | dumpling; pot-sticker | dumpling + [noun suffix] | semantic-compound | semi | ✅ reviewed |
-| 站住 | zhàn zhù | to stand | stand + fast | verb-object | semi | ✅ reviewed |
+| 站住 | zhàn zhù | to stand | stand + fast | semantic-compound | semi | ✅ reviewed |
 | 快餐 | kuài cān | fast food; snack; quick meal | fast + meal | semantic-compound | transparent | ✅ reviewed |
 | 地铁站 | dì tiě zhàn | subway station | subway + station | semantic-compound | transparent | ✅ reviewed |
 | 有点儿 | yǒu diǎn r | slightly; a little; somewhat | have + a bit | semantic-compound | semi | ✅ reviewed |
@@ -196,7 +196,7 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 多数 | duō shù | majority; most | many + number | semantic-compound | transparent | ✅ reviewed |
 | 爱人 | ài ren | spouse (PRC); lover (non-PRC) | love + person | semantic-compound | semi | ✅ reviewed |
 | 一部分 | yī bù fen | portion; part of; subset | one + part | semantic-compound | transparent | ✅ reviewed |
-| 等到 | děng dào | to wait until; by the time when (sth is… | wait + reach | verb-object | transparent | ✅ reviewed |
+| 等到 | děng dào | to wait until; by the time when (sth is… | wait + reach | semantic-compound | transparent | ✅ reviewed |
 | 校园 | xiào yuán | campus | school + grounds | semantic-compound | transparent | ✅ reviewed |
 | 排队 | pái duì | to line up | arrange in a row + line | verb-object | semi | ✅ reviewed |
 | 午餐 | wǔ cān | lunch; luncheon | noon + meal | semantic-compound | transparent | ✅ reviewed |
@@ -222,7 +222,7 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 晚会 | wǎn huì | evening party | evening + gathering | semantic-compound | transparent | ✅ reviewed |
 | 大门 | dà mén | entrance; door; gate; large and influen… | big + gate | semantic-compound | transparent | ✅ reviewed |
 | 晚餐 | wǎn cān | evening meal; dinner | evening + meal | semantic-compound | transparent | ✅ reviewed |
-| 篮球 | lán qiú | basketball | basket + ball | semantic-compound | transparent | ✅ reviewed |
+| 篮球 | lán qiú | basketball | basket + ball | loanword-calque | transparent | ✅ reviewed |
 | 科学家 | kē xué jiā | scientist | science + -ist | semantic-compound | transparent | ✅ reviewed |
 | 大大 | dà dà | greatly; enormously; (dialect) dad; unc… | big + big | reduplication | transparent | ✅ reviewed |
 | 这时 | zhè shí | at this time; at this moment | this + time | semantic-compound | transparent | ✅ reviewed |
@@ -239,7 +239,7 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 相机 | xiàng jī | camera (abbr. for 照相机); at the opportun… | photo(-graph) + machine | abbreviation | semi | ✅ reviewed |
 | 自行车 | zì xíng chē | bicycle; bike | self-propelled + vehicle | semantic-compound | semi | ✅ reviewed |
 | 市长 | shì zhǎng | mayor | city + head | semantic-compound | semi | ✅ reviewed |
-| 分开 | fēn kāi | to separate; to part | divide + apart | verb-object | semi | ✅ reviewed |
+| 分开 | fēn kāi | to separate; to part | divide + apart | semantic-compound | semi | ✅ reviewed |
 | 校长 | xiào zhǎng | (college, university) president; headma… | school + head | semantic-compound | semi | ✅ reviewed |
 | 大声 | dà shēng | loud voice; in a loud voice; loudly | big + voice | semantic-compound | transparent | ✅ reviewed |
 | 好人 | hǎo rén | good person; healthy person; person who… | good + person | semantic-compound | transparent | ✅ reviewed |
@@ -266,13 +266,13 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 车辆 | chē liàng | vehicle | vehicle + [vehicle measure word] | semantic-compound | semi | ✅ reviewed |
 | 图片 | tú piàn | picture; photograph | picture + flat piece | semantic-compound | semi | ✅ reviewed |
 | 早餐 | zǎo cān | breakfast | early + meal | semantic-compound | transparent | ✅ reviewed |
-| 接下来 | jiē xià lái | to accept; to take; next; following | carry on + down + come | idiom | semi | ✅ reviewed |
+| 接下来 | jiē xià lái | to accept; to take; next; following | carry on + down + come | semantic-compound | semi | ✅ reviewed |
 | 夏天 | xià tiān | summer | summer + season | semantic-compound | transparent | ✅ reviewed |
 | 好久 | hǎo jiǔ | quite a while | quite + long (time) | semantic-compound | semi | ✅ reviewed |
 | 广场 | guǎng chǎng | public square; plaza | wide + open ground | semantic-compound | transparent | ✅ reviewed |
-| 懂得 | dǒng de | to understand; to know; to comprehend | understand + [attain] | verb-object | semi | ✅ reviewed |
+| 懂得 | dǒng de | to understand; to know; to comprehend | understand + [attain] | semantic-compound | semi | ✅ reviewed |
 | 蓝色 | lán sè | blue (color) | blue + colour | semantic-compound | transparent | ✅ reviewed |
-| 碰到 | pèng dào | to come across; to run into; to meet; t… | bump + reach | verb-object | transparent | ✅ reviewed |
+| 碰到 | pèng dào | to come across; to run into; to meet; t… | bump + reach | semantic-compound | transparent | ✅ reviewed |
 | 准确 | zhǔn què | accurate; exact; precise | exact + certain | semantic-compound | transparent | ✅ reviewed |
 | 请求 | qǐng qiú | to request; to ask; request | request + seek | semantic-compound | transparent | ✅ reviewed |
 | 便宜 | pián yi | cheap; inexpensive; small advantages; t… | convenient + fitting | semantic-compound | semi | ✅ reviewed |
@@ -284,7 +284,7 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 不久 | bù jiǔ | not long (after); before too long; soon… | not + long (time) | semantic-compound | transparent | ✅ reviewed |
 | 送给 | sòng gěi | to send; to give as a present | give / send + give (to) | semantic-compound | transparent | ✅ reviewed |
 | 流行 | liú xíng | (of a contagious disease etc) to spread… | flow + circulate | semantic-compound | semi | ✅ reviewed |
-| 组成 | zǔ chéng | to form; to make up; to constitute | organise + into | verb-object | semi | ✅ reviewed |
+| 组成 | zǔ chéng | to form; to make up; to constitute | organise + into | semantic-compound | semi | ✅ reviewed |
 | 难过 | nán guò | to feel sad; to feel unwell; (of life) … | hard + to get through | semantic-compound | semi | ✅ reviewed |
 | 顾客 | gù kè | customer; client | patronise + guest | semantic-compound | semi | ✅ reviewed |
 | 不如 | bù rú | not equal to; not as good as; inferior … | not + be like / come up to | semantic-compound | semi | ✅ reviewed |
@@ -397,7 +397,7 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 动物 | dòng wù | animal | moving + thing | semantic-compound | semi | ✅ reviewed |
 | 想法 | xiǎng fǎ | way of thinking; opinion; notion; to th… | think + way | semantic-compound | transparent | ✅ reviewed |
 | 举行 | jǔ xíng | to hold (a meeting, ceremony etc) | raise up + carry out | semantic-compound | semi | ✅ reviewed |
-| 怎么办 | zěn me bàn | what's to be done | how + handle | verb-object | transparent | ✅ reviewed |
+| 怎么办 | zěn me bàn | what's to be done | how + handle | semantic-compound | transparent | ✅ reviewed |
 | 不够 | bù gòu | not enough; insufficient; inadequate | not + enough | semantic-compound | transparent | ✅ reviewed |
 | 小心 | xiǎo xīn | to be careful; to take care | make small + heart | verb-object | semi | ✅ reviewed |
 | 咱们 | zán men | we or us (including both the speaker an… | we (inclusive) + [plural] | semantic-compound | transparent | ✅ reviewed |
@@ -419,7 +419,7 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 心里 | xīn li | chest; heart; mind | heart + inside | semantic-compound | transparent | ✅ reviewed |
 | 教育 | jiào yù | to educate; to teach; education | teach + nurture | semantic-compound | semi | ✅ reviewed |
 | 日子 | rì zi | day; a (calendar) date; days of one's l… | day + [noun suffix] | semantic-compound | transparent | ✅ reviewed |
-| 留下 | liú xià | to leave behind; to stay behind; to rem… | keep + down | verb-object | semi | ✅ reviewed |
+| 留下 | liú xià | to leave behind; to stay behind; to rem… | keep + down | semantic-compound | semi | ✅ reviewed |
 | 关心 | guān xīn | to be concerned about; to care about | attach + heart | verb-object | semi | ✅ reviewed |
 | 方向 | fāng xiàng | direction; orientation | direction + toward | semantic-compound | transparent | ✅ reviewed |
 | 正是 | zhèng shì | is precisely | exactly + is | semantic-compound | transparent | ✅ reviewed |
@@ -462,11 +462,11 @@ Multi-character words introduced at this level. `Literal` and `Why` are filled i
 | 重新 | chóng xīn | again; once more; re- | again + anew | semantic-compound | semi | ✅ reviewed |
 | 只能 | zhǐ néng | can only; obliged to do sth; to have no… | only + can | semantic-compound | transparent | ✅ reviewed |
 | 经过 | jīng guò | to pass; to go through; process; course | pass through + cross | semantic-compound | semi | ✅ reviewed |
-| 受到 | shòu dào | to receive (praise, an education, punis… | receive + reach | verb-object | transparent | ✅ reviewed |
-| 变成 | biàn chéng | to change into; to turn into; to become | change + become | verb-object | transparent | ✅ reviewed |
+| 受到 | shòu dào | to receive (praise, an education, punis… | receive + reach | semantic-compound | transparent | ✅ reviewed |
+| 变成 | biàn chéng | to change into; to turn into; to become | change + become | semantic-compound | transparent | ✅ reviewed |
 | 声音 | shēng yīn | voice; sound | sound + tone | semantic-compound | transparent | ✅ reviewed |
 | 怎样 | zěn yàng | how; what kind | how + manner | semantic-compound | semi | ✅ reviewed |
-| 做到 | zuò dào | to accomplish; to achieve | do + reach | verb-object | transparent | ✅ reviewed |
+| 做到 | zuò dào | to accomplish; to achieve | do + reach | semantic-compound | transparent | ✅ reviewed |
 | 眼睛 | yǎn jing | eye | eye + eyeball | semantic-compound | transparent | ✅ reviewed |
 | 新闻 | xīn wén | news | new + what is heard | semantic-compound | semi | ✅ reviewed |
 | 可爱 | kě ài | adorable; cute; lovely | -able + love | semantic-compound | transparent | ✅ reviewed |

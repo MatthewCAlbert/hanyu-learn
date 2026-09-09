@@ -177,6 +177,6 @@ words:
   - 两岸
 ---
 
-Nations, regions, landscape features and place names. Extra-band country names
+Nations, regions and place names. Landscape features live in `nature`. Extra-band country names
 are not on the HSK 3.0 wordlist. Names the HSK hanzi set cannot spell are omitted
 (韩国, 澳大利亚, 埃及, 菲律宾, 匈牙利, 柬埔寨, 老挝).

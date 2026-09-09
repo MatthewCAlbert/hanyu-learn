@@ -21,7 +21,7 @@ examples:
 ---
 
 ## Pattern
-在 (or 正在, or 正) before the verb marks an action in progress; [[呢]] at the end can reinforce it, and can even carry the meaning alone after context is set. Do not confuse this 在 with the location verb 在 (书在桌子上) covered in [[grammar:you-existence]] — same character, different job.
+在 (or 正在, or 正) before the verb marks an action in progress; [[呢]] at the end can reinforce it, and can even carry the meaning alone after context is set. Do not confuse this 在 with the location verb 在 (书在桌子上) covered in [[grammar:zai-location]] — same character, different job.
 
 ## Usage
 Negate with 没(有), not 不: 他没在看书 "he isn't reading right now." 呢 alone after a clause can express the progressive on its own: 他看书呢。

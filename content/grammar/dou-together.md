@@ -20,7 +20,7 @@ examples:
 ---
 
 ## Pattern
-[[都]] marks that the preceding plural or listed set is fully included: 我们都是学生. [[一起]] marks a shared action: 一起去, 一起吃. Both sit before the verb (or before 是/很).
+[[都]] marks that the preceding plural or listed set is fully included: 我们都是学生. [[一起]] marks a shared action: 一起去, 一起吃. Both sit before the verb; 都 can also precede 是/很 (都是学生), while 一起 goes with action verbs.
 
 ## Usage
 都 looks backward at who or what is included, so put the group first: 他们都来了, not *都他们来了. 一起 answers “with whom / jointly,” not “every one of them.”

@@ -21,7 +21,7 @@ members:
     role: everyday
     register: colloquial
     contexts: [speech, chat]
-    regions: [widespread]
+    regions: [northern]
     currency: current
     sense: "a joke, a funny story (colloquial erhua; 讲个笑话儿)"
     pos: [n]

@@ -39,5 +39,5 @@ this pair.
 ## Corpus evidence
 Lexicographic (L): 现汉 cross-references 公交车 as the common clipped form of
 公共汽车.
-Reviewed (R): 公交车's own entry calls 公共汽车 "the modern everyday word,
-shorter than 公共汽车" — i.e. itself the newer default.
+Reviewed (R): 公交车's own entry calls itself the modern everyday word,
+shorter than 公共汽车 — i.e. the newer default.

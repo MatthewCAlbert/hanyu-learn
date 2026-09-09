@@ -16,8 +16,8 @@ words:
 examples:
   - cmn: 他高高兴兴地回家了。
     eng: He went home in high spirits.
-  - cmn: 今天的天气好好的。
-    eng: The weather is just fine today.
+  - cmn: 他的眼睛大大的。
+    eng: His eyes are (nice and) big.
 ---
 
 ## Pattern

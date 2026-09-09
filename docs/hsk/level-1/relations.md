@@ -69,7 +69,6 @@ Not learner-facing until reviewed into `content/relations/` or `chars:`.
 | 读音 读书 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 教学楼 | usage | 97 | high textbook-frequency word with no usage profile or relation |
 | 考生 考试 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
-| 考生 先生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 考生 学生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 考生 医生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 网友 | usage | 97 | high textbook-frequency word with no usage profile or relation |
@@ -90,3 +89,4 @@ Not learner-facing until reviewed into `content/relations/` or `chars:`.
 | 西医 医生 | synonym-set | 96 | wikilink in authored notes is not yet a relation member pair |
 | 汉字 | usage | 95 | high textbook-frequency word with no usage profile or relation |
 | 汉字 名字 | synonym-set | 95 | wikilink in authored notes is not yet a relation member pair |
+| 午睡 睡觉 | synonym-set | 95 | wikilink in authored notes is not yet a relation member pair |

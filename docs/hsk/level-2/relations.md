@@ -96,7 +96,7 @@ Not learner-facing until reviewed into `content/relations/` or `chars:`.
 | 考生 | usage | 97 | high textbook-frequency word with no usage profile or relation |
 | 考生 考试 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 考生 留学生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
-| 考生 先生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 考生 学生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 考生 医生 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |
 | 西餐 | usage | 97 | high textbook-frequency word with no usage profile or relation |
+| 西餐 快餐 | synonym-set | 97 | wikilink in authored notes is not yet a relation member pair |

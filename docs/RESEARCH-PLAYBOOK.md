@@ -131,6 +131,14 @@ under `## Why this combination`.
 | `idiom` | 东西 east+west | Why is it opaque, and is the popular story attested? |
 | `reduplication` | 谢谢 | What does the doubling do — softening, aspect, plurality? |
 
+**Verb + complement is `semantic-compound`, not `verb-object`.** Resultative and
+directional complements (看到, 打开, 走进, 记住) take no object and do not split
+like 起床 — 看到个… is impossible; 看得见 is potential-infix behaviour of the
+complement, not object separation. File them as `semantic-compound` and explain
+the complement in prose. `verb-object` is reserved for a verb with a genuine
+noun object (起床, 开车, 帮忙). Polite 请 + verb formulas (请坐, 请问) and
+question-word frames (怎么办) are likewise `semantic-compound`.
+
 `transparency` drives the UI, so be honest with it:
 
 - `transparent` — the characters give it away (电脑)

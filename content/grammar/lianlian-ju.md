@@ -26,4 +26,4 @@ Two verb phrases share one subject and follow each other in the order the action
 This is different from [[grammar:zhe-durative]]'s V着V pattern (one action framing another) — here both actions are sequential events, not a held state. Very common with 去/来 + activity: 我们去看电影吧 "let's go watch a movie."
 
 ## Notes
-Do not add 然后 or 就 between the two verbs at this level — plain juxtaposition already signals the sequence; those connectors are for stitching whole clauses together.
+Do not add 然后 between the two verbs — plain juxtaposition already signals the sequence. 就 before V2 is fine and adds an "immediately after" reading (他开门就出去了); see [[grammar:yi-jiu]].

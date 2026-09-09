@@ -21,7 +21,7 @@ members:
     role: everyday
     register: colloquial
     contexts: [speech]
-    regions: [widespread]
+    regions: [northern]
     currency: current
     sense: "a picture, drawing, painting (everyday spoken, erhua)"
     pos: [n]

@@ -25,7 +25,7 @@ examples:
 [[不过]] softens a contrast, mild enough to stand without a matching [[grammar:suiran-danshi]] 虽然: A，不过 B. [[不但]]...而且 stacks a second, stronger point on top of the first instead of contrasting it: *不但 A，而且 B* — "not only A, but also B."
 
 ## Usage
-不过 reads gentler than 但是 — good for a small caveat rather than a real reversal. When the subject is the same in both halves of 不但...而且, 不但 can move after the subject: 她不但会说中文... (subject before 不但) is also fine, not just 不但她会说中文.
+不过 reads gentler than 但是 — good for a small caveat rather than a real reversal. When both halves of 不但...而且 share one subject, the subject comes before 不但: 她不但会说中文，而且说得很好. 不但 precedes the subject only when the two clauses have different subjects.
 
 ## Notes
 不但...而且 often pairs with 也/还 in the second clause for extra flow: 不但会说，而且说得很好 already reads naturally without one.

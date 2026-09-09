@@ -20,7 +20,7 @@ examples:
 ---
 
 ## Pattern
-*一 + V1，就 + V2* says V2 follows V1 immediately, every time: 他一起床就去洗脸 "the moment he's up, he washes his face." Both verbs share the same subject.
+*一 + V1，就 + V2* says V2 follows V1 immediately, every time: 他一起床就去洗脸 "the moment he's up, he washes his face." Both verbs usually share the same subject, but the second clause may have its own subject, placed before 就: 我一打电话，他就来了。
 
 ## Usage
 This differs from [[grammar:ruguo-jiu]]'s 如果...就, which sets up a hypothetical condition — 一...就 instead describes a tight, often habitual, time link between two real events. 就 keeps its usual spot right before the second verb.

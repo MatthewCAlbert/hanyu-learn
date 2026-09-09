@@ -18,7 +18,7 @@ members:
     pos: [a]
   - form: 悲伤
     kind: word
-    role: everyday
+    role: formal
     register: written
     contexts: [writing, speech]
     regions: [widespread]

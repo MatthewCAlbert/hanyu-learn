@@ -34,7 +34,7 @@ members:
     regions: [northern]
     currency: current
     sense: "do what / what for"
-    pos: [r]
+    pos: [v]
 ---
 
 ## Distinctions

@@ -1,7 +1,7 @@
 ---
 lesson: noun-predicate
 title: Noun-predicate sentences
-pattern: Time / Age / Nationality as predicate
+pattern: Time / Age / Price as predicate
 level: 1
 order: 140
 status: drafted

@@ -12,7 +12,7 @@ members:
     role: everyday
     register: colloquial
     contexts: [speech]
-    regions: [widespread]
+    regions: [northern]
     currency: current
     sense: "girl (young female child, general)"
     pos: [n]

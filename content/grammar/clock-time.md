@@ -27,7 +27,7 @@ examples:
 Hours use [[点]]: 三点. Minutes use [[分]] after the hour: 三点二十分. [[半]] after 点 is thirty minutes: 三点半. The time phrase can be a noun predicate: 现在三点.
 
 ## Usage
-Ask with 几点: 现在几点？ 二 vs 两: hours usually take 两 before 点 (两点), not 二点. 分 may drop in casual speech after round hours.
+Ask with 几点: 现在几点？ 二 vs 两: hours usually take 两 before 点 (两点), not 二点. 分 may drop when the minutes are a multiple of ten: 三点二十 for 三点二十分.
 
 ## Notes
 点 is also a classifier and a verb “to order.” After a number in this lesson it means o'clock.

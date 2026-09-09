@@ -18,7 +18,7 @@ words:
 examples:
   - cmn: 今天星期一。
     eng: Today is Monday.
-  - cmn: 我二零一二年去中国。
+  - cmn: 我二零一二年去了中国。
     eng: I went to China in 2012.
 ---
 

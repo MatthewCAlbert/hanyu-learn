@@ -29,11 +29,12 @@ members:
 ---
 
 ## Distinctions
-长, read cháng "excelling, strong" (not the "long" reading), and 短 "short,
-lacking" both combine with the same 处 "aspect, place" (also in 好处
-"benefit") to name the aspect where a person excels vs falls short. The pair
-is about a person's (or thing's) traits, not a physical measurement — do not
-confuse this cháng with the "long/length" reading of 长.
+长 is read cháng here — the same reading as 长 "long"; the "strong point"
+sense is an extension of "long" (a person's long aspects), not a separate
+pronunciation. 短 "short, lacking" combines with the same 处 "aspect, place"
+(also in 好处 "benefit") to name the aspect where a person excels vs falls
+short. The pair is about a person's (or thing's) traits, not a physical
+measurement — the reading to keep apart is zhǎng "to grow" (长大, 成长).
 
 ## Corpus evidence
 Lexicographic (L): 现汉 defines each against the other as the merit/
