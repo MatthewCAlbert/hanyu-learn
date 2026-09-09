@@ -173,6 +173,7 @@ words:
   - 香港
   - 全世界
   - 边境
+  - 南北
 ---
 
 Nations, regions, landscape features and place names. Extra-band country names
