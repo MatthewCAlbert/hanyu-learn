@@ -174,6 +174,7 @@ words:
   - 全世界
   - 边境
   - 南北
+  - 两岸
 ---
 
 Nations, regions, landscape features and place names. Extra-band country names
