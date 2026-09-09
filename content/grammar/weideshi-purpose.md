@@ -27,4 +27,4 @@ examples:
 Use it for an intentional aim, not an accidental result. A person or group must be able to pursue the purpose. For a simple purpose phrase before an action, 为了 is usually shorter.
 
 ## Notes
-The 的 is part of the fixed connector here. It does not modify a following noun as in [[grammar:de-attributive]].
+The 的 is part of the fixed connector here. It does not modify a following noun as in [[grammar:de-attributive]]. A more formal purpose linker is [[grammar:yibian-so]].

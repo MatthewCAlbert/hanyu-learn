@@ -7,7 +7,8 @@ order: 100
 status: drafted
 confidence: high
 sources: []
-prerequisites: []
+prerequisites:
+  - lianlian-ju-1
 hanzi: []
 words:
   - 出去

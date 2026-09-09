@@ -23,7 +23,7 @@ examples:
 [[被]], 叫, or 让 puts the affected thing in subject position and names what happened to it: *S + 被/叫/让 + (Agent) + V + Other*. Like [[grammar:ba-sentence]], the verb almost always needs a result or complement after it — a bare verb rarely ends the sentence.
 
 ## Usage
-The agent (who/what did it) can be dropped after 被 but not after 叫/让, which read more like spoken-language "so-and-so made it happen": 手机被弄坏了 is fine; 手机叫弄坏了 is not — it needs 叫他弄坏了. 被 is the neutral, written-friendly choice of the three.
+The agent (who/what did it) can be dropped after 被 but not after 叫/让 — that agentless 被 pattern is expanded in [[grammar:bei-bare]]. 被 is the neutral, written-friendly choice of the three.
 
 ## Notes
 This is not the only way to describe someone doing something to something — plain SVO (他弄坏了我的手机) says the same thing without foregrounding the victim; 被 is used specifically when the affected thing is the point of the sentence.

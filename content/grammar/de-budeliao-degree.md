@@ -27,4 +27,4 @@ examples:
 This is vivid and conversational. It works naturally for strong feelings and noticeable states, but is too emotional for a neutral measurement or restrained formal report.
 
 ## Notes
-Standalone [[不得了]] can also warn that a situation is disastrous. After 得, the whole expression functions as a degree complement.
+Standalone [[不得了]] can also warn that a situation is disastrous. After 得, the whole expression functions as a degree complement. Related extremes (得慌, 坏了, 透了) are [[grammar:de-huang-tou]].

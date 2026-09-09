@@ -26,4 +26,4 @@ examples:
 The A clause is often deliberately extreme or exaggerated to make the point vivid: 哪怕再难 "even if it gets [however] hard," 哪怕全世界都反对 "even if the whole world objects." 也 and 还 both work in the result clause.
 
 ## Notes
-哪怕 shares the "no matter" spirit of [[grammar:buguan-wulun]] but names one single extreme case rather than an open range of possibilities.
+哪怕 shares the "no matter" spirit of [[grammar:buguan-wulun]] but names one single extreme case rather than an open range of possibilities. The more standard written twin is [[grammar:jishi-ye]].

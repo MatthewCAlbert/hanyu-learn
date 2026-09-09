@@ -23,7 +23,7 @@ examples:
 *A 比 B + Adj* states that A exceeds B in that quality. The adjective stands alone — no [[很]] in a 比 sentence: 他比我很高 is wrong, even though 很 is normal in the plain adjectival predicate of [[grammar:hen-degree]].
 
 ## Usage
-Negate the comparison itself with 不比, or use A 没有 B + Adj for "A is not as ... as B" (see [[grammar:you-existence]]). Question: 他比你高吗？
+Negate the comparison itself with 不比, or use [[grammar:mei-you-comparison]] (A 没有 B + Adj) for "A is not as ... as B." Question: 他比你高吗？
 
 ## Notes
 比 replaces both 很 and 是 in this pattern — do not stack them.

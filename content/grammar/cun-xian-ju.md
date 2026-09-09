@@ -10,6 +10,7 @@ sources: []
 prerequisites:
   - zhe-durative
   - you-existence
+  - cunxian-ju-1
 hanzi:
   - 位
 words: []

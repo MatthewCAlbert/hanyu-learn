@@ -25,6 +25,7 @@ import {
   matchesGrammar,
   toGrammarIndex,
 } from "~/lib/grammar";
+import { LEVELS } from "~/lib/levels";
 import { SHARD_BUCKETS, shardBucket } from "~/lib/shards";
 
 const H = hanzi as unknown as Hanzi[];
@@ -97,6 +98,43 @@ describe("grammar search", () => {
     ];
     expect(grammarAtLevels(rows, [1]).map((g) => g.id)).toEqual(["a1", "a2"]);
     expect(grammarAtLevels(rows, [1, 2]).map((g) => g.id)).toEqual(["a1", "a2", "b"]);
+  });
+
+  it("retains more than 20 lessons per HSK band in curriculum order", () => {
+    const perLevel = 21;
+    const rows: GrammarIndex[] = LEVELS.flatMap((level) =>
+      Array.from({ length: perLevel }, (_, i) => {
+        const order = (perLevel - i) * 10;
+        const id = `l${level}-o${order}`;
+        return {
+          id,
+          title: id,
+          pattern: id,
+          level,
+          order,
+          status: "drafted" as const,
+          hanzi: [],
+          words: [],
+          haystack: id,
+        };
+      }),
+    );
+
+    for (const level of LEVELS) {
+      const ids = grammarAtLevels(rows, [level]).map((g) => g.id);
+      expect(ids).toHaveLength(perLevel);
+      expect(ids).toEqual(
+        Array.from({ length: perLevel }, (_, i) => `l${level}-o${(i + 1) * 10}`),
+      );
+    }
+
+    const all = grammarAtLevels(rows, LEVELS);
+    expect(all).toHaveLength(LEVELS.length * perLevel);
+    expect(all.map((g) => g.id)).toEqual(
+      LEVELS.flatMap((level) =>
+        Array.from({ length: perLevel }, (_, i) => `l${level}-o${(i + 1) * 10}`),
+      ),
+    );
   });
 });
 
