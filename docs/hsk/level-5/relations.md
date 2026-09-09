@@ -38,6 +38,8 @@ Not learner-facing until reviewed into `content/relations/` or `chars:`.
 | Forms | Kind | Percentile | Reason |
 |---|---|---|---|
 | 二维码 | usage | 100 | high textbook-frequency word with no usage profile or relation |
+| 胡同儿 | char-link | 100 | phonetic-loan without a transliteration character link |
+| 胡同儿 | char-link | 100 | opaque word with no character-contribution overlay |
 | 胡同儿 | usage | 100 | high textbook-frequency word with no usage profile or relation |
 | 杀毒 | usage | 100 | high textbook-frequency word with no usage profile or relation |
 | 微博 | usage | 100 | high textbook-frequency word with no usage profile or relation |
@@ -75,5 +77,3 @@ Not learner-facing until reviewed into `content/relations/` or `chars:`.
 | 盒饭 | usage | 96 | high textbook-frequency word with no usage profile or relation |
 | 救灾 | usage | 96 | high textbook-frequency word with no usage profile or relation |
 | 起到 | usage | 96 | high textbook-frequency word with no usage profile or relation |
-| 扇子 | usage | 96 | high textbook-frequency word with no usage profile or relation |
-| 虚心 | usage | 96 | high textbook-frequency word with no usage profile or relation |
