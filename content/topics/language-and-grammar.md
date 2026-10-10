@@ -120,6 +120,7 @@ words:
   - 蒙古文
   - 藏文
   - 印地文
+  - 反问
 ---
 
 Words about language itself, and grammatical vocabulary. Extra-band language
