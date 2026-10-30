@@ -99,9 +99,10 @@ pnpm data:audio:upload # PUT those clips to S3-compatible storage (see .env.exam
   pasted YouTube URL is confirmed with **Load player** before a privacy-enhanced
   embed appears; playback never autoplays.
 - **Page-aware study chat** streams answers about the current hanzi, word,
-  comparison, translation, or song lyrics. It supports `@` entry mentions,
-  searches the local corpus before guessing, can use web search, and exposes
-  tool activity, citations, token usage and cost.
+  comparison, translation, or song lyrics. It supports `@` entry mentions, lets
+  you attach or paste up to four photos per message for a vision-capable model
+  to read, searches the local corpus before guessing, can use web search, and
+  exposes tool activity, citations, token usage and cost.
 - **i+1 example sentences** — every example at a level uses _only_ characters
   learned at or below it. Enforced by a test, not by hope.
 - Stroke-order animation, click-to-play pronunciation on entry headers, dark
@@ -115,13 +116,15 @@ needs no key. To enable study chat, pinyin/freeform translation, image
 translation, and song import, open `/settings` and add an OpenRouter API key
 (`sk-or-…`) plus a model slug. The app checks that the key works and the model
 advertises tool calling before saving. Image mode also needs a vision-capable
-model (one that lists `image` among its input modalities). Reasoning, reasoning
-effort and response verbosity are configurable.
+model (one that lists `image` among its input modalities); attaching a photo
+in study chat has the same requirement, checked when you send. Reasoning,
+reasoning effort and response verbosity are configurable.
 
 The model and key are stored in `localStorage`. Unsaved chats and unsaved song
 imports are in memory and disappear on reload; chats and songs are written to
 IndexedDB only when explicitly saved (separate databases). Saved threads can be
-renamed or deleted; saved songs can be deleted. Translate photos stay in page
+renamed or deleted; saved songs can be deleted. A chat's attached photos are
+saved with it like the rest of the message. Translate photos stay in page
 memory and are not written to the URL or IndexedDB. Song lyrics are user-local AI
 imports with cited sources — verify them against the linked page; they are not
 part of the licensed HSK corpus and never enter `content/` or `data/sources/`.

@@ -9,12 +9,14 @@ import {
 } from "~/lib/ai/config";
 import { CONFIG_SAMPLING_DEFAULTS } from "~/lib/ai/types";
 import {
+  cloneMessage,
   deleteSavedChat,
   getSavedChat,
   listSavedChats,
   putSavedChat,
   resetChatDbForTests,
 } from "~/lib/ai/chat-db.client";
+import { MAX_CHAT_IMAGES, type ChatImage } from "~/lib/ai/types";
 import {
   AGENT_LIMITS,
   dropCallModelHeader,
@@ -356,6 +358,69 @@ describe("page context snapshots", () => {
     ]);
     const first = input[0];
     expect(first && "content" in first && String(first.content)).toContain("Hanzi: 好");
+  });
+});
+
+function fakeImage(name: string): ChatImage {
+  return { dataUrl: `data:image/png;base64,${name}`, mime: "image/png", name, bytes: 4 };
+}
+
+describe("chat image attachments", () => {
+  it("sends photos as input_image parts followed by the caption", () => {
+    const input = historyToInput([
+      {
+        id: "1",
+        role: "user",
+        content: "what does this say?",
+        createdAt: 1,
+        images: [fakeImage("a.png"), fakeImage("b.png")],
+      },
+    ]);
+    const first = input[0];
+    expect(first && "content" in first ? first.content : null).toEqual([
+      { type: "input_image", imageUrl: "data:image/png;base64,a.png", detail: "high" },
+      { type: "input_image", imageUrl: "data:image/png;base64,b.png", detail: "high" },
+      { type: "input_text", text: "what does this say?" },
+    ]);
+  });
+
+  it("omits the text part for an image-only message but still includes it", () => {
+    const input = historyToInput([
+      { id: "1", role: "user", content: "", createdAt: 1, images: [fakeImage("a.png")] },
+    ]);
+    expect(input).toHaveLength(1);
+    const first = input[0];
+    expect(first && "content" in first ? first.content : null).toEqual([
+      { type: "input_image", imageUrl: "data:image/png;base64,a.png", detail: "high" },
+    ]);
+  });
+
+  it("caps composer attachments and removes by index", () => {
+    aiStore.setState({ composerImages: [] });
+    for (let i = 0; i < MAX_CHAT_IMAGES + 2; i++) {
+      aiStore.getState().addComposerImage(fakeImage(`${i}.png`));
+    }
+    expect(aiStore.getState().composerImages).toHaveLength(MAX_CHAT_IMAGES);
+    aiStore.getState().removeComposerImage(0);
+    expect(aiStore.getState().composerImages.map((i) => i.name)).toEqual([
+      "1.png",
+      "2.png",
+      "3.png",
+    ]);
+    aiStore.setState({ composerImages: [] });
+  });
+
+  it("deep-clones attached images so edits to a reopened chat do not mutate the saved copy", () => {
+    const original = {
+      id: "1",
+      role: "user" as const,
+      content: "",
+      createdAt: 1,
+      images: [fakeImage("a.png")],
+    };
+    const clone = cloneMessage(original);
+    clone.images![0]!.name = "mutated.png";
+    expect(original.images![0]!.name).toBe("a.png");
   });
 });
 

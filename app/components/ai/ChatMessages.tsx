@@ -79,9 +79,23 @@ function MessageBubble({ message, streaming = false }: { message: ChatMessage; s
   if (message.role === "user") {
     return (
       <div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent-soft px-3.5 py-2.5 text-sm leading-relaxed text-ink">
-        <p className="whitespace-pre-wrap wrap-break-word">
-          <MentionedText text={message.content} tone="user" />
-        </p>
+        {message.images && message.images.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {message.images.map((img, i) => (
+              <img
+                key={i}
+                src={img.dataUrl}
+                alt={img.name}
+                className="size-24 rounded-lg object-cover ring-1 ring-ink/10"
+              />
+            ))}
+          </div>
+        )}
+        {message.content ? (
+          <p className="whitespace-pre-wrap wrap-break-word">
+            <MentionedText text={message.content} tone="user" />
+          </p>
+        ) : null}
       </div>
     );
   }
