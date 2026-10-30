@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Link } from "react-router";
+import { ImagePreviewDialog } from "~/components/Dialog";
 import { ToolActivityList, UsageDetails } from "./UsageDetails";
 import { MentionedText, mentionify } from "./MentionedText";
 import type { ChatMessage, ChatRecord } from "~/lib/ai/types";
@@ -76,12 +77,36 @@ export function ChatMessages({
 }
 
 function MessageBubble({ message, streaming = false }: { message: ChatMessage; streaming?: boolean }) {
+  const [preview, setPreview] = useState<{ src: string; alt: string } | null>(null);
   if (message.role === "user") {
     return (
       <div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent-soft px-3.5 py-2.5 text-sm leading-relaxed text-ink">
-        <p className="whitespace-pre-wrap wrap-break-word">
-          <MentionedText text={message.content} tone="user" />
-        </p>
+        {message.images && message.images.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {message.images.map((img, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Expand image: ${img.name}`}
+                title="Expand image"
+                onClick={() => setPreview({ src: img.dataUrl, alt: img.name })}
+                className="cursor-zoom-in rounded-lg focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <img
+                  src={img.dataUrl}
+                  alt=""
+                  className="size-24 rounded-lg object-cover ring-1 ring-ink/10"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+        <ImagePreviewDialog image={preview} onOpenChange={(open) => !open && setPreview(null)} />
+        {message.content ? (
+          <p className="whitespace-pre-wrap wrap-break-word">
+            <MentionedText text={message.content} tone="user" />
+          </p>
+        ) : null}
       </div>
     );
   }
