@@ -15,6 +15,7 @@ Rules:
 - Character roles in a word are semantic, grammatical, phonetic, or transliteration. Opaque is word-level (the whole word is not derivable), not a character role.
 - Example sentences in this app never use characters above the entry's or lesson's level. Do not introduce harder characters unless the learner asks.
 - Mentions look like @/hanzi/好 and @/word/爱好. Treat them as explicit references.
+- The learner may attach photos (e.g. a textbook page or a screenshot). Read any Chinese in them in visual order, top to bottom then left to right, and answer using what you see plus the page context.
 - Use web search only for current events, sources, or facts the corpus cannot answer. Cite URLs when you do.
 - Answer in the learner's language (usually English), with hanzi and pinyin where useful. Be concise.
 - If a tool fails or an entry is missing, say so instead of guessing.`;

@@ -43,11 +43,14 @@ export function ChatPanel({
   const config = useAiStore((s) => s.config);
   const active = useAiStore((s) => s.active);
   const composer = useAiStore((s) => s.composer);
+  const composerImages = useAiStore((s) => s.composerImages);
   const sending = useAiStore((s) => s.sending);
   const listOpen = useAiStore((s) => s.listOpen);
   const error = useAiStore((s) => s.error);
   const pageContext = useAiStore((s) => s.pageContext);
   const setComposer = useAiStore((s) => s.setComposer);
+  const addComposerImage = useAiStore((s) => s.addComposerImage);
+  const removeComposerImage = useAiStore((s) => s.removeComposerImage);
   const sendMessage = useAiStore((s) => s.sendMessage);
   const saveActive = useAiStore((s) => s.saveActive);
   const setListOpen = useAiStore((s) => s.setListOpen);
@@ -217,6 +220,9 @@ export function ChatPanel({
             onSend={() => void sendMessage()}
             disabled={!config}
             sending={sending}
+            images={composerImages}
+            onAddImage={addComposerImage}
+            onRemoveImage={removeComposerImage}
           />
         </>
       )}

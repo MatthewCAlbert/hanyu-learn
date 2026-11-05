@@ -74,6 +74,7 @@ export function cloneMessage(message: ChatMessage): ChatMessage {
   return {
     ...message,
     mentions: message.mentions ? [...message.mentions] : undefined,
+    images: message.images?.map((img) => ({ ...img })),
     toolActivities: message.toolActivities?.map((t) => ({ ...t })),
     citations: message.citations?.map((c) => ({ ...c })),
     usage: message.usage ? { ...message.usage } : undefined,

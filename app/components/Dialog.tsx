@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from "react";
 import { AlertDialog, Dialog } from "radix-ui";
+import { ZoomableImage } from "./ZoomableImage";
 
 /** Present while a design-system dialog is open (nested Escape/Tab handling). */
 export const APP_DIALOG_SELECTOR = "[data-app-dialog]";
@@ -86,6 +87,43 @@ export function BottomSheet({
           <div className="max-h-[calc(86dvh-6.5rem)] overflow-y-auto overscroll-contain px-5 py-5">
             {children}
           </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+export function ImagePreviewDialog({
+  image,
+  onOpenChange,
+}: {
+  image: { src: string; alt: string } | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog.Root open={image != null} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[60] bg-ink/80" data-app-dialog="" />
+        <Dialog.Content
+          className="fixed inset-0 z-[61] outline-none"
+          data-app-dialog=""
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => {
+            // The close unmounts the dialog before window listeners run; stop the chat panel
+            // behind it from treating the same keypress as its own Escape.
+            event.stopPropagation();
+          }}
+        >
+          <Dialog.Title className="sr-only">Image preview</Dialog.Title>
+          <Dialog.Description className="sr-only">{image?.alt ?? ""}</Dialog.Description>
+          {image && <ZoomableImage src={image.src} alt={image.alt} />}
+          <Dialog.Close
+            type="button"
+            aria-label="Close preview"
+            className="ui-touch absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 inline-flex size-11 items-center justify-center rounded-full bg-ink/70 text-2xl leading-none text-paper hover:bg-ink"
+          >
+            <span aria-hidden>×</span>
+          </Dialog.Close>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

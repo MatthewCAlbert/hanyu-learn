@@ -9,11 +9,13 @@ import {
   putSavedChat,
   toSummary,
 } from "./chat-db.client";
-import { clearConfig, hasValidConfig, readConfig, writeConfig } from "./config";
+import { checkModelImageInput, clearConfig, hasValidConfig, readConfig, writeConfig } from "./config";
 import { contextChanged } from "./context";
 import { isAbortError, normalizeAgentError } from "./errors";
 import { extractMentions } from "./mentions";
+import { MAX_CHAT_IMAGES } from "./types";
 import type {
+  ChatImage,
   ChatRecord,
   ChatSummary,
   Citation,
@@ -91,6 +93,7 @@ export interface AiState {
   panelOpen: boolean;
   listOpen: boolean;
   composer: string;
+  composerImages: ChatImage[];
   config: OpenRouterConfig | null;
   pageContext: PageContext | null;
   chats: ChatSummary[];
@@ -108,6 +111,8 @@ export interface AiActions {
   setListOpen: (open: boolean) => void;
   setComposer: (value: string) => void;
   appendComposer: (value: string) => void;
+  addComposerImage: (image: ChatImage) => void;
+  removeComposerImage: (index: number) => void;
   setPageContext: (ctx: PageContext | null) => void;
   setConfig: (config: OpenRouterConfig) => Promise<void>;
   clearConfig: () => void;
@@ -127,6 +132,7 @@ const initial: AiState = {
   panelOpen: false,
   listOpen: false,
   composer: "",
+  composerImages: [],
   config: null,
   pageContext: null,
   chats: [],
@@ -193,6 +199,14 @@ export const aiStore = createStore<AiStore>()(
       const composer = get().composer.trimEnd();
       set({ composer: composer ? `${composer}\n\n${excerpt}` : `${excerpt}\n\n` });
     },
+    addComposerImage: (image) => {
+      const current = get().composerImages;
+      if (current.length >= MAX_CHAT_IMAGES) return;
+      set({ composerImages: [...current, image] });
+    },
+    removeComposerImage: (index) => {
+      set({ composerImages: get().composerImages.filter((_, i) => i !== index) });
+    },
     setPageContext: (pageContext) => set({ pageContext }),
 
     setConfig: async (config) => {
@@ -211,6 +225,7 @@ export const aiStore = createStore<AiStore>()(
       set({
         active: createBlankChat(),
         composer: "",
+        composerImages: [],
         sending: false,
         error: null,
         dirty: false,
@@ -238,6 +253,7 @@ export const aiStore = createStore<AiStore>()(
       set({
         active: cloneChat(loaded),
         composer: "",
+        composerImages: [],
         sending: false,
         error: null,
         dirty: false,
@@ -286,12 +302,14 @@ export const aiStore = createStore<AiStore>()(
 
     sendMessage: async (raw) => {
       const text = (raw ?? get().composer).trim();
-      if (!text || get().sending) return;
-      const { config, active, pageContext } = get();
+      if (get().sending) return;
+      const { config, active, pageContext, composerImages } = get();
+      if (!text && composerImages.length === 0) return;
       if (!hasValidConfig(config)) {
         set({ panelOpen: true, error: "Add a model and API key to chat." });
         return;
       }
+      const images = composerImages.length ? composerImages : undefined;
       const chat = active ?? createBlankChat();
       const createdAt = now();
       const attachContext = contextChanged(chat.lastContextKey, pageContext);
@@ -301,6 +319,7 @@ export const aiStore = createStore<AiStore>()(
         content: text,
         createdAt,
         mentions: extractMentions(text),
+        images,
         pageContextKey: attachContext ? pageContext?.key : undefined,
         pageContextText: attachContext ? pageContext?.text : undefined,
       };
@@ -313,7 +332,7 @@ export const aiStore = createStore<AiStore>()(
       };
       const nextChat: ChatRecord = {
         ...chat,
-        title: chat.messages.length === 0 ? titleFrom(text) : chat.title,
+        title: chat.messages.length === 0 ? titleFrom(text || "Photo") : chat.title,
         updatedAt: createdAt,
         lastContextKey: pageContext?.kind && pageContext.kind !== "none" ? pageContext.key : chat.lastContextKey,
         messages: [...chat.messages, user, assistant],
@@ -324,6 +343,7 @@ export const aiStore = createStore<AiStore>()(
       set({
         active: nextChat,
         composer: "",
+        composerImages: [],
         sending: true,
         error: null,
         dirty: nextChat.saved,
@@ -343,6 +363,10 @@ export const aiStore = createStore<AiStore>()(
       const liveText = coalesce((content: string) => patchAssistant({ content }));
 
       try {
+        if (images?.length) {
+          const vision = await checkModelImageInput(config, signal);
+          if (!vision.ok) throw new Error(vision.error);
+        }
         const { runAgent } = await import("./agent");
         const result = await runAgent({
           config,

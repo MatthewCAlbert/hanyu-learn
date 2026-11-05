@@ -198,9 +198,23 @@ export function historyToInput(messages: ChatMessage[]): Item[] {
             text: m.pageContextText,
           })
         : m.content;
-    if (!content) continue;
+    const images = m.role === "user" ? m.images : undefined;
+    if (!content && !images?.length) continue;
     if (m.role === "user") {
-      out.push({ role: "user", content });
+      if (images?.length) {
+        const parts: Array<
+          | { type: "input_image"; imageUrl: string; detail: "high" }
+          | { type: "input_text"; text: string }
+        > = images.map((img) => ({
+          type: "input_image" as const,
+          imageUrl: img.dataUrl,
+          detail: "high" as const,
+        }));
+        if (content) parts.push({ type: "input_text", text: content });
+        out.push({ role: "user", content: parts });
+      } else {
+        out.push({ role: "user", content });
+      }
     } else {
       out.push({
         type: "message",

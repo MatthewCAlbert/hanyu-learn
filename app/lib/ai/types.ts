@@ -1,4 +1,10 @@
 import type { EntryKind } from "~/lib/compare";
+import type { TranslateImage } from "~/lib/translate";
+
+export type ChatImage = TranslateImage;
+
+/** One message may carry up to this many attached photos. */
+export const MAX_CHAT_IMAGES = 4;
 
 export type MentionKind = "hanzi" | "word";
 
@@ -78,6 +84,8 @@ export interface ChatMessage {
   content: string;
   createdAt: number;
   mentions?: MentionRef[];
+  /** User-attached photos, read in order alongside the text. */
+  images?: ChatImage[];
   pageContextKey?: string;
   pageContextText?: string;
   toolActivities?: ToolActivity[];

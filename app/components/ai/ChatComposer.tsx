@@ -1,13 +1,15 @@
 import { useEffect, useId, useMemo, useRef, useState, type RefObject } from "react";
-import { LuLoader, LuSend } from "react-icons/lu";
+import { LuImagePlus, LuLoader, LuSend, LuX } from "react-icons/lu";
 import clsx from "clsx";
 import { Highlighted } from "~/components/ui";
 import { loadAiCatalog } from "~/lib/ai/catalog";
 import { highlightComposer, insertMention, mentionAtCaret } from "~/lib/ai/mentions";
 import { kindOptions, searchMentions } from "~/lib/ai/mention-search";
+import { MAX_CHAT_IMAGES } from "~/lib/ai/types";
 import type { CompareCatalog } from "~/lib/detail-data";
 import type { CompareHit } from "~/lib/compare-search";
-import type { MentionKind, MentionRef } from "~/lib/ai/types";
+import type { ChatImage, MentionKind, MentionRef } from "~/lib/ai/types";
+import { TRANSLATE_IMAGE_TYPES, imageFileFromClipboard, readTranslateImage } from "~/lib/translate";
 
 // iOS zooms focused controls below 16px. Keep the mobile composer at 16px.
 const fieldText =
@@ -20,6 +22,9 @@ export function ChatComposer({
   disabled,
   sending,
   inputRef,
+  images,
+  onAddImage,
+  onRemoveImage,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -27,15 +32,40 @@ export function ChatComposer({
   disabled?: boolean;
   sending?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement | null>;
+  images?: ChatImage[];
+  onAddImage?: (image: ChatImage) => void;
+  onRemoveImage?: (index: number) => void;
 }) {
   const reactId = useId();
   const listId = `${reactId}-mentions`;
   const localRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = inputRef ?? localRef;
   const [caret, setCaret] = useState(0);
   const [catalog, setCatalog] = useState<CompareCatalog | null>(null);
   const [active, setActive] = useState(0);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const pendingImages = images ?? [];
+  const atImageCap = pendingImages.length >= MAX_CHAT_IMAGES;
+  const canSend = Boolean(value.trim()) || pendingImages.length > 0;
+
+  const takeImageFile = (file: File | null) => {
+    if (!file || !onAddImage) return;
+    if (atImageCap) {
+      setImageError(`Up to ${MAX_CHAT_IMAGES} images per message.`);
+      return;
+    }
+    void (async () => {
+      const read = await readTranslateImage(file, file.name || "image");
+      if (!read.ok) {
+        setImageError(read.error);
+        return;
+      }
+      setImageError(null);
+      onAddImage(read.image);
+    })();
+  };
 
   const [dismissed, setDismissed] = useState(false);
   const query = useMemo(
@@ -242,8 +272,14 @@ export function ChatComposer({
               }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (!sending && value.trim()) onSend();
+                if (!sending && canSend) onSend();
               }
+            }}
+            onPaste={(e) => {
+              const file = imageFileFromClipboard(e.clipboardData);
+              if (!file) return;
+              e.preventDefault();
+              takeImageFile(file);
             }}
             className={clsx(
               fieldText,
@@ -252,19 +288,73 @@ export function ChatComposer({
             )}
           />
         </div>
+        {pendingImages.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-3 pt-2">
+            {pendingImages.map((img, i) => (
+              <div
+                key={i}
+                className="group relative size-14 shrink-0 overflow-hidden rounded-lg border border-line bg-sunk"
+              >
+                <img src={img.dataUrl} alt={img.name} className="size-full object-cover" />
+                <button
+                  type="button"
+                  aria-label={`Remove image ${i + 1}`}
+                  onClick={() => onRemoveImage?.(i)}
+                  className="absolute right-0.5 top-0.5 inline-flex size-5 items-center justify-center rounded-full bg-ink/70 text-paper"
+                >
+                  <LuX className="size-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {imageError && <p className="px-3 pt-2 text-xs text-accent">{imageError}</p>}
         <div className="flex items-center justify-between gap-2 px-2 pb-2">
           <p className="min-w-0 truncate px-1 text-[11px] leading-4 text-ink-3">
             Enter to send · Shift+Enter for a new line
           </p>
-          <button
-            type="button"
-            aria-label={sending ? "Sending" : "Send"}
-            disabled={disabled || sending || !value.trim()}
-            onClick={onSend}
-            className="ui-touch inline-flex size-11 items-center justify-center rounded-xl bg-ink text-paper disabled:opacity-40"
-          >
-            {sending ? <LuLoader className="size-4 animate-spin" /> : <LuSend className="size-4" />}
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {onAddImage && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={TRANSLATE_IMAGE_TYPES.join(",")}
+                  disabled={disabled || atImageCap}
+                  className="sr-only"
+                  onChange={(e) => {
+                    takeImageFile(e.target.files?.[0] ?? null);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  aria-label="Attach image"
+                  title={
+                    atImageCap ? `Up to ${MAX_CHAT_IMAGES} images per message` : "Attach image"
+                  }
+                  disabled={disabled || atImageCap}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="ui-touch inline-flex size-11 items-center justify-center rounded-xl text-ink-2 hover:bg-sunk hover:text-accent disabled:opacity-40"
+                >
+                  <LuImagePlus className="size-4" />
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              aria-label={sending ? "Sending" : "Send"}
+              disabled={disabled || sending || !canSend}
+              onClick={onSend}
+              className="ui-touch inline-flex size-11 items-center justify-center rounded-xl bg-ink text-paper disabled:opacity-40"
+            >
+              {sending ? (
+                <LuLoader className="size-4 animate-spin" />
+              ) : (
+                <LuSend className="size-4" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
