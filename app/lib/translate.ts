@@ -2,8 +2,20 @@
 export const TRANSLATE_QUERY_MAX = 500;
 /** Client-side paste cap — several paragraphs, not a novel. */
 export const TRANSLATE_TEXT_MAX = 8_000;
-/** One photo, not a scan of a book. */
-export const TRANSLATE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+/**
+ * One photo, not a scan of a book. This caps the file the user picks; what is
+ * actually sent is the compressed copy (see `compressImageBlob`), so a full-size
+ * phone photo is fine here.
+ */
+export const TRANSLATE_IMAGE_MAX_BYTES = 25 * 1024 * 1024;
+/**
+ * Longest edge after downscaling. Vision models resize to roughly this anyway,
+ * and 2048px keeps small hanzi on signs and menus legible.
+ */
+export const IMAGE_MAX_EDGE = 2048;
+export const IMAGE_JPEG_QUALITY = 0.85;
+/** Already small and within IMAGE_MAX_EDGE: re-encoding would only lose quality. */
+export const IMAGE_COMPRESS_SKIP_BYTES = 300 * 1024;
 export const TRANSLATE_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 
 export type TranslateImageMime = (typeof TRANSLATE_IMAGE_TYPES)[number];
@@ -158,12 +170,83 @@ function bytesToBase64(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString("base64");
 }
 
+/** Scale (width, height) down to fit within `maxEdge`, keeping aspect ratio. Never upscales. */
+export function fitWithin(
+  width: number,
+  height: number,
+  maxEdge = IMAGE_MAX_EDGE,
+): { width: number; height: number } {
+  const longest = Math.max(width, height);
+  if (longest <= maxEdge || longest <= 0) return { width, height };
+  const scale = maxEdge / longest;
+  return {
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
+  };
+}
+
+/**
+ * Downscale and re-encode an image as JPEG in the browser. Returns null when
+ * there is nothing to gain or the runtime cannot decode/encode (SSR, tests,
+ * old browsers) — the caller then keeps the original bytes.
+ */
+export async function compressImageBlob(blob: Blob): Promise<Blob | null> {
+  if (typeof createImageBitmap !== "function") return null;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+  } catch {
+    return null;
+  }
+  try {
+    const { width, height } = fitWithin(bitmap.width, bitmap.height);
+    const resized = width !== bitmap.width || height !== bitmap.height;
+    if (!resized && blob.size <= IMAGE_COMPRESS_SKIP_BYTES) return null;
+
+    let out: Blob | null = null;
+    if (typeof OffscreenCanvas === "function") {
+      const canvas = new OffscreenCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      // JPEG has no alpha: paint transparent screenshots onto white, not black.
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      out = await canvas.convertToBlob({ type: "image/jpeg", quality: IMAGE_JPEG_QUALITY });
+    } else if (typeof document !== "undefined") {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      out = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", IMAGE_JPEG_QUALITY),
+      );
+    }
+    if (!out || out.type !== "image/jpeg") return null;
+    // A resize is worth keeping even if bytes barely move; a same-size
+    // re-encode is only worth it if it actually shrinks the file.
+    if (!resized && out.size >= blob.size) return null;
+    return out;
+  } catch {
+    return null;
+  } finally {
+    bitmap.close();
+  }
+}
+
 export async function readTranslateImage(
   file: Blob,
   name = "image",
 ): Promise<{ ok: true; image: TranslateImage } | { ok: false; error: string }> {
   if (file.size > TRANSLATE_IMAGE_MAX_BYTES) {
-    return { ok: false, error: "Images must be 10 MB or smaller." };
+    return {
+      ok: false,
+      error: `Images must be ${TRANSLATE_IMAGE_MAX_BYTES / 1024 / 1024} MB or smaller.`,
+    };
   }
   if (file.size === 0) {
     return { ok: false, error: "That image is empty." };
@@ -173,15 +256,19 @@ export async function readTranslateImage(
   if (!typed || !isAllowedTranslateImageType(typed)) {
     return { ok: false, error: "Use a PNG, JPEG, or WebP image." };
   }
-  const mime = typed;
   const label = "name" in file && typeof file.name === "string" && file.name.trim() ? file.name : name;
+  // Compress before it goes anywhere: the data URL is sent to the model, kept
+  // in chat history (IndexedDB) and re-sent with every later turn.
+  const compressed = await compressImageBlob(file);
+  const mime: TranslateImageMime = compressed ? "image/jpeg" : typed;
+  const finalBytes = compressed ? new Uint8Array(await compressed.arrayBuffer()) : bytes;
   return {
     ok: true,
     image: {
-      dataUrl: `data:${mime};base64,${bytesToBase64(bytes)}`,
+      dataUrl: `data:${mime};base64,${bytesToBase64(finalBytes)}`,
       mime,
       name: label,
-      bytes: file.size,
+      bytes: finalBytes.byteLength,
     },
   };
 }

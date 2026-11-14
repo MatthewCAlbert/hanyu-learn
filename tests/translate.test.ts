@@ -16,7 +16,9 @@ import {
   browseSearchEmpty,
   capText,
   containsHanzi,
+  fitWithin,
   hanziCount,
+  IMAGE_MAX_EDGE,
   isAllowedTranslateImageType,
   isExactCorpusEntry,
   needsAiForSource,
@@ -224,7 +226,7 @@ describe("image translation", () => {
         type: "image/png",
         arrayBuffer: async () => new ArrayBuffer(0),
       } as Blob),
-    ).toMatchObject({ ok: false, error: "Images must be 10 MB or smaller." });
+    ).toMatchObject({ ok: false, error: "Images must be 25 MB or smaller." });
     expect(await readTranslateImage(new Blob([], { type: "image/png" }))).toMatchObject({
       ok: false,
       error: "That image is empty.",
@@ -232,6 +234,14 @@ describe("image translation", () => {
     expect(
       await readTranslateImage(new File([new Uint8Array([1, 2, 3])], "x.gif", { type: "image/gif" })),
     ).toMatchObject({ ok: false, error: "Use a PNG, JPEG, or WebP image." });
+  });
+
+  it("downscales oversize images to the max edge, keeping aspect ratio", () => {
+    expect(fitWithin(4032, 3024)).toEqual({ width: IMAGE_MAX_EDGE, height: 1536 });
+    expect(fitWithin(1170, 2532)).toEqual({ width: 946, height: IMAGE_MAX_EDGE });
+    expect(fitWithin(800, 600)).toEqual({ width: 800, height: 600 });
+    expect(fitWithin(IMAGE_MAX_EDGE, 10)).toEqual({ width: IMAGE_MAX_EDGE, height: 10 });
+    expect(fitWithin(100_000, 1)).toEqual({ width: IMAGE_MAX_EDGE, height: 1 });
   });
 
   it("builds a multimodal user message with the image data URL", () => {
